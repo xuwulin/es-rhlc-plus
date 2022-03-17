@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.xwl</groupId>
+    <artifactId>elasticsearch-plus</artifactId>
+    <version>0.0.1</version>
+    <modules>
+        <module>elasticsearch-plus-core</module>
+        <module>elasticsearch-plus-boot-starter</module>
+        <module>elasticsearch-plus-boot-autoconfigure</module>
+        <module>elasticsearch-plus-boot-starter-example</module>
+    </modules>
+    <!-- 表明这是一个父工程 -->
+    <packaging>pom</packaging>
+    <description>Elasticsearch 增强工具包，简化CRUD操作</description>
+
+    <!-- 开发者 -->
+    <developers>
+        <developer>
+            <name>xwl</name>
+            <email>978100228@qq.com</email>
+        </developer>
+    </developers>
+
+    <!-- 统一管理依赖版本 -->
+    <properties>
+        <!-- java编译版本 -->
+        <java.version>1.8</java.version>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <!-- 字符编码集 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- 依赖版本 -->
+        <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
+        <elasticsearch.version>7.6.2</elasticsearch.version>
+        <commons-collections4.version>4.4</commons-collections4.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <commons-codec.version>1.6</commons-codec.version>
+        <fastjson.version>1.2.78</fastjson.version>
+        <lombok.version>1.18.20</lombok.version>
+
+        <!-- maven plugins -->
+        <compiler-plugin.version>3.5.1</compiler-plugin.version>
+        <maven-deploy-plugin.version>2.7</maven-deploy-plugin.version>
+        <source-plugin.version>2.2.1</source-plugin.version>
+        <javadoc-plugin.version>2.9.1</javadoc-plugin.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.xwl</groupId>
+                <artifactId>elasticsearch-plus-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.xwl</groupId>
+                <artifactId>elasticsearch-plus-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.xwl</groupId>
+                <artifactId>elasticsearch-plus-boot-autoconfigure</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- spring boot -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- elasticsearch高级客户端 -->
+            <dependency>
+                <groupId>org.elasticsearch.client</groupId>
+                <artifactId>elasticsearch-rest-high-level-client</artifactId>
+                <version>${elasticsearch.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons-codec.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- maven依赖仓库 -->
+    <repositories>
+        <!-- 使用aliyun的Maven源，提升下载速度 -->
+        <repository>
+            <id>aliyunmaven</id>
+            <name>aliyun</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <!-- 从远程仓库引入release版本，不引入snapshots版本 -->
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+        <!-- 公司地址 -->
+        <repository>
+            <id>central</id>
+            <url>http://10.10.50.246:8081/repository/maven-public</url>
+        </repository>
+    </repositories>
+
+    <!-- maven插件仓库 -->
+    <pluginRepositories>
+        <!-- 使用aliyun的Maven源，提升下载速度 -->
+        <pluginRepository>
+            <id>aliyun-plugin</id>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+
+        <!-- 公司地址 -->
+        <pluginRepository>
+            <id>central</id>
+            <url>http://10.10.50.246:8081/repository/maven-public</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <!-- 定义maven deploy上传仓库 -->
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <name>Nexus Release Repository</name>
+            <url>http://10.10.50.246:8081/repository/maven-releases/</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>Nexus Snapshot Repository</name>
+            <url>http://10.10.50.246:8081/repository/maven-releases/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <build>
+        <!-- 指定资源文件位置 -->
+        <resources>
+            <!-- maven默认所有资源文件都是放在src/main/resources路径下的，但是如果指定了src/main/java，也必须指定src/main/resources，否则打包不会把resources下的资源文件打进jar包中 -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+            <!-- maven默认src/main/java路径下的只有.java文件会被打进jar包，需要把.xml文件也打进jar包，则要使用include标签添加xml文件 -->
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <!-- 打编译jar包插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${compiler-plugin.version}</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <compilerVersion>${java.version}</compilerVersion>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+            <!-- 打源码jar包插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${source-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- 发布Jar包到私服仓库插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${maven-deploy-plugin.version}</version>
+            </plugin>
+            <!-- 打Javadoc jar包插件 -->
+            <!--<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${javadoc-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>-->
+            <!-- GPG签名插件：在将 Maven 的包上传到中央仓库并且创建发行版之前需要对包进行 GPG 签名。 -->
+            <!--<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>${maven-gpg-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>-->
+        </plugins>
+    </build>
+</project>
