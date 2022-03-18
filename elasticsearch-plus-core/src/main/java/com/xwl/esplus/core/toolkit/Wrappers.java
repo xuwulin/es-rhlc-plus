@@ -1,4 +1,8 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.toolkit;
+
+import com.xwl.esplus.core.wrapper.EsLambdaIndexWrapper;
+import com.xwl.esplus.core.wrapper.EsLambdaQueryWrapper;
+import com.xwl.esplus.core.wrapper.EsLambdaUpdateWrapper;
 
 /**
  * Wrapper 条件构造
@@ -16,8 +20,8 @@ public final class Wrappers {
      * @param <T> 实体类泛型
      * @return LambdaEsIndexWrapper
      */
-    public static <T> LambdaEsIndexWrapper<T> lambdaIndex() {
-        return new LambdaEsIndexWrapper<>();
+    public static <T> EsLambdaIndexWrapper<T> lambdaIndex() {
+        return new EsLambdaIndexWrapper<>();
     }
 
     /**
@@ -27,8 +31,8 @@ public final class Wrappers {
      * @param <T>    实体类泛型
      * @return LambdaEsIndexWrapper
      */
-    public static <T> LambdaEsIndexWrapper<T> lambdaIndex(T entity) {
-        return new LambdaEsIndexWrapper<>(entity);
+    public static <T> EsLambdaIndexWrapper<T> lambdaIndex(T entity) {
+        return new EsLambdaIndexWrapper<>(entity);
     }
 
     /**
@@ -37,8 +41,8 @@ public final class Wrappers {
      * @param <T> 实体类泛型
      * @return LambdaQueryWrapper
      */
-    public static <T> LambdaEsQueryWrapper<T> lambdaQuery() {
-        return new LambdaEsQueryWrapper<>();
+    public static <T> EsLambdaQueryWrapper<T> lambdaQuery() {
+        return new EsLambdaQueryWrapper<>();
     }
 
     /**
@@ -48,8 +52,8 @@ public final class Wrappers {
      * @param <T>    实体类泛型
      * @return LambdaEsQueryWrapper
      */
-    public static <T> LambdaEsQueryWrapper<T> lambdaQuery(T entity) {
-        return new LambdaEsQueryWrapper<>(entity);
+    public static <T> EsLambdaQueryWrapper<T> lambdaQuery(T entity) {
+        return new EsLambdaQueryWrapper<>(entity);
     }
 
     /**
@@ -58,8 +62,8 @@ public final class Wrappers {
      * @param <T> 实体类泛型
      * @return LambdaEsUpdateWrapper
      */
-    public static <T> LambdaEsUpdateWrapper<T> lambdaUpdate() {
-        return new LambdaEsUpdateWrapper<>();
+    public static <T> EsLambdaUpdateWrapper<T> lambdaUpdate() {
+        return new EsLambdaUpdateWrapper<>();
     }
 
     /**
@@ -69,7 +73,7 @@ public final class Wrappers {
      * @param <T>    实体类泛型
      * @return LambdaEsUpdateWrapper
      */
-    public static <T> LambdaEsUpdateWrapper<T> lambdaUpdate(T entity) {
-        return new LambdaEsUpdateWrapper<>(entity);
+    public static <T> EsLambdaUpdateWrapper<T> lambdaUpdate(T entity) {
+        return new EsLambdaUpdateWrapper<>(entity);
     }
 }

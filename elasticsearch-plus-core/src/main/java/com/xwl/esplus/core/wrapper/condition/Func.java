@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.condition.interfaces;
+package com.xwl.esplus.core.wrapper.condition;
 
 import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.toolkit.FieldUtils;

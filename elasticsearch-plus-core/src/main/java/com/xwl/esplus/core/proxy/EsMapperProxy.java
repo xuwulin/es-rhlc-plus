@@ -1,7 +1,7 @@
 package com.xwl.esplus.core.proxy;
 
 import com.xwl.esplus.core.cache.BaseCache;
-import com.xwl.esplus.core.condition.EsBaseMapperImpl;
+import com.xwl.esplus.core.wrapper.EsBaseMapperImpl;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;

@@ -1,8 +1,8 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.wrapper;
 
 import com.xwl.esplus.core.common.DocumentFieldInfo;
-import com.xwl.esplus.core.condition.interfaces.Query;
-import com.xwl.esplus.core.condition.interfaces.SFunction;
+import com.xwl.esplus.core.wrapper.query.Query;
+import com.xwl.esplus.core.wrapper.condition.SFunction;
 import com.xwl.esplus.core.param.EsAggregationParam;
 import com.xwl.esplus.core.param.EsBaseParam;
 import com.xwl.esplus.core.param.EsHighLightParam;
@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
  * @author xwl
  * @since 2022/3/16 14:38
  */
-public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, LambdaEsQueryWrapper<T>>
-        implements Query<LambdaEsQueryWrapper<T>, T, SFunction<T, ?>> {
+public class EsLambdaQueryWrapper<T> extends EsAbstractLambdaQueryWrapper<T, EsLambdaQueryWrapper<T>>
+        implements Query<EsLambdaQueryWrapper<T>, T, SFunction<T, ?>> {
     /**
      * 查询字段
      */
@@ -43,7 +43,7 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
      */
-    public LambdaEsQueryWrapper() {
+    public EsLambdaQueryWrapper() {
         this(null);
         include = new String[]{};
         exclude = new String[]{};
@@ -54,14 +54,14 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
      *
      * @param entity 实体
      */
-    public LambdaEsQueryWrapper(T entity) {
+    public EsLambdaQueryWrapper(T entity) {
         super.initNeed();
         super.setEntity(entity);
         include = new String[]{};
         exclude = new String[]{};
     }
 
-    LambdaEsQueryWrapper(T entity, List<EsBaseParam> baseEsParamList, List<EsHighLightParam> highLightParamList,
+    EsLambdaQueryWrapper(T entity, List<EsBaseParam> baseEsParamList, List<EsHighLightParam> highLightParamList,
                          List<EsSortParam> sortParamList, List<EsAggregationParam> aggregationParamList) {
         super.setEntity(entity);
         include = new String[]{};
@@ -73,12 +73,12 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     }
 
     @Override
-    protected LambdaEsQueryWrapper<T> instance() {
-        return new LambdaEsQueryWrapper<>(entity, baseParamList, highLightParamList, sortParamList, aggregationParamList);
+    protected EsLambdaQueryWrapper<T> instance() {
+        return new EsLambdaQueryWrapper<>(entity, baseParamList, highLightParamList, sortParamList, aggregationParamList);
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> select(SFunction<T, ?>... columns) {
+    public EsLambdaQueryWrapper<T> select(SFunction<T, ?>... columns) {
         if (CollectionUtils.isNotEmpty(columns)) {
             List<String> list = Arrays.stream(columns)
                     .map(FieldUtils::getFieldName)
@@ -89,12 +89,12 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> select(Predicate<DocumentFieldInfo> predicate) {
+    public EsLambdaQueryWrapper<T> select(Predicate<DocumentFieldInfo> predicate) {
         return select(entityClass, predicate);
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> select(Class<T> entityClass, Predicate<DocumentFieldInfo> predicate) {
+    public EsLambdaQueryWrapper<T> select(Class<T> entityClass, Predicate<DocumentFieldInfo> predicate) {
         this.entityClass = entityClass;
         List<String> list = DocumentInfoUtils.getEntityInfo(getCheckEntityClass()).chooseSelect(predicate);
         include = list.toArray(include);
@@ -102,7 +102,7 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> notSelect(SFunction<T, ?>... columns) {
+    public EsLambdaQueryWrapper<T> notSelect(SFunction<T, ?>... columns) {
         if (CollectionUtils.isNotEmpty(columns)) {
             List<String> list = Arrays.stream(columns)
                     .map(FieldUtils::getFieldName)
@@ -113,25 +113,25 @@ public class LambdaEsQueryWrapper<T> extends AbstractLambdaQueryWrapper<T, Lambd
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> from(Integer from) {
+    public EsLambdaQueryWrapper<T> from(Integer from) {
         this.from = from;
         return typedThis;
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> size(Integer size) {
+    public EsLambdaQueryWrapper<T> size(Integer size) {
         this.size = size;
         return typedThis;
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> limit(Integer m) {
+    public EsLambdaQueryWrapper<T> limit(Integer m) {
         this.size = m;
         return typedThis;
     }
 
     @Override
-    public LambdaEsQueryWrapper<T> limit(Integer m, Integer n) {
+    public EsLambdaQueryWrapper<T> limit(Integer m, Integer n) {
         this.from = m;
         this.size = n;
         return typedThis;

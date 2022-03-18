@@ -1,6 +1,6 @@
 package com.xwl.esplus.core.cache;
 
-import com.xwl.esplus.core.condition.EsBaseMapperImpl;
+import com.xwl.esplus.core.wrapper.EsBaseMapperImpl;
 import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.toolkit.ExceptionUtils;
 import com.xwl.esplus.core.toolkit.FieldUtils;

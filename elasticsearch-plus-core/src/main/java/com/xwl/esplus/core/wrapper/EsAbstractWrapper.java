@@ -1,6 +1,6 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.wrapper;
 
-import com.xwl.esplus.core.condition.interfaces.*;
+import com.xwl.esplus.core.wrapper.condition.*;
 import com.xwl.esplus.core.constant.EsAggregationTypeEnum;
 import com.xwl.esplus.core.enums.EsAttachTypeEnum;
 import com.xwl.esplus.core.enums.EsBaseParamTypeEnum;
@@ -34,7 +34,7 @@ import static com.xwl.esplus.core.enums.EsQueryTypeEnum.*;
  * @author xwl
  * @since 2022/3/15 18:31
  */
-public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, R, Children>> extends EsWrapper<T>
+public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper<T, R, Children>> extends EsWrapper<T>
         implements Compare<Children, R>, Nested<Children, Children>, Join<Children>, Func<Children, R>, Geo<Children, R> {
     protected final Children typedThis = (Children) this;
 

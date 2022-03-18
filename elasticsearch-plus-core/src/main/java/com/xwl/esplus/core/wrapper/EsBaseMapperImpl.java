@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.wrapper;
 
 import com.xwl.esplus.core.cache.GlobalConfigCache;
 import com.xwl.esplus.core.constant.EsConstants;
@@ -27,7 +27,7 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.util.*;
 
-import static com.xwl.esplus.core.condition.WrapperProcessor.buildSearchSourceBuilder;
+import static com.xwl.esplus.core.wrapper.EsWrapperProcessor.buildSearchSourceBuilder;
 
 /**
  * 核心，EsBaseMapper接口实现，获得常用的CRUD功能，（需要和EsWrapper类在同一包下，因为EsWrapper类中的属性是protected）
@@ -71,7 +71,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public Boolean createIndex(LambdaEsIndexWrapper<T> wrapper) {
+    public Boolean createIndex(EsLambdaIndexWrapper<T> wrapper) {
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(wrapper.indexName);
         // 分片个副本信息
         Settings.Builder settings = Settings.builder();
@@ -109,7 +109,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public Boolean updateIndex(LambdaEsIndexWrapper<T> wrapper) {
+    public Boolean updateIndex(EsLambdaIndexWrapper<T> wrapper) {
         boolean existsIndex = this.existsIndex(wrapper.indexName);
         if (!existsIndex) {
             throw ExceptionUtils.epe("index: %s not exists", wrapper.indexName);
@@ -156,7 +156,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public SearchResponse search(LambdaEsQueryWrapper<T> wrapper) throws IOException {
+    public SearchResponse search(EsLambdaQueryWrapper<T> wrapper) throws IOException {
         // 构建es restHighLevel 查询参数
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
@@ -169,7 +169,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public SearchSourceBuilder getSearchSourceBuilder(LambdaEsQueryWrapper<T> wrapper) throws IOException {
+    public SearchSourceBuilder getSearchSourceBuilder(EsLambdaQueryWrapper<T> wrapper) throws IOException {
         return buildSearchSourceBuilder(wrapper);
     }
 
@@ -179,7 +179,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public String getSource(LambdaEsQueryWrapper<T> wrapper) throws IOException {
+    public String getSource(EsLambdaQueryWrapper<T> wrapper) throws IOException {
         // 获取由本框架生成的es查询参数 用于验证生成语法的正确性
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);

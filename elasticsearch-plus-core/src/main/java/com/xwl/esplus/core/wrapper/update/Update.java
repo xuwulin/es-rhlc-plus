@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.condition.interfaces;
+package com.xwl.esplus.core.wrapper.update;
 
 import java.io.Serializable;
 

@@ -1,7 +1,7 @@
 package com.xwl.esplus.core.toolkit;
 
 import com.xwl.esplus.core.constant.EsConstants;
-import com.xwl.esplus.core.condition.interfaces.SFunction;
+import com.xwl.esplus.core.wrapper.condition.SFunction;
 
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Method;

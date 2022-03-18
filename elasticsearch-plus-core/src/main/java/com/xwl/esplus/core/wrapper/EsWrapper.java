@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.wrapper;
 
 import org.elasticsearch.action.search.SearchRequest;
 

@@ -1,6 +1,6 @@
 package com.xwl.esplus.example.index;
 
-import com.xwl.esplus.core.condition.LambdaEsIndexWrapper;
+import com.xwl.esplus.core.wrapper.EsLambdaIndexWrapper;
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
 import com.xwl.esplus.example.document.TestDocument;
@@ -30,7 +30,7 @@ public class IndexTest {
 
     @Test
     public void testIndex() {
-        LambdaEsIndexWrapper<TestDocument> wrapper = new LambdaEsIndexWrapper<>();
+        EsLambdaIndexWrapper<TestDocument> wrapper = new EsLambdaIndexWrapper<>();
         wrapper.indexName(TestDocument.class.getSimpleName().toLowerCase());
 
         wrapper.mapping(TestDocument::getTitle, EsFieldTypeEnum.KEYWORD)
@@ -55,7 +55,7 @@ public class IndexTest {
     @Test
     public void testUpdateIndex() {
         // 测试更新索引
-        LambdaEsIndexWrapper<TestDocument> wrapper = new LambdaEsIndexWrapper<>();
+        EsLambdaIndexWrapper<TestDocument> wrapper = new EsLambdaIndexWrapper<>();
         // 指定要更新哪个索引
         String indexName = TestDocument.class.getSimpleName().toLowerCase();
         wrapper.indexName(indexName);

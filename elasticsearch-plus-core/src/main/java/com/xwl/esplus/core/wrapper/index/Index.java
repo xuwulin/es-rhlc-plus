@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.condition.interfaces;
+package com.xwl.esplus.core.wrapper.index;
 
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;

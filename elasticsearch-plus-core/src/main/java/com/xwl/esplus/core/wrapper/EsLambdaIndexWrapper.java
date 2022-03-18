@@ -1,7 +1,7 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.wrapper;
 
-import com.xwl.esplus.core.condition.interfaces.Index;
-import com.xwl.esplus.core.condition.interfaces.SFunction;
+import com.xwl.esplus.core.wrapper.index.Index;
+import com.xwl.esplus.core.wrapper.condition.SFunction;
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
 import com.xwl.esplus.core.param.EsIndexParam;
@@ -22,7 +22,7 @@ import java.util.Objects;
  * @since 2022/3/11 17:41
  */
 @SuppressWarnings("serial")
-public class LambdaEsIndexWrapper<T> extends EsWrapper<T> implements Index<LambdaEsIndexWrapper<T>, SFunction<T, ?>>, Serializable {
+public class EsLambdaIndexWrapper<T> extends EsWrapper<T> implements Index<EsLambdaIndexWrapper<T>, SFunction<T, ?>>, Serializable {
     /**
      * 索引名称
      */
@@ -54,12 +54,12 @@ public class LambdaEsIndexWrapper<T> extends EsWrapper<T> implements Index<Lambd
     /**
      * 此包装类本身
      */
-    protected final LambdaEsIndexWrapper<T> typedThis = this;
+    protected final EsLambdaIndexWrapper<T> typedThis = this;
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
      */
-    public LambdaEsIndexWrapper() {
+    public EsLambdaIndexWrapper() {
         this(null);
     }
 
@@ -68,7 +68,7 @@ public class LambdaEsIndexWrapper<T> extends EsWrapper<T> implements Index<Lambd
      *
      * @param entity 实体
      */
-    public LambdaEsIndexWrapper(T entity) {
+    public EsLambdaIndexWrapper(T entity) {
         this.entity = entity;
         esIndexParamList = new ArrayList<>();
     }
@@ -79,7 +79,7 @@ public class LambdaEsIndexWrapper<T> extends EsWrapper<T> implements Index<Lambd
     }
 
     @Override
-    public LambdaEsIndexWrapper<T> indexName(String indexName) {
+    public EsLambdaIndexWrapper<T> indexName(String indexName) {
         if (StringUtils.isEmpty(indexName)) {
             throw new RuntimeException("indexName can not be empty");
         }
@@ -88,7 +88,7 @@ public class LambdaEsIndexWrapper<T> extends EsWrapper<T> implements Index<Lambd
     }
 
     @Override
-    public LambdaEsIndexWrapper<T> settings(Integer shards, Integer replicas) {
+    public EsLambdaIndexWrapper<T> settings(Integer shards, Integer replicas) {
         if (Objects.nonNull(shards)) {
             this.shardsNum = shards;
         }
@@ -99,7 +99,7 @@ public class LambdaEsIndexWrapper<T> extends EsWrapper<T> implements Index<Lambd
     }
 
     @Override
-    public LambdaEsIndexWrapper<T> createAlias(String aliasName) {
+    public EsLambdaIndexWrapper<T> createAlias(String aliasName) {
         if (StringUtils.isEmpty(indexName)) {
             throw new RuntimeException("indexName can not be empty");
         }
@@ -111,7 +111,7 @@ public class LambdaEsIndexWrapper<T> extends EsWrapper<T> implements Index<Lambd
     }
 
     @Override
-    public LambdaEsIndexWrapper<T> mapping(SFunction<T, ?> column, EsFieldTypeEnum fieldType, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer) {
+    public EsLambdaIndexWrapper<T> mapping(SFunction<T, ?> column, EsFieldTypeEnum fieldType, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer) {
         String fieldName = FieldUtils.getFieldName(column);
         EsIndexParam esIndexParam = new EsIndexParam();
         esIndexParam.setFieldName(fieldName);
@@ -123,7 +123,7 @@ public class LambdaEsIndexWrapper<T> extends EsWrapper<T> implements Index<Lambd
     }
 
     @Override
-    public LambdaEsIndexWrapper<T> mapping(Map<String, Object> mapping) {
+    public EsLambdaIndexWrapper<T> mapping(Map<String, Object> mapping) {
         this.mapping = mapping;
         return null;
     }

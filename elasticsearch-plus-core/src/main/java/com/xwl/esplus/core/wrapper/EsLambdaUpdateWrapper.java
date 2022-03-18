@@ -1,7 +1,7 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.wrapper;
 
-import com.xwl.esplus.core.condition.interfaces.SFunction;
-import com.xwl.esplus.core.condition.interfaces.Update;
+import com.xwl.esplus.core.wrapper.condition.SFunction;
+import com.xwl.esplus.core.wrapper.update.Update;
 import com.xwl.esplus.core.param.EsBaseParam;
 import com.xwl.esplus.core.param.EsUpdateParam;
 import com.xwl.esplus.core.toolkit.FieldUtils;
@@ -14,14 +14,14 @@ import java.util.List;
  * @author xwl
  * @since 2022/3/16 15:02
  */
-public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, LambdaEsUpdateWrapper<T>>
-        implements Update<LambdaEsUpdateWrapper<T>, SFunction<T, ?>> {
+public class EsLambdaUpdateWrapper<T> extends EsAbstractLambdaUpdateWrapper<T, EsLambdaUpdateWrapper<T>>
+        implements Update<EsLambdaUpdateWrapper<T>, SFunction<T, ?>> {
     List<EsUpdateParam> updateParamList;
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
      */
-    public LambdaEsUpdateWrapper() {
+    public EsLambdaUpdateWrapper() {
         this(null);
     }
 
@@ -30,20 +30,20 @@ public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, Lam
      *
      * @param entity 实体
      */
-    public LambdaEsUpdateWrapper(T entity) {
+    public EsLambdaUpdateWrapper(T entity) {
         super.initNeed();
         super.setEntity(entity);
         updateParamList = new ArrayList<>();
     }
 
-    LambdaEsUpdateWrapper(T entity, List<EsBaseParam> baseEsParamList, List<EsUpdateParam> updateParamList) {
+    EsLambdaUpdateWrapper(T entity, List<EsBaseParam> baseEsParamList, List<EsUpdateParam> updateParamList) {
         super.setEntity(entity);
         this.baseParamList = baseEsParamList;
         this.updateParamList = updateParamList;
     }
 
     @Override
-    public LambdaEsUpdateWrapper<T> set(boolean condition, SFunction<T, ?> column, Object val) {
+    public EsLambdaUpdateWrapper<T> set(boolean condition, SFunction<T, ?> column, Object val) {
         if (condition) {
             EsUpdateParam esUpdateParam = new EsUpdateParam();
             esUpdateParam.setField(FieldUtils.getFieldName(column));
@@ -54,8 +54,8 @@ public class LambdaEsUpdateWrapper<T> extends AbstractLambdaUpdateWrapper<T, Lam
     }
 
     @Override
-    protected LambdaEsUpdateWrapper<T> instance() {
-        return new LambdaEsUpdateWrapper<>(entity, baseParamList, updateParamList);
+    protected EsLambdaUpdateWrapper<T> instance() {
+        return new EsLambdaUpdateWrapper<>(entity, baseParamList, updateParamList);
     }
 
     @Override

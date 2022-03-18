@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.wrapper;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -28,7 +28,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return true-创建成功，false-创建失败
      */
-    Boolean createIndex(LambdaEsIndexWrapper<T> wrapper);
+    Boolean createIndex(EsLambdaIndexWrapper<T> wrapper);
 
     /**
      * 更新索引
@@ -36,7 +36,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return true-更新成功，false-更新失败
      */
-    Boolean updateIndex(LambdaEsIndexWrapper<T> wrapper);
+    Boolean updateIndex(EsLambdaIndexWrapper<T> wrapper);
 
     /**
      * 删除指定索引
@@ -53,7 +53,7 @@ public interface EsBaseMapper<T> {
      * @return es标准结果
      * @throws IOException IO异常
      */
-    SearchResponse search(LambdaEsQueryWrapper<T> wrapper) throws IOException;
+    SearchResponse search(EsLambdaQueryWrapper<T> wrapper) throws IOException;
 
     /**
      * 获取SearchSourceBuilder,可用于本框架生成基础查询条件,不支持的高阶语法用户可通过SearchSourceBuilder 进一步封装
@@ -61,7 +61,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 查询参数
      */
-    SearchSourceBuilder getSearchSourceBuilder(LambdaEsQueryWrapper<T> wrapper) throws IOException;
+    SearchSourceBuilder getSearchSourceBuilder(EsLambdaQueryWrapper<T> wrapper) throws IOException;
 
     /**
      * es原生查询
@@ -79,7 +79,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 查询JSON格式参数
      */
-    String getSource(LambdaEsQueryWrapper<T> wrapper) throws IOException;
+    String getSource(EsLambdaQueryWrapper<T> wrapper) throws IOException;
 
     /**
      * 未指定返回类型,未指定分页参数

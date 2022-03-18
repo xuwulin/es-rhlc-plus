@@ -1,6 +1,6 @@
 package com.xwl.esplus.example.mapper;
 
-import com.xwl.esplus.core.condition.EsBaseMapper;
+import com.xwl.esplus.core.wrapper.EsBaseMapper;
 import com.xwl.esplus.example.document.TestDocument;
 
 /**

@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.condition;
+package com.xwl.esplus.core.wrapper;
 
 import com.xwl.esplus.core.enums.EsAttachTypeEnum;
 import com.xwl.esplus.core.param.EsAggregationParam;
@@ -34,8 +34,8 @@ import static com.xwl.esplus.core.enums.EsBaseParamTypeEnum.*;
  * @author xwl
  * @since 2022/3/16 15:06
  */
-public class WrapperProcessor {
-    private WrapperProcessor() {
+public class EsWrapperProcessor {
+    private EsWrapperProcessor() {
     }
 
     /**
@@ -44,7 +44,7 @@ public class WrapperProcessor {
      * @param wrapper 条件
      * @return ES查询参数
      */
-    public static SearchSourceBuilder buildSearchSourceBuilder(LambdaEsQueryWrapper<?> wrapper) throws IOException {
+    public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) throws IOException {
         // 初始化boolQueryBuilder 参数
         BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.baseParamList);
 
@@ -128,7 +128,7 @@ public class WrapperProcessor {
      * @param wrapper 条件
      * @return SearchSourceBuilder
      */
-    private static SearchSourceBuilder initSearchSourceBuilder(LambdaEsQueryWrapper<?> wrapper) {
+    private static SearchSourceBuilder initSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         // 设置高亮字段
         if (!CollectionUtils.isEmpty(wrapper.highLightParamList)) {
@@ -336,7 +336,7 @@ public class WrapperProcessor {
      * @param wrapper 条件
      * @return 是否包含的布尔值
      */
-    public static boolean includeId(String idField, LambdaEsQueryWrapper<?> wrapper) {
+    public static boolean includeId(String idField, EsLambdaQueryWrapper<?> wrapper) {
         if (CollectionUtils.isEmpty(wrapper.include) && CollectionUtils.isEmpty(wrapper.exclude)) {
             // 未设置, 默认返回
             return true;
