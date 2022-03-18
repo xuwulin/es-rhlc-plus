@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.wrapper;
+package com.xwl.esplus.core.wrapper.processor;
 
 import com.xwl.esplus.core.enums.EsAttachTypeEnum;
 import com.xwl.esplus.core.param.EsAggregationParam;
@@ -7,6 +7,7 @@ import com.xwl.esplus.core.param.EsGeoParam;
 import com.xwl.esplus.core.toolkit.CollectionUtils;
 import com.xwl.esplus.core.toolkit.EsQueryTypeUtils;
 import com.xwl.esplus.core.toolkit.OptionalUtils;
+import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
@@ -46,16 +47,16 @@ public class EsWrapperProcessor {
      */
     public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) throws IOException {
         // 初始化boolQueryBuilder 参数
-        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.baseParamList);
+        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.getBaseParamList());
 
         // 初始化searchSourceBuilder 参数
         SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper);
 
         // 初始化geo相关: BoundingBox,geoDistance,geoPolygon,geoShape
-        GeoBoundingBoxQueryBuilder geoBoundingBoxQueryBuilder = initGeoBoundingBoxQueryBuilder(wrapper.geoParam);
-        GeoDistanceQueryBuilder geoDistanceQueryBuilder = initGeoDistanceQueryBuilder(wrapper.geoParam);
-        GeoPolygonQueryBuilder geoPolygonQueryBuilder = initGeoPolygonQueryBuilder(wrapper.geoParam);
-        GeoShapeQueryBuilder geoShapeQueryBuilder = initGeoShapeQueryBuilder(wrapper.geoParam);
+        GeoBoundingBoxQueryBuilder geoBoundingBoxQueryBuilder = initGeoBoundingBoxQueryBuilder(wrapper.getGeoParam());
+        GeoDistanceQueryBuilder geoDistanceQueryBuilder = initGeoDistanceQueryBuilder(wrapper.getGeoParam());
+        GeoPolygonQueryBuilder geoPolygonQueryBuilder = initGeoPolygonQueryBuilder(wrapper.getGeoParam());
+        GeoShapeQueryBuilder geoShapeQueryBuilder = initGeoShapeQueryBuilder(wrapper.getGeoParam());
 
         // 设置参数
         Optional.ofNullable(geoBoundingBoxQueryBuilder).ifPresent(boolQueryBuilder::filter);
@@ -131,8 +132,8 @@ public class EsWrapperProcessor {
     private static SearchSourceBuilder initSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         // 设置高亮字段
-        if (!CollectionUtils.isEmpty(wrapper.highLightParamList)) {
-            wrapper.highLightParamList.forEach(highLightParam -> {
+        if (!CollectionUtils.isEmpty(wrapper.getHighLightParamList())) {
+            wrapper.getHighLightParamList().forEach(highLightParam -> {
                 HighlightBuilder highlightBuilder = new HighlightBuilder();
                 highLightParam.getFields().forEach(highlightBuilder::field);
                 highlightBuilder.preTags(highLightParam.getPreTag());
@@ -142,8 +143,8 @@ public class EsWrapperProcessor {
         }
 
         // 设置排序字段
-        if (!CollectionUtils.isEmpty(wrapper.sortParamList)) {
-            wrapper.sortParamList.forEach(sortParam -> {
+        if (!CollectionUtils.isEmpty(wrapper.getSortParamList())) {
+            wrapper.getSortParamList().forEach(sortParam -> {
                 SortOrder sortOrder = sortParam.getAsc() ? SortOrder.ASC : SortOrder.DESC;
                 sortParam.getFields().forEach(field -> {
                     FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
@@ -153,17 +154,17 @@ public class EsWrapperProcessor {
         }
 
         // 设置查询或不查询字段
-        if (CollectionUtils.isNotEmpty(wrapper.include) || CollectionUtils.isNotEmpty(wrapper.exclude)) {
-            searchSourceBuilder.fetchSource(wrapper.include, wrapper.exclude);
+        if (CollectionUtils.isNotEmpty(wrapper.getInclude()) || CollectionUtils.isNotEmpty(wrapper.getExclude())) {
+            searchSourceBuilder.fetchSource(wrapper.getInclude(), wrapper.getExclude());
         }
 
         // 设置查询起止参数
-        Optional.ofNullable(wrapper.from).ifPresent(searchSourceBuilder::from);
-        OptionalUtils.ofNullable(wrapper.size).ifPresent(searchSourceBuilder::size, DEFAULT_SIZE);
+        Optional.ofNullable(wrapper.getFrom()).ifPresent(searchSourceBuilder::from);
+        OptionalUtils.ofNullable(wrapper.getSize()).ifPresent(searchSourceBuilder::size, DEFAULT_SIZE);
 
         // 设置聚合参数
-        if (!CollectionUtils.isEmpty(wrapper.aggregationParamList)) {
-            initAggregations(wrapper.aggregationParamList, searchSourceBuilder);
+        if (!CollectionUtils.isEmpty(wrapper.getAggregationParamList())) {
+            initAggregations(wrapper.getAggregationParamList(), searchSourceBuilder);
         }
 
         return searchSourceBuilder;
@@ -337,13 +338,13 @@ public class EsWrapperProcessor {
      * @return 是否包含的布尔值
      */
     public static boolean includeId(String idField, EsLambdaQueryWrapper<?> wrapper) {
-        if (CollectionUtils.isEmpty(wrapper.include) && CollectionUtils.isEmpty(wrapper.exclude)) {
+        if (CollectionUtils.isEmpty(wrapper.getInclude()) && CollectionUtils.isEmpty(wrapper.getExclude())) {
             // 未设置, 默认返回
             return true;
-        } else if (CollectionUtils.isNotEmpty(wrapper.include) && Arrays.asList(wrapper.include).contains(idField)) {
+        } else if (CollectionUtils.isNotEmpty(wrapper.getInclude()) && Arrays.asList(wrapper.getInclude()).contains(idField)) {
             return true;
         } else {
-            return CollectionUtils.isNotEmpty(wrapper.exclude) && !Arrays.asList(wrapper.exclude).contains(idField);
+            return CollectionUtils.isNotEmpty(wrapper.getExclude()) && !Arrays.asList(wrapper.getExclude()).contains(idField);
         }
     }
 }

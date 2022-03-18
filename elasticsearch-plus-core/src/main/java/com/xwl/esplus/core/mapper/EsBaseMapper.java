@@ -1,5 +1,8 @@
-package com.xwl.esplus.core.wrapper;
+package com.xwl.esplus.core.mapper;
 
+import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
+import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
+import com.xwl.esplus.core.wrapper.update.EsLambdaUpdateWrapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -133,7 +136,7 @@ public interface EsBaseMapper<T> {
      * @param entity 插入的数据对象
      * @return 成功条数
      */
-//    Integer insert(T entity);
+    Integer insert(T entity);
 
     /**
      * 批量插入
@@ -191,7 +194,7 @@ public interface EsBaseMapper<T> {
      * @param updateWrapper 条件
      * @return 成功条数
      */
-//    Integer update(T entity, LambdaEsUpdateWrapper<T> updateWrapper);
+    Integer update(T entity, EsLambdaUpdateWrapper<T> updateWrapper);
 
     /**
      * 根据 ID 查询

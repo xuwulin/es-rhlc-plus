@@ -1,6 +1,6 @@
 package com.xwl.esplus.core.wrapper.query;
 
-import com.xwl.esplus.core.common.DocumentFieldInfo;
+import com.xwl.esplus.core.metadata.DocumentFieldInfo;
 
 import java.io.Serializable;
 import java.util.function.Predicate;

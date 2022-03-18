@@ -8,9 +8,14 @@ import com.xwl.esplus.core.wrapper.condition.SFunction;
  * @author xwl
  * @since 2022/3/16 14:36
  */
-public abstract class EsAbstractLambdaQueryWrapper<T, Children extends EsAbstractLambdaQueryWrapper<T, Children>>
+public abstract class EsAbstractLambdaWrapper<T, Children extends EsAbstractLambdaWrapper<T, Children>>
         extends EsAbstractWrapper<T, SFunction<T, ?>, Children> {
     protected T entity;
+
+    @Override
+    public T getEntity() {
+        return entity;
+    }
 
     @Override
     public Children setEntity(T entity) {

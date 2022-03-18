@@ -94,6 +94,38 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
         aggregationParamList = new ArrayList<>();
     }
 
+    public Children getTypedThis() {
+        return typedThis;
+    }
+
+    public List<EsBaseParam> getBaseParamList() {
+        return baseParamList;
+    }
+
+    public List<EsHighLightParam> getHighLightParamList() {
+        return highLightParamList;
+    }
+
+    public List<EsSortParam> getSortParamList() {
+        return sortParamList;
+    }
+
+    public List<EsAggregationParam> getAggregationParamList() {
+        return aggregationParamList;
+    }
+
+    public EsGeoParam getGeoParam() {
+        return geoParam;
+    }
+
+    public T getEntity() {
+        return entity;
+    }
+
+    public Class<T> getEntityClass() {
+        return entityClass;
+    }
+
     @Override
     public Children eq(boolean condition, R column, Object val, Float boost) {
         return doIt(condition, TERM_QUERY, MUST, FieldUtils.getFieldName(column), val, boost);

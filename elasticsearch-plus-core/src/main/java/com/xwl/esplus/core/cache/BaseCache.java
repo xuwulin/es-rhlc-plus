@@ -1,6 +1,6 @@
 package com.xwl.esplus.core.cache;
 
-import com.xwl.esplus.core.wrapper.EsBaseMapperImpl;
+import com.xwl.esplus.core.mapper.EsBaseMapperImpl;
 import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.toolkit.ExceptionUtils;
 import com.xwl.esplus.core.toolkit.FieldUtils;
@@ -23,12 +23,12 @@ public class BaseCache {
     /**
      * 用于存放BaseEsMapper的所有实例
      */
-    private static final Map<Class<?>, EsBaseMapperImpl<?>> baseEsMapperInstanceMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, EsBaseMapperImpl<?>> esBaseMapperInstanceMap = new ConcurrentHashMap<>();
 
     /**
      * 用于存放Es entity 中的字段的get/is方法
      */
-    private static final Map<Class<?>, Map<String, Method>> baseEsEntityMethodMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Map<String, Method>> esBaseEntityMethodMap = new ConcurrentHashMap<>();
 
     /**
      * 初始化缓存
@@ -38,11 +38,11 @@ public class BaseCache {
      */
     public static void initCache(Class<?> mapperInterface, RestHighLevelClient client) {
         // 初始化baseEsMapper的所有实现类实例
-        EsBaseMapperImpl baseEsMapper = new EsBaseMapperImpl();
-        baseEsMapper.setClient(client);
+        EsBaseMapperImpl esBaseMapper = new EsBaseMapperImpl();
+        esBaseMapper.setClient(client);
         Class<?> entityClass = TypeUtils.getInterfaceT(mapperInterface, 0);
-        baseEsMapper.setEntityClass(entityClass);
-        baseEsMapperInstanceMap.put(mapperInterface, baseEsMapper);
+        esBaseMapper.setEntityClass(entityClass);
+        esBaseMapperInstanceMap.put(mapperInterface, esBaseMapper);
 
         // 初始化entity中所有字段(注解策略生效)
         Method[] entityMethods = entityClass.getMethods();
@@ -55,7 +55,7 @@ public class BaseCache {
                         invokeMethodsMap.put(FieldUtils.resolveFieldName(methodName), entityMethod);
                     }
                 });
-        baseEsEntityMethodMap.putIfAbsent(entityClass, invokeMethodsMap);
+        esBaseEntityMethodMap.putIfAbsent(entityClass, invokeMethodsMap);
     }
 
     /**
@@ -65,7 +65,7 @@ public class BaseCache {
      * @return 实现类
      */
     public static EsBaseMapperImpl<?> getBaseEsMapperInstance(Class<?> mapperInterface) {
-        return Optional.ofNullable(baseEsMapperInstanceMap.get(mapperInterface))
+        return Optional.ofNullable(esBaseMapperInstanceMap.get(mapperInterface))
                 .orElseThrow(() -> ExceptionUtils.epe("no such instance", mapperInterface));
     }
 
@@ -77,7 +77,7 @@ public class BaseCache {
      * @return 执行方法
      */
     public static Method getEsEntityInvokeMethod(Class<?> entityClass, String methodName) {
-        return Optional.ofNullable(baseEsEntityMethodMap.get(entityClass))
+        return Optional.ofNullable(esBaseEntityMethodMap.get(entityClass))
                 .map(b -> b.get(methodName))
                 .orElseThrow(() -> ExceptionUtils.epe("no such method:", entityClass, methodName));
     }

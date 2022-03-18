@@ -1,8 +1,8 @@
 package com.xwl.esplus.core.toolkit;
 
-import com.xwl.esplus.core.wrapper.EsLambdaIndexWrapper;
-import com.xwl.esplus.core.wrapper.EsLambdaQueryWrapper;
-import com.xwl.esplus.core.wrapper.EsLambdaUpdateWrapper;
+import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
+import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
+import com.xwl.esplus.core.wrapper.update.EsLambdaUpdateWrapper;
 
 /**
  * Wrapper 条件构造

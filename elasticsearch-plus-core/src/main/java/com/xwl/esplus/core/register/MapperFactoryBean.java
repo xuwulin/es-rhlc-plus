@@ -1,7 +1,6 @@
 package com.xwl.esplus.core.register;
 
 import com.xwl.esplus.core.cache.BaseCache;
-import com.xwl.esplus.core.proxy.EsMapperProxy;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;

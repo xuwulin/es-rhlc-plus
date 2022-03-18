@@ -4,8 +4,8 @@ import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.annotation.EsDocumentId;
 import com.xwl.esplus.core.annotation.IndexName;
 import com.xwl.esplus.core.cache.GlobalConfigCache;
-import com.xwl.esplus.core.common.DocumentFieldInfo;
-import com.xwl.esplus.core.common.DocumentInfo;
+import com.xwl.esplus.core.metadata.DocumentFieldInfo;
+import com.xwl.esplus.core.metadata.DocumentInfo;
 import com.xwl.esplus.core.config.GlobalConfig;
 import com.xwl.esplus.core.enums.EsIdTypeEnum;
 import org.springframework.util.ClassUtils;
@@ -43,7 +43,7 @@ public class DocumentInfoUtils {
      * @param clazz 类
      * @return 文档字段信息
      */
-    public static DocumentInfo getEntityInfo(Class<?> clazz) {
+    public static DocumentInfo getDocumentInfo(Class<?> clazz) {
         if (clazz == null) {
             return null;
         }

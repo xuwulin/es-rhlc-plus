@@ -1,6 +1,6 @@
-package com.xwl.esplus.core.wrapper;
+package com.xwl.esplus.core.wrapper.index;
 
-import com.xwl.esplus.core.wrapper.index.Index;
+import com.xwl.esplus.core.wrapper.EsWrapper;
 import com.xwl.esplus.core.wrapper.condition.SFunction;
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
@@ -71,6 +71,38 @@ public class EsLambdaIndexWrapper<T> extends EsWrapper<T> implements Index<EsLam
     public EsLambdaIndexWrapper(T entity) {
         this.entity = entity;
         esIndexParamList = new ArrayList<>();
+    }
+
+    public String getIndexName() {
+        return indexName;
+    }
+
+    public String getAliasName() {
+        return aliasName;
+    }
+
+    public Integer getShardsNum() {
+        return shardsNum;
+    }
+
+    public Integer getReplicasNum() {
+        return replicasNum;
+    }
+
+    public Map<String, Object> getMapping() {
+        return mapping;
+    }
+
+    public List<EsIndexParam> getEsIndexParamList() {
+        return esIndexParamList;
+    }
+
+    public T getEntity() {
+        return entity;
+    }
+
+    public EsLambdaIndexWrapper<T> getTypedThis() {
+        return typedThis;
     }
 
     @Override

@@ -1,7 +1,7 @@
-package com.xwl.esplus.core.wrapper;
+package com.xwl.esplus.core.wrapper.query;
 
-import com.xwl.esplus.core.common.DocumentFieldInfo;
-import com.xwl.esplus.core.wrapper.query.Query;
+import com.xwl.esplus.core.metadata.DocumentFieldInfo;
+import com.xwl.esplus.core.wrapper.EsAbstractLambdaWrapper;
 import com.xwl.esplus.core.wrapper.condition.SFunction;
 import com.xwl.esplus.core.param.EsAggregationParam;
 import com.xwl.esplus.core.param.EsBaseParam;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * @author xwl
  * @since 2022/3/16 14:38
  */
-public class EsLambdaQueryWrapper<T> extends EsAbstractLambdaQueryWrapper<T, EsLambdaQueryWrapper<T>>
+public class EsLambdaQueryWrapper<T> extends EsAbstractLambdaWrapper<T, EsLambdaQueryWrapper<T>>
         implements Query<EsLambdaQueryWrapper<T>, T, SFunction<T, ?>> {
     /**
      * 查询字段
@@ -72,6 +72,22 @@ public class EsLambdaQueryWrapper<T> extends EsAbstractLambdaQueryWrapper<T, EsL
         this.aggregationParamList = aggregationParamList;
     }
 
+    public String[] getInclude() {
+        return include;
+    }
+
+    public String[] getExclude() {
+        return exclude;
+    }
+
+    public Integer getFrom() {
+        return from;
+    }
+
+    public Integer getSize() {
+        return size;
+    }
+
     @Override
     protected EsLambdaQueryWrapper<T> instance() {
         return new EsLambdaQueryWrapper<>(entity, baseParamList, highLightParamList, sortParamList, aggregationParamList);
@@ -96,7 +112,7 @@ public class EsLambdaQueryWrapper<T> extends EsAbstractLambdaQueryWrapper<T, EsL
     @Override
     public EsLambdaQueryWrapper<T> select(Class<T> entityClass, Predicate<DocumentFieldInfo> predicate) {
         this.entityClass = entityClass;
-        List<String> list = DocumentInfoUtils.getEntityInfo(getCheckEntityClass()).chooseSelect(predicate);
+        List<String> list = DocumentInfoUtils.getDocumentInfo(getCheckEntityClass()).chooseSelect(predicate);
         include = list.toArray(include);
         return typedThis;
     }

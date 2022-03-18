@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.common;
+package com.xwl.esplus.core.metadata;
 
 import com.xwl.esplus.core.enums.EsIdTypeEnum;
 

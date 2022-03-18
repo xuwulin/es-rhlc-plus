@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.common;
+package com.xwl.esplus.core.page;
 
 import java.io.Serializable;
 import java.util.List;

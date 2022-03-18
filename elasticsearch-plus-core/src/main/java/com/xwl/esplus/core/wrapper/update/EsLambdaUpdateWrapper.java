@@ -1,7 +1,7 @@
-package com.xwl.esplus.core.wrapper;
+package com.xwl.esplus.core.wrapper.update;
 
+import com.xwl.esplus.core.wrapper.EsAbstractLambdaWrapper;
 import com.xwl.esplus.core.wrapper.condition.SFunction;
-import com.xwl.esplus.core.wrapper.update.Update;
 import com.xwl.esplus.core.param.EsBaseParam;
 import com.xwl.esplus.core.param.EsUpdateParam;
 import com.xwl.esplus.core.toolkit.FieldUtils;
@@ -14,7 +14,7 @@ import java.util.List;
  * @author xwl
  * @since 2022/3/16 15:02
  */
-public class EsLambdaUpdateWrapper<T> extends EsAbstractLambdaUpdateWrapper<T, EsLambdaUpdateWrapper<T>>
+public class EsLambdaUpdateWrapper<T> extends EsAbstractLambdaWrapper<T, EsLambdaUpdateWrapper<T>>
         implements Update<EsLambdaUpdateWrapper<T>, SFunction<T, ?>> {
     List<EsUpdateParam> updateParamList;
 
@@ -40,6 +40,10 @@ public class EsLambdaUpdateWrapper<T> extends EsAbstractLambdaUpdateWrapper<T, E
         super.setEntity(entity);
         this.baseParamList = baseEsParamList;
         this.updateParamList = updateParamList;
+    }
+
+    public List<EsUpdateParam> getUpdateParamList() {
+        return updateParamList;
     }
 
     @Override

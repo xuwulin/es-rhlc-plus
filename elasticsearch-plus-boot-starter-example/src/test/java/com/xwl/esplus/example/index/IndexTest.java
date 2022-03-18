@@ -1,8 +1,8 @@
 package com.xwl.esplus.example.index;
 
-import com.xwl.esplus.core.wrapper.EsLambdaIndexWrapper;
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
+import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
 import com.xwl.esplus.example.document.TestDocument;
 import com.xwl.esplus.example.mapper.TestDocumentBaseMapper;
 import org.junit.Assert;
@@ -23,7 +23,7 @@ public class IndexTest {
     @Test
     public void testExistsIndex() {
         // 测试是否存在指定名称的索引
-        String indexName = TestDocument.class.getSimpleName().toLowerCase();
+        String indexName = "test_document";
         boolean existsIndex = testDocumentMapper.existsIndex(indexName);
         Assert.assertTrue(existsIndex);
     }
@@ -31,15 +31,16 @@ public class IndexTest {
     @Test
     public void testIndex() {
         EsLambdaIndexWrapper<TestDocument> wrapper = new EsLambdaIndexWrapper<>();
-        wrapper.indexName(TestDocument.class.getSimpleName().toLowerCase());
-
-        wrapper.mapping(TestDocument::getTitle, EsFieldTypeEnum.KEYWORD)
-                .mapping(TestDocument::getLocation, EsFieldTypeEnum.GEO_POINT)
-                .mapping(TestDocument::getGeoLocation, EsFieldTypeEnum.GEO_SHAPE)
-                .mapping(TestDocument::getContent, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_SMART);
+        wrapper.indexName("test_document");
+        wrapper.mapping(TestDocument::getId, EsFieldTypeEnum.KEYWORD)
+                .mapping(TestDocument::getTitle, EsFieldTypeEnum.KEYWORD)
+                .mapping(TestDocument::getContent, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_SMART)
+                .mapping(TestDocument::getCreator, EsFieldTypeEnum.KEYWORD)
+                .mapping(TestDocument::getCreatedTime, EsFieldTypeEnum.DATE)
+                .mapping(TestDocument::getLocation, EsFieldTypeEnum.GEO_POINT);
 
         // 设置分片及副本信息,可缺省
-        wrapper.settings(3, 2);
+//        wrapper.settings(3, 2);
 
         // 设置别名信息,可缺省
         wrapper.createAlias("hello_es_plus");
@@ -57,10 +58,9 @@ public class IndexTest {
         // 测试更新索引
         EsLambdaIndexWrapper<TestDocument> wrapper = new EsLambdaIndexWrapper<>();
         // 指定要更新哪个索引
-        String indexName = TestDocument.class.getSimpleName().toLowerCase();
+        String indexName = "test_document";
         wrapper.indexName(indexName);
         wrapper.mapping(TestDocument::getCreator, EsFieldTypeEnum.KEYWORD);
-        wrapper.mapping(TestDocument::getGmtCreate, EsFieldTypeEnum.DATE);
         boolean isOk = testDocumentMapper.updateIndex(wrapper);
         Assert.assertTrue(isOk);
     }
@@ -69,7 +69,7 @@ public class IndexTest {
     public void testDeleteIndex() {
         // 测试删除索引
         // 指定要删除哪个索引
-        String indexName = TestDocument.class.getSimpleName().toLowerCase();
+        String indexName = "test_document";
         boolean isOk = testDocumentMapper.deleteIndex(indexName);
         Assert.assertTrue(isOk);
     }

@@ -5,7 +5,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import java.io.Serializable;
 
 /**
- * 条件构造抽象类，Lambda表达式的祖宗
+ * 条件构造抽象类，条件构造器祖宗
  * @author xwl
  * @since 2022/3/11 17:09
  */
