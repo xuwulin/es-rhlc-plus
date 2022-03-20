@@ -31,10 +31,22 @@ public class TestDocument {
      */
     private String content;
     /**
+     * 备注
+     */
+    private String remark;
+    /**
      * 作者 加EsDocumentField注解,并指明strategy = FieldStrategyEnum.NOT_EMPTY 表示更新的时候的策略为 创建者不为空字符串时才更新
      */
     @EsDocumentField(strategy = EsFieldStrategyEnum.NOT_EMPTY)
-    private String creator;
+    private String author;
+    /**
+     * 昵称
+     */
+    private String nickname;
+    /**
+     * 年龄
+     */
+    private String age;
     /**
      * 创建时间
      */
@@ -48,4 +60,21 @@ public class TestDocument {
      * 地理位置纬经度坐标 例如: "30.643077,104.023769"
      */
     private String location;
+    /**
+     * 拷贝目标
+     */
+    private String all;
+    /**
+     * 地址
+     */
+    private String address;
+    private String addr;
+    /**
+     * fullName
+     */
+    private String fullName;
+
+    private String firstName;
+    private String lastName;
+    private String customize;
 }

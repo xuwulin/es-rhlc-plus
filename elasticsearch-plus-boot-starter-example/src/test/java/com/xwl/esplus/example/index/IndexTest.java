@@ -2,6 +2,7 @@ package com.xwl.esplus.example.index;
 
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
+import com.xwl.esplus.core.param.EsIndexParam;
 import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
 import com.xwl.esplus.example.document.TestDocument;
 import com.xwl.esplus.example.mapper.TestDocumentBaseMapper;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author xwl
@@ -29,18 +32,36 @@ public class IndexTest {
     }
 
     @Test
-    public void testIndex() {
+    public void testCreateIndex() {
         EsLambdaIndexWrapper<TestDocument> wrapper = new EsLambdaIndexWrapper<>();
         wrapper.indexName("test_document");
+        List<EsIndexParam> fields = new ArrayList<>();
+        EsIndexParam field = new EsIndexParam();
+        field.setFieldName("first");
+        field.setFieldType(EsFieldTypeEnum.KEYWORD.getType());
+        field.setIgnoreAbove(20);
+        fields.add(field);
         wrapper.mapping(TestDocument::getId, EsFieldTypeEnum.KEYWORD)
-                .mapping(TestDocument::getTitle, EsFieldTypeEnum.KEYWORD)
-                .mapping(TestDocument::getContent, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_SMART)
-                .mapping(TestDocument::getCreator, EsFieldTypeEnum.KEYWORD)
+                .mapping(TestDocument::getTitle, EsFieldTypeEnum.KEYWORD, true)
+                .mapping(TestDocument::getContent, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
+                .mapping(TestDocument::getRemark, EsFieldTypeEnum.TEXT, TestDocument::getAll, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
+                .mapping(TestDocument::getAuthor, EsFieldTypeEnum.KEYWORD)
+                .mapping(TestDocument::getNickname, EsFieldTypeEnum.KEYWORD, false, 20)
+                .mapping(TestDocument::getAge, EsFieldTypeEnum.INTEGER, false)
                 .mapping(TestDocument::getCreatedTime, EsFieldTypeEnum.DATE)
-                .mapping(TestDocument::getLocation, EsFieldTypeEnum.GEO_POINT);
+                .mapping(TestDocument::getLocation, EsFieldTypeEnum.GEO_POINT)
+                .mapping(TestDocument::getAll, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
+                .mapping(TestDocument::getAddress, EsFieldTypeEnum.TEXT, true, null, TestDocument::getAll, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD, new EsLambdaIndexWrapper<TestDocument>()
+                        .mapping(TestDocument::getAddr, EsFieldTypeEnum.KEYWORD, true, 20)
+                        .getEsIndexParamList())
+                .mapping(TestDocument::getFullName, new EsLambdaIndexWrapper<TestDocument>()
+                        .mapping(TestDocument::getFirstName, EsFieldTypeEnum.KEYWORD, true, 20)
+                        .mapping(TestDocument::getLastName, EsFieldTypeEnum.KEYWORD, false, 50)
+                        .getEsIndexParamList())
+                .mapping(TestDocument::getCustomize, EsFieldTypeEnum.TEXT, true, null, null, "customize", EsAnalyzerEnum.IK_SMART, null);
 
         // 设置分片及副本信息,可缺省
-//        wrapper.settings(3, 2);
+        wrapper.settings(3, 2);
 
         // 设置别名信息,可缺省
         wrapper.createAlias("hello_es_plus");
@@ -60,7 +81,7 @@ public class IndexTest {
         // 指定要更新哪个索引
         String indexName = "test_document";
         wrapper.indexName(indexName);
-        wrapper.mapping(TestDocument::getCreator, EsFieldTypeEnum.KEYWORD);
+        wrapper.mapping(TestDocument::getAuthor, EsFieldTypeEnum.KEYWORD);
         boolean isOk = testDocumentMapper.updateIndex(wrapper);
         Assert.assertTrue(isOk);
     }

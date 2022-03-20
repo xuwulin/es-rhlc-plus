@@ -70,13 +70,13 @@ public class EsConstants {
     /**
      * 分片数量字段
      */
-    public static final String SHARDS_FIELD = "index.number_of_shards";
+    public static final String NUMBER_OF_SHARDS = "number_of_shards";
     /**
      * 副本数量字段
      */
-    public static final String REPLICAS_FIELD = "index.number_of_replicas";
+    public static final String NUMBER_OF_REPLICAS = "number_of_replicas";
     /**
-     * 索引特性
+     * 索引特性/子对象
      */
     public static final String PROPERTIES = "properties";
     /**
@@ -84,11 +84,28 @@ public class EsConstants {
      */
     public static final String TYPE = "type";
     /**
-     * 分词器
+     * 是否索引该字段，默认true
+     */
+    public static final String INDEX = "index";
+    /**
+     * ignoreAbove：字符串长度限定（针对keyword），keyword类型下，字符过于长，检索意义不大，索引会被禁用，数据不可被检索，默认值256，
+     * 超出这个长度的字段将不会被索引，但是会存储。这里的不被索引是这个字段不被索引
+     */
+    public static final String IGNORE_ABOVE = "ignore_above";
+    /**
+     * 拷贝
+     */
+    public static final String COPY_TO = "copy_to";
+    /**
+     * 创建索引时的分词器
      */
     public static final String ANALYZER = "analyzer";
     /**
-     * 查询分词器
+     * 多（子）字段
+     */
+    public static final String FIELDS = "fields";
+    /**
+     * 搜索时的查询分词器
      */
     public static final String SEARCH_ANALYZER = "search_analyzer";
     /**

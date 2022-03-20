@@ -20,7 +20,7 @@ public class InsertTest {
         TestDocument testDocument = new TestDocument();
         testDocument.setTitle("测试es-plus");
         testDocument.setContent("一个是阆苑仙葩，一个是美玉无瑕");
-        testDocument.setCreator("曹雪芹");
+        testDocument.setAuthor("曹雪芹");
         testDocument.setNotExistsField("高鹗");
         testDocument.setLocation("30.643077,104.023769");
         testDocumentMapper.insert(testDocument);

@@ -44,12 +44,13 @@ public class ElasticsearchProperties {
     private int socketTimeout = 30000;
 
     /**
-     * 最大连接数（单位：个），默认100
+     * 连接池中最大连接数（单位：个），默认100
      */
     private int maxConnTotal = 100;
 
     /**
      * 最大路由连接数（单位：个），默认100
+     * 某一个服务每次能并行接收的请求数量
      */
     private int maxConnPerRoute = 100;
 

@@ -23,7 +23,7 @@ public class UpdateTest {
         TestDocument testDocument = new TestDocument();
         testDocument.setContent("滴不尽相思血泪抛红豆");
         EsLambdaUpdateWrapper<TestDocument> wrapper = Wrappers.<TestDocument>lambdaUpdate()
-                .eq(TestDocument::getCreator, "曹雪芹");
+                .eq(TestDocument::getAuthor, "曹雪芹");
         testDocumentMapper.update(testDocument, wrapper);
     }
 }

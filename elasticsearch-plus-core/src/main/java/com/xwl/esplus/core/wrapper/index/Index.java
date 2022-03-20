@@ -2,8 +2,10 @@ package com.xwl.esplus.core.wrapper.index;
 
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
+import com.xwl.esplus.core.param.EsIndexParam;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,7 +57,7 @@ public interface Index<Children, R> extends Serializable {
      *
      * @param column    列
      * @param fieldType es中的类型
-     * @param analyzer  分词器类型
+     * @param analyzer  创建索引时的分词器类型
      * @return 泛型
      */
     default Children mapping(R column, EsFieldTypeEnum fieldType, EsAnalyzerEnum analyzer) {
@@ -67,11 +69,86 @@ public interface Index<Children, R> extends Serializable {
      *
      * @param column         列
      * @param fieldType      es中的类型
-     * @param analyzer       分词器类型
-     * @param searchAnalyzer 查询分词器类型
+     * @param analyzer       创建索引时的分词器类型
+     * @param searchAnalyzer 查询时的分词器类型
      * @return 泛型
      */
     Children mapping(R column, EsFieldTypeEnum fieldType, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer);
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column    列
+     * @param fieldType es中的类型
+     * @param index     是否索引，默认true
+     * @return
+     */
+    Children mapping(R column, EsFieldTypeEnum fieldType, boolean index);
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column      列
+     * @param fieldType   es中的类型
+     * @param index       是否索引，默认true
+     * @param ignoreAbove ignoreAbove：字符串长度限定（针对keyword），keyword类型下，字符过于长，检索意义不大，索引会被禁用，数据不可被检索，
+     *                    默认值256，超出这个长度的字段将不会被索引，但是会存储。这里的不被索引是这个字段不被索引
+     * @return
+     */
+    Children mapping(R column, EsFieldTypeEnum fieldType, boolean index, Integer ignoreAbove);
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column         列
+     * @param fieldType      es中的类型
+     * @param copyTo         拷贝至哪个字段
+     * @param analyzer       创建索引时的分词器类型
+     * @param searchAnalyzer 查询时的分词器类型
+     * @return
+     */
+    Children mapping(R column, EsFieldTypeEnum fieldType, R copyTo, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer);
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column         列
+     * @param fieldType      es中的类型
+     * @param index          是否索引，默认true
+     * @param ignoreAbove    ignoreAbove：字符串长度限定（针对keyword），keyword类型下，字符过于长，检索意义不大，索引会被禁用，数据不可被检索，
+     *                       默认值256，超出这个长度的字段将不会被索引，但是会存储。这里的不被索引是这个字段不被索引
+     * @param copyTo         拷贝至哪个字段
+     * @param analyzer       创建索引时的分词器类型
+     * @param searchAnalyzer 查询时的分词器类型
+     * @param fields         多（子）字段信息列表
+     * @return
+     */
+    Children mapping(R column, EsFieldTypeEnum fieldType, boolean index, Integer ignoreAbove, R copyTo, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer, List<EsIndexParam> fields);
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column         列
+     * @param fieldType      es中的类型
+     * @param index          是否索引，默认true
+     * @param ignoreAbove    ignoreAbove：字符串长度限定（针对keyword），keyword类型下，字符过于长，检索意义不大，索引会被禁用，数据不可被检索，
+     *                       默认值256，超出这个长度的字段将不会被索引，但是会存储。这里的不被索引是这个字段不被索引
+     * @param copyTo         拷贝至哪个字段
+     * @param analyzer       创建索引时的分词器类型，字符串，自定义分词器
+     * @param searchAnalyzer 查询时的分词器类型
+     * @param fields         多（子）字段信息列表
+     * @return
+     */
+    Children mapping(R column, EsFieldTypeEnum fieldType, boolean index, Integer ignoreAbove, R copyTo, String analyzer, EsAnalyzerEnum searchAnalyzer, List<EsIndexParam> fields);
+
+    /**
+     * 设置mapping信息，子对象
+     *
+     * @param column     列
+     * @param properties 子对象信息列表
+     * @return
+     */
+    Children mapping(R column, List<EsIndexParam> properties);
 
     /**
      * 用户自行指定mapping

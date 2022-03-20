@@ -97,7 +97,7 @@ public class ElasticsearchAutoConfiguration implements InitializingBean, Environ
         // 构建连接对象
         RestClientBuilder builder = RestClient.builder(httpHost);
 
-        CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         // 用户名，密码配置
         String username = elasticsearchProperties.getUsername();
         String password = elasticsearchProperties.getPassword();
@@ -107,17 +107,17 @@ public class ElasticsearchAutoConfiguration implements InitializingBean, Environ
 
         // 异步连接延时配置
         builder.setRequestConfigCallback(requestConfigBuilder -> {
+            requestConfigBuilder.setSocketTimeout(elasticsearchProperties.getSocketTimeout());
             requestConfigBuilder.setConnectTimeout(elasticsearchProperties.getConnectTimeout());
             requestConfigBuilder.setConnectionRequestTimeout(elasticsearchProperties.getConnectionRequestTimeout());
-            requestConfigBuilder.setSocketTimeout(elasticsearchProperties.getSocketTimeout());
             return requestConfigBuilder;
         });
         // 异步连接数配置
         builder.setHttpClientConfigCallback(httpClientBuilder -> {
             // 设置账号密码
-            httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
             httpClientBuilder.setMaxConnTotal(elasticsearchProperties.getMaxConnTotal());
             httpClientBuilder.setMaxConnPerRoute(elasticsearchProperties.getMaxConnPerRoute());
+            httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
             return httpClientBuilder;
         });
         return new RestHighLevelClient(builder);
