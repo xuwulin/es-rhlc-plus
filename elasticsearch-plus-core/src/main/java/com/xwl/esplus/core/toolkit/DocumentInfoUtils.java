@@ -2,7 +2,7 @@ package com.xwl.esplus.core.toolkit;
 
 import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.annotation.EsDocumentId;
-import com.xwl.esplus.core.annotation.IndexName;
+import com.xwl.esplus.core.annotation.EsIndexName;
 import com.xwl.esplus.core.cache.GlobalConfigCache;
 import com.xwl.esplus.core.metadata.DocumentFieldInfo;
 import com.xwl.esplus.core.metadata.DocumentInfo;
@@ -27,7 +27,6 @@ public class DocumentInfoUtils {
      * 储存反射类表信息
      */
     private static final Map<Class<?>, DocumentInfo> DOCUMENT_INFO_CACHE = new ConcurrentHashMap<>();
-
     /**
      * 默认主键名称
      */
@@ -63,69 +62,68 @@ public class DocumentInfoUtils {
 
         // 缓存中未获取到,则初始化
         GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
-        return initTableInfo(globalConfig, clazz);
+        return initDocumentInfo(globalConfig, clazz);
     }
 
     /**
-     * 获取所有实体映射表信息
+     * 获取所有实体映射文档信息
      *
-     * @return 所有实体映射表信息
+     * @return 所有实体映射文档信息
      */
-    public static List<DocumentInfo> getTableInfos() {
+    public static List<DocumentInfo> getDocumentInfos() {
         return new ArrayList<>(DOCUMENT_INFO_CACHE.values());
     }
 
     /**
-     * 实体类反射获取表信息 初始化
+     * 实体类反射获取文档信息，初始化
      *
      * @param globalConfig 全局配置
      * @param clazz        类
-     * @return 实体信息
+     * @return 文档对应实体信息
      */
-    public synchronized static DocumentInfo initTableInfo(GlobalConfig globalConfig, Class<?> clazz) {
-        DocumentInfo entityInfo = DOCUMENT_INFO_CACHE.get(clazz);
-        if (entityInfo != null) {
-            return entityInfo;
+    public synchronized static DocumentInfo initDocumentInfo(GlobalConfig globalConfig, Class<?> clazz) {
+        DocumentInfo documentInfo = DOCUMENT_INFO_CACHE.get(clazz);
+        if (documentInfo != null) {
+            return documentInfo;
         }
 
         // 没有获取到缓存信息,则初始化
-        entityInfo = new DocumentInfo();
+        documentInfo = new DocumentInfo();
         // 初始化表名(索引名)相关
-        initTableName(clazz, globalConfig, entityInfo);
+        initIndexName(clazz, globalConfig, documentInfo);
         // 初始化字段相关
-        initTableFields(clazz, globalConfig, entityInfo);
+        initDocumentFields(clazz, globalConfig, documentInfo);
 
         // 放入缓存
-        DOCUMENT_INFO_CACHE.put(clazz, entityInfo);
+        DOCUMENT_INFO_CACHE.put(clazz, documentInfo);
 
-        return entityInfo;
+        return documentInfo;
     }
 
-
     /**
-     * 初始化 表主键,表字段
+     * 初始化 文档主键,文档字段
      *
      * @param clazz        类
      * @param globalConfig 全局配置
      * @param entityInfo   实体信息
      */
-    public static void initTableFields(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo entityInfo) {
+    public static void initDocumentFields(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo entityInfo) {
         // 数据库全局配置
         GlobalConfig.DocumentConfig documentConfig = globalConfig.getDocumentConfig();
         List<Field> list = getAllFields(clazz);
         // 标记是否读取到主键
         boolean isReadPK = false;
         // 是否存在 @EsDocumentId 注解
-        boolean existTableId = isExistTableId(list);
+        boolean existTableId = isExistDocumentId(list);
 
         List<DocumentFieldInfo> fieldList = new ArrayList<>();
         for (Field field : list) {
             // 主键ID 初始化
             if (!isReadPK) {
                 if (existTableId) {
-                    isReadPK = initTableIdWithAnnotation(documentConfig, entityInfo, field, clazz);
+                    isReadPK = initDocumentIdWithAnnotation(documentConfig, entityInfo, field, clazz);
                 } else {
-                    isReadPK = initTableIdWithoutAnnotation(documentConfig, entityInfo, field, clazz);
+                    isReadPK = initDocumentIdWithoutAnnotation(documentConfig, entityInfo, field, clazz);
                 }
                 if (isReadPK) {
                     continue;
@@ -133,7 +131,7 @@ public class DocumentInfoUtils {
             }
 
             // 有 @DocumentField 注解的字段初始化
-            if (initTableFieldWithAnnotation(documentConfig, fieldList, field)) {
+            if (initDocumentFieldWithAnnotation(documentConfig, fieldList, field)) {
                 continue;
             }
 
@@ -146,17 +144,16 @@ public class DocumentInfoUtils {
 
     }
 
-
     /**
-     * 字段属性初始化
+     * 文档字段属性初始化
      *
      * @param documentConfig 索引配置
      * @param fieldList      字段列表
      * @param field          字段
      * @return
      */
-    private static boolean initTableFieldWithAnnotation(GlobalConfig.DocumentConfig documentConfig,
-                                                        List<DocumentFieldInfo> fieldList, Field field) {
+    private static boolean initDocumentFieldWithAnnotation(GlobalConfig.DocumentConfig documentConfig,
+                                                           List<DocumentFieldInfo> fieldList, Field field) {
         // 获取注解属性，自定义字段
         EsDocumentField esDocumentField = field.getAnnotation(EsDocumentField.class);
         if (null == esDocumentField) {
@@ -169,9 +166,8 @@ public class DocumentInfoUtils {
         return true;
     }
 
-
     /**
-     * 主键属性初始化
+     * 文档主键属性初始化
      *
      * @param dbConfig     索引配置
      * @param documentInfo 实体信息
@@ -179,8 +175,8 @@ public class DocumentInfoUtils {
      * @param clazz        类
      * @return 布尔值
      */
-    private static boolean initTableIdWithAnnotation(GlobalConfig.DocumentConfig dbConfig, DocumentInfo documentInfo,
-                                                     Field field, Class<?> clazz) {
+    private static boolean initDocumentIdWithAnnotation(GlobalConfig.DocumentConfig dbConfig, DocumentInfo documentInfo,
+                                                        Field field, Class<?> clazz) {
         EsDocumentId esDocumentId = field.getAnnotation(EsDocumentId.class);
         if (esDocumentId != null) {
             if (StringUtils.isEmpty(documentInfo.getKeyColumn())) {
@@ -209,9 +205,8 @@ public class DocumentInfoUtils {
         return false;
     }
 
-
     /**
-     * 主键属性初始化
+     * 文档主键属性初始化
      *
      * @param documentConfig 索引配置
      * @param documentInfo   实体信息
@@ -219,8 +214,8 @@ public class DocumentInfoUtils {
      * @param clazz          类
      * @return 布尔值
      */
-    private static boolean initTableIdWithoutAnnotation(GlobalConfig.DocumentConfig documentConfig, DocumentInfo documentInfo,
-                                                        Field field, Class<?> clazz) {
+    private static boolean initDocumentIdWithoutAnnotation(GlobalConfig.DocumentConfig documentConfig, DocumentInfo documentInfo,
+                                                           Field field, Class<?> clazz) {
         String column = field.getName();
         if (DEFAULT_ID_NAME.equalsIgnoreCase(column) || DEFAULT_ES_ID_NAME.equals(column)) {
             if (StringUtils.isEmpty(documentInfo.getKeyColumn())) {
@@ -241,12 +236,12 @@ public class DocumentInfoUtils {
     }
 
     /**
-     * 判断主键注解是否存在
+     * 判断文档主键注解是否存在
      *
      * @param list 字段列表
      * @return 布尔值
      */
-    public static boolean isExistTableId(List<Field> list) {
+    public static boolean isExistDocumentId(List<Field> list) {
         for (Field field : list) {
             EsDocumentId tableId = field.getAnnotation(EsDocumentId.class);
             if (tableId != null) {
@@ -255,7 +250,6 @@ public class DocumentInfoUtils {
         }
         return false;
     }
-
 
     /**
      * 获取该类的所有属性列表
@@ -277,16 +271,16 @@ public class DocumentInfoUtils {
     }
 
     /**
-     * 初始化表(索引)名称
+     * 初始化索引名称
      *
      * @param clazz        类
      * @param globalConfig 全局配置
      * @param entityInfo   实体信息
      */
-    private static void initTableName(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo entityInfo) {
+    private static void initIndexName(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo entityInfo) {
         // 数据库全局配置
         GlobalConfig.DocumentConfig documentConfig = globalConfig.getDocumentConfig();
-        IndexName index = clazz.getAnnotation(IndexName.class);
+        EsIndexName index = clazz.getAnnotation(EsIndexName.class);
         String tableName = clazz.getSimpleName().toLowerCase(Locale.ROOT);
         String tablePrefix = documentConfig.getTablePrefix();
 

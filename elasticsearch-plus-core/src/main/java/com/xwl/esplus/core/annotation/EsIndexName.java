@@ -6,14 +6,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 索引注解
+ * elasticsearch索引注解
  *
  * @author xwl
  * @since 2022/3/11 18:59
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
-public @interface IndexName {
+public @interface EsIndexName {
     /**
      * 实体对应的索引名
      *

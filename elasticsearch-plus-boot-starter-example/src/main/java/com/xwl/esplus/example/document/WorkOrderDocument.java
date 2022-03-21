@@ -1,6 +1,6 @@
 package com.xwl.esplus.example.document;
 
-import com.xwl.esplus.core.annotation.IndexName;
+import com.xwl.esplus.core.annotation.EsIndexName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-@IndexName("work_order")
+@EsIndexName("work_order")
 public class WorkOrderDocument {
     /**
      * id

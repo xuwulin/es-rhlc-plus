@@ -2,7 +2,7 @@ package com.xwl.esplus.example.document;
 
 import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.annotation.EsDocumentId;
-import com.xwl.esplus.core.annotation.IndexName;
+import com.xwl.esplus.core.annotation.EsIndexName;
 import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
 import com.xwl.esplus.core.enums.EsIdTypeEnum;
 import lombok.Data;
@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  * Copyright © 2021 xpc1024 All Rights Reserved
  **/
 @Data
-@IndexName("test_document")
+@EsIndexName("test_document")
 public class TestDocument {
     /**
      * es中的唯一id
