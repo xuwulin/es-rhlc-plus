@@ -1,8 +1,8 @@
 package com.xwl.esplus.example.index;
 
+import com.alibaba.fastjson.JSONObject;
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
-import com.xwl.esplus.core.param.EsIndexParam;
 import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
 import com.xwl.esplus.example.document.TestDocument;
 import com.xwl.esplus.example.mapper.TestDocumentBaseMapper;
@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author xwl
@@ -34,14 +33,37 @@ public class IndexTest {
     @Test
     public void testCreateIndex() {
         EsLambdaIndexWrapper<TestDocument> wrapper = new EsLambdaIndexWrapper<>();
-        wrapper.indexName("test_document");
-        List<EsIndexParam> fields = new ArrayList<>();
-        EsIndexParam field = new EsIndexParam();
-        field.setFieldName("first");
-        field.setFieldType(EsFieldTypeEnum.KEYWORD.getType());
-        field.setIgnoreAbove(20);
-        fields.add(field);
-        wrapper.mapping(TestDocument::getId, EsFieldTypeEnum.KEYWORD)
+        String analysis = "{\n" +
+                "    \"analysis\": {\n" +
+                "        \"analyzer\": {\n" +
+                "            \"text_anlyzer\": {\n" +
+                "                \"tokenizer\": \"ik_max_word\",\n" +
+                "                \"filter\": \"py\"\n" +
+                "            },\n" +
+                "            \"completion_analyzer\": {\n" +
+                "                \"tokenizer\": \"keyword\",\n" +
+                "                \"filter\": \"py\"\n" +
+                "            }\n" +
+                "        },\n" +
+                "        \"filter\": {\n" +
+                "            \"py\": {\n" +
+                "                \"type\": \"pinyin\",\n" +
+                "                \"keep_full_pinyin\": false,\n" +
+                "                \"keep_joined_full_pinyin\": true,\n" +
+                "                \"keep_original\": true,\n" +
+                "                \"limit_first_letter_length\": 16,\n" +
+                "                \"remove_duplicated_term\": true,\n" +
+                "                \"none_chinese_pinyin_tokenize\": false\n" +
+                "            }\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+
+        Map<String, Object> map = JSONObject.parseObject(analysis, Map.class);
+        wrapper.indexName("test_document")
+                .alias("hello_es_plus")
+                .settings(2, 3, map)
+                .mapping(TestDocument::getId, EsFieldTypeEnum.KEYWORD)
                 .mapping(TestDocument::getTitle, EsFieldTypeEnum.KEYWORD, true)
                 .mapping(TestDocument::getContent, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
                 .mapping(TestDocument::getRemark, EsFieldTypeEnum.TEXT, TestDocument::getAll, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
@@ -58,13 +80,8 @@ public class IndexTest {
                         .mapping(TestDocument::getFirstName, EsFieldTypeEnum.KEYWORD, true, 20)
                         .mapping(TestDocument::getLastName, EsFieldTypeEnum.KEYWORD, false, 50)
                         .getEsIndexParamList())
-                .mapping(TestDocument::getCustomize, EsFieldTypeEnum.TEXT, true, null, null, "customize", EsAnalyzerEnum.IK_SMART, null);
+                .mapping(TestDocument::getCustomize, EsFieldTypeEnum.TEXT, true, null, null, "text_anlyzer", EsAnalyzerEnum.IK_SMART, null);
 
-        // 设置分片及副本信息,可缺省
-        wrapper.settings(3, 2);
-
-        // 设置别名信息,可缺省
-        wrapper.createAlias("hello_es_plus");
         // 创建索引，调用此方法时，会先去调用代理对象中的invoke方法，由代理对象去执行具体的逻辑（创建索引的方法）
         // 即，当我们调用 TestDocumentMapper.createIndex() 方法的时候，
         // 这个方法会被EsMapperProxy.invoke()方法被拦截，

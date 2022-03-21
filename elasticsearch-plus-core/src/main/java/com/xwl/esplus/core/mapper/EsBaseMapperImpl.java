@@ -13,6 +13,7 @@ import com.xwl.esplus.core.enums.EsIdTypeEnum;
 import com.xwl.esplus.core.metadata.DocumentFieldInfo;
 import com.xwl.esplus.core.metadata.DocumentInfo;
 import com.xwl.esplus.core.param.EsIndexParam;
+import com.xwl.esplus.core.param.EsIndexSettingParam;
 import com.xwl.esplus.core.param.EsUpdateParam;
 import com.xwl.esplus.core.toolkit.*;
 import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
@@ -98,35 +99,43 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     @Override
     public Boolean createIndex(EsLambdaIndexWrapper<T> wrapper) {
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(wrapper.getIndexName());
-        Settings.Builder settings = Settings.builder();
-        // 分片数
-        Optional.ofNullable(wrapper.getNumberOfShards())
-                .ifPresent(shards -> settings.put(EsConstants.NUMBER_OF_SHARDS, shards));
-        // 副本数
-        Optional.ofNullable(wrapper.getNumberOfReplicas())
-                .ifPresent(replicas -> settings.put(EsConstants.NUMBER_OF_REPLICAS, replicas));
-        createIndexRequest.settings(settings);
+        // 别名信息
+        Optional.ofNullable(wrapper.getAlias())
+                .ifPresent(aliasName -> {
+                    Alias alias = new Alias(aliasName);
+                    createIndexRequest.alias(alias);
+                });
 
-        // mapping信息
+        // settings
+        Settings.Builder settings = Settings.builder();
+        EsIndexSettingParam settingParam = wrapper.getSetting();
+        if (Objects.nonNull(settingParam)) {
+            // 分片数
+            Optional.ofNullable(settingParam.getNumberOfShards())
+                    .ifPresent(shards -> settings.put(EsConstants.NUMBER_OF_SHARDS, shards));
+            // 副本数
+            Optional.ofNullable(settingParam.getNumberOfReplicas())
+                    .ifPresent(replicas -> settings.put(EsConstants.NUMBER_OF_REPLICAS, replicas));
+            // 自定义分词器（包含分词器、分词过滤器等）
+            Optional.ofNullable(settingParam.getAnalysis())
+                    .ifPresent(analysis -> settings.loadFromSource(JSONObject.toJSONString(analysis), XContentType.JSON));
+            createIndexRequest.settings(settings);
+        }
+
+        // mappings
+        Map<String, Object> mapping;
         if (Objects.isNull(wrapper.getMapping())) {
             List<EsIndexParam> indexParamList = wrapper.getEsIndexParamList();
             if (!CollectionUtils.isEmpty(indexParamList)) {
                 // 根据索引参数构建索引mapping
-                Map<String, Object> mapping = buildMapping(indexParamList);
+                mapping = buildMapping(indexParamList);
                 createIndexRequest.mapping(mapping);
-                String s5 = JSONObject.toJSONString(mapping);
-                System.out.println(s5);
             }
         } else {
-            // 用户手动指定的mapping
-            createIndexRequest.mapping(wrapper.getMapping());
+            // 用户手动指定的mapping，优先级高
+            mapping = wrapper.getMapping();
+            createIndexRequest.mapping(mapping);
         }
-
-        // 别名信息
-        Optional.ofNullable(wrapper.getAlias()).ifPresent(aliasName -> {
-            Alias alias = new Alias(aliasName);
-            createIndexRequest.alias(alias);
-        });
 
         try {
             // 执行
@@ -295,33 +304,33 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             Map<String, Object> info = new HashMap<>();
             // 设置字段类型
             Optional.ofNullable(indexParam.getFieldType())
-                    .ifPresent(fieldType -> info.put(EsConstants.TYPE, indexParam.getFieldType()));
+                    .ifPresent(fieldType -> info.put(EsConstants.TYPE, fieldType));
             // 设置是否索引该字段，默认true
             Optional.ofNullable(indexParam.getIndex())
-                    .ifPresent(index -> info.put(EsConstants.INDEX, indexParam.getIndex()));
+                    .ifPresent(index -> info.put(EsConstants.INDEX, index));
             // 设置ignoreAbove，只有keyword类型才有此属性
             if (EsFieldTypeEnum.KEYWORD.getType().equals(indexParam.getFieldType())) {
                 Optional.ofNullable(indexParam.getIgnoreAbove())
-                        .ifPresent(ignoreAbove -> info.put(EsConstants.IGNORE_ABOVE, indexParam.getIgnoreAbove()));
+                        .ifPresent(ignoreAbove -> info.put(EsConstants.IGNORE_ABOVE, ignoreAbove));
             }
             // 设置copy_to
             Optional.ofNullable(indexParam.getCopyTo())
-                    .ifPresent(copyTo -> info.put(EsConstants.COPY_TO, indexParam.getCopyTo()));
+                    .ifPresent(copyTo -> info.put(EsConstants.COPY_TO, copyTo));
             // 设置分词器
             if (EsFieldTypeEnum.TEXT.getType().equals(indexParam.getFieldType())) {
                 // 创建索引时的分词器
                 Optional.ofNullable(indexParam.getAnalyzer())
-                        .ifPresent(analyzer -> info.put(EsConstants.ANALYZER, indexParam.getAnalyzer().toString().toLowerCase()));
+                        .ifPresent(analyzer -> info.put(EsConstants.ANALYZER, analyzer.toString().toLowerCase()));
                 // 搜索时的分词器
                 Optional.ofNullable(indexParam.getSearchAnalyzer())
-                        .ifPresent(searchAnalyzer -> info.put(EsConstants.SEARCH_ANALYZER, indexParam.getSearchAnalyzer().toString().toLowerCase()));
+                        .ifPresent(searchAnalyzer -> info.put(EsConstants.SEARCH_ANALYZER, searchAnalyzer.toString().toLowerCase()));
             }
             // 子字段properties
             Optional.ofNullable(indexParam.getProperties())
-                    .ifPresent(prop -> info.put(EsConstants.PROPERTIES, buildMapping(indexParam.getProperties()).get(EsConstants.PROPERTIES)));
+                    .ifPresent(property -> info.put(EsConstants.PROPERTIES, buildMapping(property).get(EsConstants.PROPERTIES)));
             // 子属性fields
             Optional.ofNullable(indexParam.getFields())
-                    .ifPresent(field -> info.put(EsConstants.FIELDS, buildMapping(indexParam.getFields()).get(EsConstants.PROPERTIES)));
+                    .ifPresent(field -> info.put(EsConstants.FIELDS, buildMapping(field).get(EsConstants.PROPERTIES)));
 
             properties.put(indexParam.getFieldName(), info);
         });

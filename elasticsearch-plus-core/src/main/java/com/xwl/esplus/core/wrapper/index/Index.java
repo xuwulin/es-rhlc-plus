@@ -3,6 +3,7 @@ package com.xwl.esplus.core.wrapper.index;
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
 import com.xwl.esplus.core.param.EsIndexParam;
+import com.xwl.esplus.core.param.EsIndexSettingParam;
 
 import java.io.Serializable;
 import java.util.List;
@@ -25,21 +26,41 @@ public interface Index<Children, R> extends Serializable {
     Children indexName(String indexName);
 
     /**
-     * 设置索引的分片数和副本数
+     * 设置创建别名信息
+     *
+     * @param alias 别名
+     * @return 泛型
+     */
+    Children alias(String alias);
+
+    /**
+     * 设置setting信息：分片数、副本数
      *
      * @param shards   分片数
      * @param replicas 副本数
-     * @return 泛型
+     * @return
      */
-    Children settings(Integer shards, Integer replicas);
+    default Children settings(Integer shards, Integer replicas) {
+        return settings(shards, replicas, null);
+    }
 
     /**
-     * 设置创建别名信息
+     * 设置setting信息：分片数、副本数、自定义分词器等
      *
-     * @param aliasName 别名
-     * @return 泛型
+     * @param shards   分片数
+     * @param replicas 副本数
+     * @param analysis 自定义分词器
+     * @return
      */
-    Children createAlias(String aliasName);
+    Children settings(Integer shards, Integer replicas, Map<String, Object> analysis);
+
+    /**
+     * 设置setting信息：分片数、副本数、自定义分词器等
+     *
+     * @param settingParam setting参数
+     * @return
+     */
+    Children settings(EsIndexSettingParam settingParam);
 
     /**
      * 设置mapping信息
@@ -73,7 +94,10 @@ public interface Index<Children, R> extends Serializable {
      * @param searchAnalyzer 查询时的分词器类型
      * @return 泛型
      */
-    Children mapping(R column, EsFieldTypeEnum fieldType, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer);
+    Children mapping(R column,
+                     EsFieldTypeEnum fieldType,
+                     EsAnalyzerEnum analyzer,
+                     EsAnalyzerEnum searchAnalyzer);
 
     /**
      * 设置mapping信息
@@ -83,7 +107,9 @@ public interface Index<Children, R> extends Serializable {
      * @param index     是否索引，默认true
      * @return
      */
-    Children mapping(R column, EsFieldTypeEnum fieldType, boolean index);
+    Children mapping(R column,
+                     EsFieldTypeEnum fieldType,
+                     boolean index);
 
     /**
      * 设置mapping信息
@@ -95,7 +121,10 @@ public interface Index<Children, R> extends Serializable {
      *                    默认值256，超出这个长度的字段将不会被索引，但是会存储。这里的不被索引是这个字段不被索引
      * @return
      */
-    Children mapping(R column, EsFieldTypeEnum fieldType, boolean index, Integer ignoreAbove);
+    Children mapping(R column,
+                     EsFieldTypeEnum fieldType,
+                     boolean index,
+                     Integer ignoreAbove);
 
     /**
      * 设置mapping信息
@@ -107,7 +136,11 @@ public interface Index<Children, R> extends Serializable {
      * @param searchAnalyzer 查询时的分词器类型
      * @return
      */
-    Children mapping(R column, EsFieldTypeEnum fieldType, R copyTo, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer);
+    Children mapping(R column,
+                     EsFieldTypeEnum fieldType,
+                     R copyTo,
+                     EsAnalyzerEnum analyzer,
+                     EsAnalyzerEnum searchAnalyzer);
 
     /**
      * 设置mapping信息
@@ -123,7 +156,14 @@ public interface Index<Children, R> extends Serializable {
      * @param fields         多（子）字段信息列表
      * @return
      */
-    Children mapping(R column, EsFieldTypeEnum fieldType, boolean index, Integer ignoreAbove, R copyTo, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer, List<EsIndexParam> fields);
+    Children mapping(R column,
+                     EsFieldTypeEnum fieldType,
+                     boolean index,
+                     Integer ignoreAbove,
+                     R copyTo,
+                     EsAnalyzerEnum analyzer,
+                     EsAnalyzerEnum searchAnalyzer,
+                     List<EsIndexParam> fields);
 
     /**
      * 设置mapping信息
@@ -139,7 +179,14 @@ public interface Index<Children, R> extends Serializable {
      * @param fields         多（子）字段信息列表
      * @return
      */
-    Children mapping(R column, EsFieldTypeEnum fieldType, boolean index, Integer ignoreAbove, R copyTo, String analyzer, EsAnalyzerEnum searchAnalyzer, List<EsIndexParam> fields);
+    Children mapping(R column,
+                     EsFieldTypeEnum fieldType,
+                     boolean index,
+                     Integer ignoreAbove,
+                     R copyTo,
+                     String analyzer,
+                     EsAnalyzerEnum searchAnalyzer,
+                     List<EsIndexParam> fields);
 
     /**
      * 设置mapping信息，子对象

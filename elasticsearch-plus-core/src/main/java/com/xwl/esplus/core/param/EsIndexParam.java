@@ -5,7 +5,7 @@ import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import java.util.List;
 
 /**
- * elasticsearch索引相关参数
+ * elasticsearch索引mapping参数
  *
  * @author xwl
  * @since 2022/3/11 17:48

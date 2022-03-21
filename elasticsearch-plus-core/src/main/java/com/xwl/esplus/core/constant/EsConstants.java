@@ -76,6 +76,10 @@ public class EsConstants {
      */
     public static final String NUMBER_OF_REPLICAS = "number_of_replicas";
     /**
+     * 自定义分词器
+     */
+    public static final String ANALYSIS = "index.analysis";
+    /**
      * 索引特性/子对象
      */
     public static final String PROPERTIES = "properties";
