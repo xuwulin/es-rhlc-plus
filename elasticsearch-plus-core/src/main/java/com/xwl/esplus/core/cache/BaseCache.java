@@ -39,7 +39,7 @@ public class BaseCache {
     public static void initCache(Class<?> mapperInterface, RestHighLevelClient client) {
         // 初始化baseEsMapper的所有实现类实例
         EsBaseMapperImpl esBaseMapper = new EsBaseMapperImpl();
-        esBaseMapper.setClient(client);
+        esBaseMapper.setRestHighLevelClient(client);
         Class<?> entityClass = TypeUtils.getInterfaceT(mapperInterface, 0);
         esBaseMapper.setEntityClass(entityClass);
         esBaseMapperInstanceMap.put(mapperInterface, esBaseMapper);
@@ -50,8 +50,8 @@ public class BaseCache {
         Arrays.stream(entityMethods)
                 .forEach(entityMethod -> {
                     String methodName = entityMethod.getName();
-                    if (methodName.startsWith(EsConstants.GET_FUNC_PREFIX) || methodName.startsWith(EsConstants.IS_FUNC_PREFIX)
-                            || methodName.startsWith(EsConstants.SET_FUNC_PREFIX)) {
+                    if (methodName.startsWith(EsConstants.GET_METHOD_PREFIX) || methodName.startsWith(EsConstants.IS_METHOD_PREFIX)
+                            || methodName.startsWith(EsConstants.SET_METHOD_PREFIX)) {
                         invokeMethodsMap.put(FieldUtils.resolveFieldName(methodName), entityMethod);
                     }
                 });

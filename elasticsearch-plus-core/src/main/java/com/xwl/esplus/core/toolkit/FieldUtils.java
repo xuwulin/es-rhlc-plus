@@ -49,9 +49,9 @@ public class FieldUtils {
      * @return 字段名称
      */
     public static String resolveFieldName(String getMethodName) {
-        if (getMethodName.startsWith(EsConstants.GET_FUNC_PREFIX)) {
+        if (getMethodName.startsWith(EsConstants.GET_METHOD_PREFIX)) {
             getMethodName = getMethodName.substring(3);
-        } else if (getMethodName.startsWith(EsConstants.IS_FUNC_PREFIX)) {
+        } else if (getMethodName.startsWith(EsConstants.IS_METHOD_PREFIX)) {
             getMethodName = getMethodName.substring(2);
         }
         // 小写第一个字母
@@ -65,7 +65,7 @@ public class FieldUtils {
      * @return Get方法名称
      */
     public static String generateGetFunctionName(String fieldName) {
-        return EsConstants.GET_FUNC_PREFIX + firstToUpperCase(fieldName);
+        return EsConstants.GET_METHOD_PREFIX + firstToUpperCase(fieldName);
     }
 
     /**
@@ -75,7 +75,7 @@ public class FieldUtils {
      * @return et方法名称
      */
     public static String generateSetFunctionName(String fieldName) {
-        return EsConstants.SET_FUNC_PREFIX + firstToUpperCase(fieldName);
+        return EsConstants.SET_METHOD_PREFIX + firstToUpperCase(fieldName);
     }
 
     /**

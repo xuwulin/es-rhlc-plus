@@ -78,15 +78,15 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     /**
      * restHighLevel client
      */
-    private RestHighLevelClient client;
+    private RestHighLevelClient restHighLevelClient;
 
     /**
      * T 对应的类
      */
     private Class<T> entityClass;
 
-    public void setClient(RestHighLevelClient client) {
-        this.client = client;
+    public void setRestHighLevelClient(RestHighLevelClient restHighLevelClient) {
+        this.restHighLevelClient = restHighLevelClient;
     }
 
     public void setEntityClass(Class<T> entityClass) {
@@ -95,21 +95,21 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
     @Override
     public Boolean existsIndex(String indexName) {
-        if (StringUtils.isEmpty(indexName)) {
-            throw ExceptionUtils.epe("indexName can not be empty");
+        if (StringUtils.isBlank(indexName)) {
+            throw ExceptionUtils.epe("indexName can not be null or empty");
         }
         GetIndexRequest getIndexRequest = new GetIndexRequest(indexName);
         try {
-            return client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            throw ExceptionUtils.epe("existIndex exception", e);
+            return restHighLevelClient.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
+        } catch (Exception e) {
+            throw ExceptionUtils.epe("exists index exception, indexName: %s", e, indexName);
         }
     }
 
     @Override
     public Boolean createIndex(EsLambdaIndexWrapper<T> wrapper) {
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(wrapper.getIndexName());
-        // 别名信息
+        // alias
         Optional.ofNullable(wrapper.getAlias())
                 .ifPresent(aliasName -> {
                     Alias alias = new Alias(aliasName);
@@ -137,21 +137,19 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         if (Objects.isNull(wrapper.getMapping())) {
             List<EsIndexParam> indexParamList = wrapper.getEsIndexParamList();
             if (!CollectionUtils.isEmpty(indexParamList)) {
-                // 根据索引参数构建索引mapping
+                // 根据参数构建索引mapping
                 mapping = buildMapping(indexParamList);
                 createIndexRequest.mapping(mapping);
             }
         } else {
-            // 用户手动指定的mapping，优先级高
+            // 手动指定mapping，优先级高
             mapping = wrapper.getMapping();
             createIndexRequest.mapping(mapping);
         }
 
         try {
-            // 执行
-            CreateIndexResponse createIndexResponse = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
-            // 指示是否所有节点都已确认请求
-            boolean acknowledged = createIndexResponse.isAcknowledged();
+            CreateIndexResponse response = restHighLevelClient.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+            boolean acknowledged = response.isAcknowledged();
             log.info("create index [{}] result: {}", wrapper.getIndexName(), acknowledged);
             return acknowledged;
         } catch (IOException e) {
@@ -166,23 +164,23 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             throw ExceptionUtils.epe("index: %s not exists", wrapper.getIndexName());
         }
 
-        // 更新mapping
         PutMappingRequest putMappingRequest = new PutMappingRequest(wrapper.getIndexName());
         if (Objects.isNull(wrapper.getMapping())) {
             if (CollectionUtils.isEmpty(wrapper.getEsIndexParamList())) {
-                // 空参数列表,则不更新
-                return Boolean.FALSE;
+                // 空参数列表，不更新
+                return false;
             }
+            // 根据参数构建索引mapping
             Map<String, Object> mapping = buildMapping(wrapper.getEsIndexParamList());
             putMappingRequest.source(mapping);
         } else {
-            // 用户自行指定的mapping信息
+            // 手动指定mapping，优先级高
             putMappingRequest.source(wrapper.getMapping());
         }
 
         try {
-            AcknowledgedResponse acknowledgedResponse = client.indices().putMapping(putMappingRequest, RequestOptions.DEFAULT);
-            boolean acknowledged = acknowledgedResponse.isAcknowledged();
+            AcknowledgedResponse response = restHighLevelClient.indices().putMapping(putMappingRequest, RequestOptions.DEFAULT);
+            boolean acknowledged = response.isAcknowledged();
             log.info("update index [{}] result: {}", wrapper.getIndexName(), acknowledged);
             return acknowledged;
         } catch (IOException e) {
@@ -192,12 +190,12 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
     @Override
     public Boolean deleteIndex(String indexName) {
-        if (StringUtils.isEmpty(indexName)) {
+        if (StringUtils.isBlank(indexName)) {
             throw ExceptionUtils.epe("indexName can not be empty");
         }
         DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(indexName);
         try {
-            AcknowledgedResponse response = client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
+            AcknowledgedResponse response = restHighLevelClient.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
             boolean acknowledged = response.isAcknowledged();
             log.info("delete index [{}] result: {}", indexName, acknowledged);
             return response.isAcknowledged();
@@ -208,21 +206,21 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
     @Override
     public Integer insert(T entity) {
-        // 构建请求入参
         IndexRequest indexRequest = buildIndexRequest(entity);
         try {
-            IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+            IndexResponse indexResponse = restHighLevelClient.index(indexRequest, RequestOptions.DEFAULT);
             if (Objects.equals(indexResponse.status(), RestStatus.CREATED)) {
+                // 插入成功，设置文档实体的id
                 setId(entity, indexResponse.getId());
                 return EsConstants.ONE;
             } else if (Objects.equals(indexResponse.status(), RestStatus.OK)) {
-                // 该id已存在,数据被更新的情况
+                // id已存在，相当于更新
                 return EsConstants.ZERO;
             } else {
-                throw ExceptionUtils.epe("insert failed, result:%s entity:%s", indexResponse.getResult(), entity);
+                throw ExceptionUtils.epe("insert failed, result: %s, entity: %s", indexResponse.getResult(), entity);
             }
         } catch (IOException e) {
-            throw ExceptionUtils.epe("insert exception:%s entity:%s", e, entity);
+            throw ExceptionUtils.epe("insert exception: %s, entity: %s", e, entity);
         }
     }
 
@@ -231,14 +229,11 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         if (CollectionUtils.isEmpty(entityList)) {
             return EsConstants.ZERO;
         }
-        // 构建批量请求参数
         BulkRequest bulkRequest = new BulkRequest();
         entityList.forEach(entity -> {
-            // 构建创建数据请求参数
             IndexRequest indexRequest = buildIndexRequest(entity);
             bulkRequest.add(indexRequest);
         });
-        // 执行批量插入请求
         return doBulkRequest(bulkRequest, RequestOptions.DEFAULT, entityList);
     }
 
@@ -250,26 +245,22 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 构建查询条件
         BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(updateWrapper.getBaseParamList());
         searchSourceBuilder.query(boolQueryBuilder);
         searchRequest.source(searchSourceBuilder);
-
-        // 查询id列表
-        List<String> idList = this.selectIdList(searchRequest);
-        if (CollectionUtils.isEmpty(idList)) {
+        // 根据条件查询要更新的id集合
+        List<String> ids = this.selectIds(searchRequest);
+        if (CollectionUtils.isEmpty(ids)) {
             return EsConstants.ZERO;
         }
 
-        // 获取更新文档内容
+        // 更新文档内容
         String jsonData = Optional.ofNullable(entity)
                 .map(this::buildJsonSource)
                 .orElseGet(() -> buildJsonDoc(updateWrapper));
-
-        // 批量更新
         BulkRequest bulkRequest = new BulkRequest();
         String indexName = getIndexName();
-        idList.forEach(id -> {
+        ids.forEach(id -> {
             UpdateRequest updateRequest = new UpdateRequest();
             updateRequest.id(id).index(indexName);
             updateRequest.doc(jsonData, XContentType.JSON);
@@ -280,19 +271,16 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
     @Override
     public Integer updateById(T entity) {
-        // 获取id值
         String idValue = getIdValue(entityClass, entity);
-        // 构建更新请求参数
         UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
         try {
-            UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
+            UpdateResponse updateResponse = restHighLevelClient.update(updateRequest, RequestOptions.DEFAULT);
             if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
                 return EsConstants.ONE;
             }
         } catch (IOException e) {
-            throw ExceptionUtils.epe("updateById exception,entity:%s", e, entity);
+            throw ExceptionUtils.epe("updateById exception, entity: %s", e, entity);
         }
-
         return EsConstants.ZERO;
     }
 
@@ -301,15 +289,12 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         if (CollectionUtils.isEmpty(entityList)) {
             return EsConstants.ZERO;
         }
-
-        // 封装批量请求参数
         BulkRequest bulkRequest = new BulkRequest();
         entityList.forEach(entity -> {
             String idValue = getIdValue(entityClass, entity);
             UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
             bulkRequest.add(updateRequest);
         });
-        // 执行批量请求
         return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
     }
 
@@ -322,11 +307,11 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         BulkRequest bulkRequest = new BulkRequest();
         list.forEach(t -> {
             try {
-                Method getId = t.getClass().getMethod(EsConstants.GET_ID_FUNC);
+                Method getId = t.getClass().getMethod(EsConstants.GET_ID_METHOD);
                 Object invoke = getId.invoke(t);
                 if (Objects.nonNull(invoke) && invoke instanceof String) {
-                    String id = (String) invoke;
-                    if (!StringUtils.isEmpty(id)) {
+                    String id = String.valueOf(invoke);
+                    if (StringUtils.isNotBlank(id)) {
                         DeleteRequest deleteRequest = new DeleteRequest();
                         deleteRequest.id(id);
                         deleteRequest.index(getIndexName());
@@ -342,31 +327,30 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
     @Override
     public Integer deleteById(Serializable id) {
-        if (Objects.isNull(id) || StringUtils.isEmpty(id.toString())) {
-            throw ExceptionUtils.epe("id must not be null or empty");
+        if (Objects.isNull(id) || StringUtils.isBlank(id.toString())) {
+            throw ExceptionUtils.epe("id can not be null or empty");
         }
-
         DeleteRequest deleteRequest = new DeleteRequest();
         deleteRequest.id(id.toString());
         deleteRequest.index(getIndexName());
         try {
-            DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+            DeleteResponse deleteResponse = restHighLevelClient.delete(deleteRequest, RequestOptions.DEFAULT);
             if (Objects.equals(deleteResponse.status(), RestStatus.OK)) {
                 return EsConstants.ONE;
             }
         } catch (IOException e) {
-            throw ExceptionUtils.epe("deleteById exception:%s, id:%s", e, id);
+            throw ExceptionUtils.epe("deleteById exception, id: %s", e, id);
         }
         return EsConstants.ZERO;
     }
 
     @Override
     public Integer deleteBatchByIds(Collection<? extends Serializable> idList) {
-        Assert.notEmpty(idList, "the collection of id must not empty");
+        Assert.notEmpty(idList, "the collection of id can not empty");
         BulkRequest bulkRequest = new BulkRequest();
         idList.forEach(id -> {
             if (Objects.isNull(id) || StringUtils.isEmpty(id.toString())) {
-                throw ExceptionUtils.epe("id must not be null or empty");
+                throw ExceptionUtils.epe("id can not be null or empty");
             }
             DeleteRequest deleteRequest = new DeleteRequest();
             deleteRequest.id(id.toString());
@@ -387,7 +371,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         }
         // 执行查询
         try {
-            return client.search(searchRequest, RequestOptions.DEFAULT);
+            return restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
             throw ExceptionUtils.epe("Elasticsearch original search （restHighLevelClient.search()）exception: {}", e.getMessage(), e);
         }
@@ -400,7 +384,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
     @Override
     public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
-        return client.search(searchRequest, requestOptions);
+        return restHighLevelClient.search(searchRequest, requestOptions);
     }
 
     @Override
@@ -420,7 +404,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
         searchRequest.source(searchSourceBuilder);
         try {
-            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            SearchResponse response = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
             return parseResultList(response, wrapper);
         } catch (Exception e) {
             throw ExceptionUtils.epe("selectList exception", e);
@@ -494,10 +478,10 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     /**
-     * 构建创建数据请求参数
+     * 构建IndexRequest
      *
      * @param entity 实体
-     * @return es请求参数
+     * @return IndexRequest
      */
     private IndexRequest buildIndexRequest(T entity) {
         IndexRequest indexRequest = new IndexRequest();
@@ -513,13 +497,12 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
         // 构建插入的json格式数据
         String jsonData = buildJsonSource(entity);
-        indexRequest.index(documentInfo.getIndexName())
-                .source(jsonData, XContentType.JSON);
+        indexRequest.index(documentInfo.getIndexName()).source(jsonData, XContentType.JSON);
         return indexRequest;
     }
 
     /**
-     * 获取实体对象的id值
+     * 获取文档实体对象的id值
      *
      * @param entityClass 实体类
      * @param entity      实体对象
@@ -652,14 +635,14 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     /**
-     * 查询id列表
+     * 根据条件查询要更新的id集合
      *
      * @param searchRequest 查询参数
-     * @return id列表
+     * @return id集合
      */
-    private List<String> selectIdList(SearchRequest searchRequest) {
+    private List<String> selectIds(SearchRequest searchRequest) {
         try {
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
             SearchHit[] searchHits = parseSearchHit(searchResponse);
             return Arrays.stream(searchHits)
                     .map(SearchHit::getId)
@@ -705,7 +688,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     private int doBulkRequest(BulkRequest bulkRequest, RequestOptions requestOptions) {
         int totalSuccess = 0;
         try {
-            BulkResponse bulkResponse = client.bulk(bulkRequest, requestOptions);
+            BulkResponse bulkResponse = restHighLevelClient.bulk(bulkRequest, requestOptions);
             Iterator<BulkItemResponse> iterator = bulkResponse.iterator();
             while (iterator.hasNext()) {
                 if (Objects.equals(iterator.next().status(), RestStatus.OK)) {
@@ -719,17 +702,17 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     /**
-     * 执行bulk创建请求，返回成功个数，id赋值
+     * 执行批量操作
      *
      * @param bulkRequest    批量请求参数
      * @param requestOptions 类型
      * @param entityList     实体列表
-     * @return 成功个数
+     * @return 操作成功数量
      */
     private int doBulkRequest(BulkRequest bulkRequest, RequestOptions requestOptions, Collection<T> entityList) {
         int totalSuccess = 0;
         try {
-            BulkResponse bulkResponse = client.bulk(bulkRequest, requestOptions);
+            BulkResponse bulkResponse = restHighLevelClient.bulk(bulkRequest, requestOptions);
             if (bulkResponse.hasFailures()) {
                 throw ExceptionUtils.epe("bulkRequest has failures");
             }

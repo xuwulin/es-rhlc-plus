@@ -43,7 +43,7 @@ public class ExceptionUtils {
         return new EsPlusException(t);
     }
 
-    public static void throwMpe(boolean condition, String msg, Object... params) {
+    public static void throwEpe(boolean condition, String msg, Object... params) {
         if (condition) {
             throw epe(msg, params);
         }

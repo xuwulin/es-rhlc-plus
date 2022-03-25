@@ -36,31 +36,8 @@ public class IndexTest {
     @Test
     public void testCreateIndex() {
         EsLambdaIndexWrapper<UserDocument> wrapper = Wrappers.lambdaIndex();
-        String analysis = "{\n" +
-                "    \"analysis\": {\n" +
-                "        \"analyzer\": {\n" +
-                "            \"text_anlyzer\": {\n" +
-                "                \"tokenizer\": \"ik_max_word\",\n" +
-                "                \"filter\": \"py\"\n" +
-                "            },\n" +
-                "            \"completion_analyzer\": {\n" +
-                "                \"tokenizer\": \"keyword\",\n" +
-                "                \"filter\": \"py\"\n" +
-                "            }\n" +
-                "        },\n" +
-                "        \"filter\": {\n" +
-                "            \"py\": {\n" +
-                "                \"type\": \"pinyin\",\n" +
-                "                \"keep_full_pinyin\": false,\n" +
-                "                \"keep_joined_full_pinyin\": true,\n" +
-                "                \"keep_original\": true,\n" +
-                "                \"limit_first_letter_length\": 16,\n" +
-                "                \"remove_duplicated_term\": true,\n" +
-                "                \"none_chinese_pinyin_tokenize\": false\n" +
-                "            }\n" +
-                "        }\n" +
-                "    }\n" +
-                "}";
+        // 自定义分词器
+        String analysis = "{\"analysis\":{\"filter\":{\"py\":{\"keep_joined_full_pinyin\":true,\"none_chinese_pinyin_tokenize\":false,\"keep_original\":true,\"remove_duplicated_term\":true,\"type\":\"pinyin\",\"limit_first_letter_length\":16,\"keep_full_pinyin\":false}},\"analyzer\":{\"completion_analyzer\":{\"filter\":\"py\",\"tokenizer\":\"keyword\"},\"text_anlyzer\":{\"filter\":\"py\",\"tokenizer\":\"ik_max_word\"}}}}";
         Map<String, Object> analysisMap = JSONObject.parseObject(analysis, Map.class);
 
         EsIndexParam firstNameParam = new EsIndexParam();

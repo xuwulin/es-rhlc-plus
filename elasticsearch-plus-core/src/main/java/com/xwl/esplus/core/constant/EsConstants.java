@@ -54,19 +54,19 @@ public class EsConstants {
     /**
      * get 方法前缀
      */
-    public static final String GET_FUNC_PREFIX = "get";
+    public static final String GET_METHOD_PREFIX = "get";
     /**
      * set 方法前缀
      */
-    public static final String SET_FUNC_PREFIX = "set";
+    public static final String SET_METHOD_PREFIX = "set";
     /**
      * 获取id方法名
      */
-    public static final String GET_ID_FUNC = "getId";
+    public static final String GET_ID_METHOD = "getId";
     /**
      * 基本数据类型的get方法前缀
      */
-    public static final String IS_FUNC_PREFIX = "Is";
+    public static final String IS_METHOD_PREFIX = "Is";
     /**
      * 分片数量字段
      */

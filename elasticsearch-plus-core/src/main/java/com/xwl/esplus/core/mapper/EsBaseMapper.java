@@ -223,10 +223,10 @@ public interface EsBaseMapper<T> {
 //    T selectOne(EsLambdaQueryWrapper<T> wrapper);
 
     /**
-     * 根据 entity 条件，查询全部记录
+     * 根据条件查询
      *
      * @param wrapper 条件
-     * @return 指定的返回对象列表
+     * @return 对象列表
      */
     List<T> selectList(EsLambdaQueryWrapper<T> wrapper);
 }
