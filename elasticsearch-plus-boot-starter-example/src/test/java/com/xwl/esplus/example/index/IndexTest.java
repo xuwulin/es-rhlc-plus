@@ -78,7 +78,7 @@ public class IndexTest {
         wrapper.indexName("user_document")
                 .alias("hello_user")
                 .settings(1, 1, analysisMap)
-//                .mapping(UserDocument::getId, EsFieldTypeEnum.KEYWORD)
+                .mapping(UserDocument::getId, EsFieldTypeEnum.KEYWORD)
                 .mapping(UserDocument::getNickname, EsFieldTypeEnum.KEYWORD, true)
                 .mapping(UserDocument::getFullName, Arrays.asList(firstNameParam, lastNameParam))
                 .mapping(UserDocument::getIdNumber, EsFieldTypeEnum.KEYWORD, false, 18)

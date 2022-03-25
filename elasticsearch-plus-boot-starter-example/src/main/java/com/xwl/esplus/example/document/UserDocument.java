@@ -18,7 +18,7 @@ import java.util.Date;
 @Data
 @EsDocument(value = "user_document", keepGlobalIndexPrefix = false)
 public class UserDocument {
-    @EsDocumentId(value = "id", type = EsIdTypeEnum.AUTO)
+    @EsDocumentId(value = "_id", type = EsIdTypeEnum.AUTO)
     private String id;
     private String nickname;
     /**

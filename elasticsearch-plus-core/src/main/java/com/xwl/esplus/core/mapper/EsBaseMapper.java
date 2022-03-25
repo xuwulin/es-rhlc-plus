@@ -9,6 +9,9 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 核心，继承该接口后，即可获得常用的CRUD功能
@@ -50,13 +53,78 @@ public interface EsBaseMapper<T> {
     Boolean deleteIndex(String indexName);
 
     /**
+     * 插入一条记录
+     *
+     * @param entity 插入的数据对象
+     * @return 成功条数
+     */
+    Integer insert(T entity);
+
+    /**
+     * 批量插入
+     *
+     * @param entityList 插入的数据对象列表
+     * @return 成功条数
+     */
+    Integer insertBatch(Collection<T> entityList);
+
+    /**
+     * 根据 updateWrapper 条件，更新记录
+     *
+     * @param entity        更新对象
+     * @param updateWrapper 更新条件
+     * @return 成功条数
+     */
+    Integer update(T entity, EsLambdaUpdateWrapper<T> updateWrapper);
+
+    /**
+     * 根据 ID 更新
+     *
+     * @param entity 更新对象
+     * @return 成功条数
+     */
+    Integer updateById(T entity);
+
+    /**
+     * 根据ID 批量更新
+     *
+     * @param entityList 更新对象列表
+     * @return 成功条数
+     */
+    Integer updateBatchById(Collection<T> entityList);
+
+    /**
+     * 根据 entity 条件，删除记录
+     *
+     * @param wrapper 条件
+     * @return 总成功条数
+     */
+    Integer delete(EsLambdaQueryWrapper<T> wrapper);
+
+    /**
+     * 根据 ID 删除
+     *
+     * @param id 主键
+     * @return 成功条数
+     */
+    Integer deleteById(Serializable id);
+
+    /**
+     * 删除（根据ID 批量删除）
+     *
+     * @param idList 主键列表
+     * @return 总成功条数
+     */
+    Integer deleteBatchByIds(Collection<? extends Serializable> idList);
+
+    /**
      * 标准查询
      *
      * @param wrapper 条件
      * @return es标准结果
      * @throws IOException IO异常
      */
-    SearchResponse search(EsLambdaQueryWrapper<T> wrapper) throws IOException;
+    SearchResponse search(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 获取SearchSourceBuilder,可用于本框架生成基础查询条件,不支持的高阶语法用户可通过SearchSourceBuilder 进一步封装
@@ -64,7 +132,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 查询参数
      */
-    SearchSourceBuilder getSearchSourceBuilder(EsLambdaQueryWrapper<T> wrapper) throws IOException;
+    SearchSourceBuilder getSearchSourceBuilder(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * es原生查询
@@ -82,7 +150,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 查询JSON格式参数
      */
-    String getSource(EsLambdaQueryWrapper<T> wrapper) throws IOException;
+    String getSource(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 未指定返回类型,未指定分页参数
@@ -91,7 +159,7 @@ public interface EsBaseMapper<T> {
      * @return 原生分页返回
      * @throws IOException IO异常
      */
-//    PageInfo<SearchHit> pageQueryOriginal(LambdaEsQueryWrapper<T> wrapper) throws IOException;
+//    PageInfo<SearchHit> pageQueryOriginal(EsLambdaQueryWrapper<T> wrapper) throws IOException;
 
     /**
      * 未指定返回类型,指定分页参数
@@ -102,7 +170,7 @@ public interface EsBaseMapper<T> {
      * @return 原生分页返回
      * @throws IOException IO异常
      */
-//    PageInfo<SearchHit> pageQueryOriginal(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) throws IOException;
+//    PageInfo<SearchHit> pageQueryOriginal(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) throws IOException;
 
     /**
      * 指定返回类型,但未指定分页参数
@@ -110,7 +178,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 指定的返回类型
      */
-//    PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper);
+//    PageInfo<T> pageQuery(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 指定返回类型及分页参数
@@ -120,7 +188,7 @@ public interface EsBaseMapper<T> {
      * @param pageSize 每页条数
      * @return 指定的返回类型
      */
-//    PageInfo<T> pageQuery(LambdaEsQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
+//    PageInfo<T> pageQuery(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
 
     /**
      * 获取总数
@@ -128,73 +196,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 总数
      */
-//    Long selectCount(LambdaEsQueryWrapper<T> wrapper);
-
-    /**
-     * 插入一条记录
-     *
-     * @param entity 插入的数据对象
-     * @return 成功条数
-     */
-    Integer insert(T entity);
-
-    /**
-     * 批量插入
-     *
-     * @param entityList 插入的数据对象列表
-     * @return 总成功条数
-     */
-//    Integer insertBatch(Collection<T> entityList);
-
-    /**
-     * 根据 ID 删除
-     *
-     * @param id 主键
-     * @return 成功条数
-     */
-//    Integer deleteById(Serializable id);
-
-
-    /**
-     * 根据 entity 条件，删除记录
-     *
-     * @param wrapper 条件
-     * @return 总成功条数
-     */
-//    Integer delete(LambdaEsQueryWrapper<T> wrapper);
-
-    /**
-     * 删除（根据ID 批量删除）
-     *
-     * @param idList 主键列表
-     * @return 总成功条数
-     */
-//    Integer deleteBatchIds(Collection<? extends Serializable> idList);
-
-    /**
-     * 根据 ID 更新
-     *
-     * @param entity 更新对象
-     * @return 总成功条数
-     */
-//    Integer updateById(T entity);
-
-    /**
-     * 根据ID 批量更新
-     *
-     * @param entityList 更新对象列表
-     * @return 总成功条数
-     */
-//    Integer updateBatchByIds(Collection<T> entityList);
-
-    /**
-     * 根据 whereEntity 条件，更新记录
-     *
-     * @param entity        更新对象
-     * @param updateWrapper 条件
-     * @return 成功条数
-     */
-    Integer update(T entity, EsLambdaUpdateWrapper<T> updateWrapper);
+//    Long selectCount(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 根据 ID 查询
@@ -218,7 +220,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 指定的返回对象
      */
-//    T selectOne(LambdaEsQueryWrapper<T> wrapper);
+//    T selectOne(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 根据 entity 条件，查询全部记录
@@ -226,5 +228,5 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 指定的返回对象列表
      */
-//    List<T> selectList(LambdaEsQueryWrapper<T> wrapper);
+    List<T> selectList(EsLambdaQueryWrapper<T> wrapper);
 }

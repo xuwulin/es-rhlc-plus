@@ -21,6 +21,7 @@ import com.xwl.esplus.core.param.EsIndexSettingParam;
 import com.xwl.esplus.core.param.EsUpdateParam;
 import com.xwl.esplus.core.toolkit.*;
 import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
+import com.xwl.esplus.core.wrapper.processor.EsWrapperProcessor;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import com.xwl.esplus.core.wrapper.update.EsLambdaUpdateWrapper;
 import org.elasticsearch.action.admin.indices.alias.Alias;
@@ -28,12 +29,15 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
@@ -49,15 +53,17 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.xwl.esplus.core.wrapper.processor.EsWrapperProcessor.buildBoolQueryBuilder;
 import static com.xwl.esplus.core.wrapper.processor.EsWrapperProcessor.buildSearchSourceBuilder;
-import static com.xwl.esplus.core.wrapper.processor.EsWrapperProcessor.initBoolQueryBuilder;
 
 /**
  * 核心，EsBaseMapper接口实现，获得常用的CRUD功能，（需要和EsWrapper类在同一包下，因为EsWrapper类中的属性是protected）
@@ -201,40 +207,6 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public SearchResponse search(EsLambdaQueryWrapper<T> wrapper) throws IOException {
-        // 构建es restHighLevel 查询参数
-        SearchRequest searchRequest = new SearchRequest(getIndexName());
-        SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
-        searchRequest.source(searchSourceBuilder);
-        if (GlobalConfigCache.getGlobalConfig().isLogEnable()) {
-            log.info("DSL:\n==> {}", searchRequest.source().toString());
-        }
-        // 执行查询
-        return client.search(searchRequest, RequestOptions.DEFAULT);
-    }
-
-    @Override
-    public SearchSourceBuilder getSearchSourceBuilder(EsLambdaQueryWrapper<T> wrapper) throws IOException {
-        return buildSearchSourceBuilder(wrapper);
-    }
-
-    @Override
-    public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
-        return client.search(searchRequest, requestOptions);
-    }
-
-    @Override
-    public String getSource(EsLambdaQueryWrapper<T> wrapper) throws IOException {
-        // 获取由本框架生成的es查询参数 用于验证生成语法的正确性
-        SearchRequest searchRequest = new SearchRequest(getIndexName());
-        SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
-        searchRequest.source(searchSourceBuilder);
-        return Optional.ofNullable(searchRequest.source())
-                .map(SearchSourceBuilder::toString)
-                .orElseThrow(() -> ExceptionUtils.epe("get search source exception"));
-    }
-
-    @Override
     public Integer insert(T entity) {
         // 构建请求入参
         IndexRequest indexRequest = buildIndexRequest(entity);
@@ -255,15 +227,31 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
+    public Integer insertBatch(Collection<T> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return EsConstants.ZERO;
+        }
+        // 构建批量请求参数
+        BulkRequest bulkRequest = new BulkRequest();
+        entityList.forEach(entity -> {
+            // 构建创建数据请求参数
+            IndexRequest indexRequest = buildIndexRequest(entity);
+            bulkRequest.add(indexRequest);
+        });
+        // 执行批量插入请求
+        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT, entityList);
+    }
+
+    @Override
     public Integer update(T entity, EsLambdaUpdateWrapper<T> updateWrapper) {
         if (Objects.isNull(entity) && CollectionUtils.isEmpty(updateWrapper.getUpdateParamList())) {
             return EsConstants.ZERO;
         }
 
-        // 构建查询条件
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(updateWrapper.getBaseParamList());
+        // 构建查询条件
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(updateWrapper.getBaseParamList());
         searchSourceBuilder.query(boolQueryBuilder);
         searchRequest.source(searchSourceBuilder);
 
@@ -275,19 +263,168 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
         // 获取更新文档内容
         String jsonData = Optional.ofNullable(entity)
-                .map(this::buildJsonIndexSource)
+                .map(this::buildJsonSource)
                 .orElseGet(() -> buildJsonDoc(updateWrapper));
 
         // 批量更新
         BulkRequest bulkRequest = new BulkRequest();
-        String index = getIndexName();
+        String indexName = getIndexName();
         idList.forEach(id -> {
             UpdateRequest updateRequest = new UpdateRequest();
-            updateRequest.id(id).index(index);
+            updateRequest.id(id).index(indexName);
             updateRequest.doc(jsonData, XContentType.JSON);
             bulkRequest.add(updateRequest);
         });
         return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+    }
+
+    @Override
+    public Integer updateById(T entity) {
+        // 获取id值
+        String idValue = getIdValue(entityClass, entity);
+        // 构建更新请求参数
+        UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
+        try {
+            UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
+            if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
+                return EsConstants.ONE;
+            }
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("updateById exception,entity:%s", e, entity);
+        }
+
+        return EsConstants.ZERO;
+    }
+
+    @Override
+    public Integer updateBatchById(Collection<T> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return EsConstants.ZERO;
+        }
+
+        // 封装批量请求参数
+        BulkRequest bulkRequest = new BulkRequest();
+        entityList.forEach(entity -> {
+            String idValue = getIdValue(entityClass, entity);
+            UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
+            bulkRequest.add(updateRequest);
+        });
+        // 执行批量请求
+        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+    }
+
+    @Override
+    public Integer delete(EsLambdaQueryWrapper<T> wrapper) {
+        List<T> list = this.selectList(wrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return EsConstants.ZERO;
+        }
+        BulkRequest bulkRequest = new BulkRequest();
+        list.forEach(t -> {
+            try {
+                Method getId = t.getClass().getMethod(EsConstants.GET_ID_FUNC);
+                Object invoke = getId.invoke(t);
+                if (Objects.nonNull(invoke) && invoke instanceof String) {
+                    String id = (String) invoke;
+                    if (!StringUtils.isEmpty(id)) {
+                        DeleteRequest deleteRequest = new DeleteRequest();
+                        deleteRequest.id(id);
+                        deleteRequest.index(getIndexName());
+                        bulkRequest.add(deleteRequest);
+                    }
+                }
+            } catch (Exception e) {
+                throw ExceptionUtils.epe("delete exception", e);
+            }
+        });
+        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+    }
+
+    @Override
+    public Integer deleteById(Serializable id) {
+        if (Objects.isNull(id) || StringUtils.isEmpty(id.toString())) {
+            throw ExceptionUtils.epe("id must not be null or empty");
+        }
+
+        DeleteRequest deleteRequest = new DeleteRequest();
+        deleteRequest.id(id.toString());
+        deleteRequest.index(getIndexName());
+        try {
+            DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+            if (Objects.equals(deleteResponse.status(), RestStatus.OK)) {
+                return EsConstants.ONE;
+            }
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("deleteById exception:%s, id:%s", e, id);
+        }
+        return EsConstants.ZERO;
+    }
+
+    @Override
+    public Integer deleteBatchByIds(Collection<? extends Serializable> idList) {
+        Assert.notEmpty(idList, "the collection of id must not empty");
+        BulkRequest bulkRequest = new BulkRequest();
+        idList.forEach(id -> {
+            if (Objects.isNull(id) || StringUtils.isEmpty(id.toString())) {
+                throw ExceptionUtils.epe("id must not be null or empty");
+            }
+            DeleteRequest deleteRequest = new DeleteRequest();
+            deleteRequest.id(id.toString());
+            deleteRequest.index(getIndexName());
+            bulkRequest.add(deleteRequest);
+        });
+        return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+    }
+
+    @Override
+    public SearchResponse search(EsLambdaQueryWrapper<T> wrapper) {
+        // 构建es restHighLevel 查询参数
+        SearchRequest searchRequest = new SearchRequest(getIndexName());
+        SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
+        searchRequest.source(searchSourceBuilder);
+        if (GlobalConfigCache.getGlobalConfig().isLogEnable()) {
+            log.info("DSL:\n==> {}", searchRequest.source().toString());
+        }
+        // 执行查询
+        try {
+            return client.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("Elasticsearch original search （restHighLevelClient.search()）exception: {}", e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public SearchSourceBuilder getSearchSourceBuilder(EsLambdaQueryWrapper<T> wrapper) {
+        return buildSearchSourceBuilder(wrapper);
+    }
+
+    @Override
+    public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
+        return client.search(searchRequest, requestOptions);
+    }
+
+    @Override
+    public String getSource(EsLambdaQueryWrapper<T> wrapper) {
+        // 获取由本框架生成的es查询参数 用于验证生成语法的正确性
+        SearchRequest searchRequest = new SearchRequest(getIndexName());
+        SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
+        searchRequest.source(searchSourceBuilder);
+        return Optional.ofNullable(searchRequest.source())
+                .map(SearchSourceBuilder::toString)
+                .orElseThrow(() -> ExceptionUtils.epe("get search source exception"));
+    }
+
+    @Override
+    public List<T> selectList(EsLambdaQueryWrapper<T> wrapper) {
+        SearchRequest searchRequest = new SearchRequest(getIndexName());
+        SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
+        searchRequest.source(searchSourceBuilder);
+        try {
+            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+            return parseResultList(response, wrapper);
+        } catch (Exception e) {
+            throw ExceptionUtils.epe("selectList exception", e);
+        }
     }
 
     public Settings.Builder buildSettings() {
@@ -364,7 +501,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      */
     private IndexRequest buildIndexRequest(T entity) {
         IndexRequest indexRequest = new IndexRequest();
-        // id预处理，除下述情况，其它情况使用es默认的id
+        // id处理，除下述情况，其它情况使用es默认的id，注解 > 全局配置
         DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entity.getClass());
         if (StringUtils.isNotBlank(documentInfo.getId())) {
             if (EsIdTypeEnum.UUID.equals(documentInfo.getIdType())) {
@@ -375,7 +512,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         }
 
         // 构建插入的json格式数据
-        String jsonData = buildJsonIndexSource(entity);
+        String jsonData = buildJsonSource(entity);
         indexRequest.index(documentInfo.getIndexName())
                 .source(jsonData, XContentType.JSON);
         return indexRequest;
@@ -409,7 +546,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      * @param entity 实体
      * @return json
      */
-    private String buildJsonIndexSource(T entity) {
+    private String buildJsonSource(T entity) {
         // 获取所有字段列表
         Class<?> entityClass = entity.getClass();
         Map<String, EsFieldStrategyEnum> columnMap = DocumentInfoUtils
@@ -442,7 +579,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
                     }
                 }
             } catch (Exception e) {
-                throw ExceptionUtils.epe("buildJsonIndexSource exception, entity:%s", e, entity);
+                throw ExceptionUtils.epe("buildJsonSource exception, entity:%s", e, entity);
             }
         });
 
@@ -528,7 +665,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
                     .map(SearchHit::getId)
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            throw ExceptionUtils.epe("selectIdList exception", e);
+            throw ExceptionUtils.epe("selectIdList exception: {}", e.getMessage(), e);
         }
     }
 
@@ -576,9 +713,106 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException();
+            throw ExceptionUtils.epe("doBulkRequest exception, msg:%s, cause:%s", e.getMessage(), e.getCause());
         }
         return totalSuccess;
+    }
+
+    /**
+     * 执行bulk创建请求，返回成功个数，id赋值
+     *
+     * @param bulkRequest    批量请求参数
+     * @param requestOptions 类型
+     * @param entityList     实体列表
+     * @return 成功个数
+     */
+    private int doBulkRequest(BulkRequest bulkRequest, RequestOptions requestOptions, Collection<T> entityList) {
+        int totalSuccess = 0;
+        try {
+            BulkResponse bulkResponse = client.bulk(bulkRequest, requestOptions);
+            if (bulkResponse.hasFailures()) {
+                throw ExceptionUtils.epe("bulkRequest has failures");
+            }
+            Iterator<BulkItemResponse> iterator = bulkResponse.iterator();
+            while (iterator.hasNext()) {
+                BulkItemResponse next = iterator.next();
+                if (Objects.equals(next.status(), RestStatus.CREATED)) {
+                    setId((T) entityList.toArray()[totalSuccess], next.getId());
+                    totalSuccess++;
+                }
+            }
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("bulkRequest exception, msg:%s, cause:%s", e.getMessage(), e.getCause());
+        }
+        return totalSuccess;
+    }
+
+    /**
+     * 构建更新数据请求参数
+     *
+     * @param entity  实体
+     * @param idValue id值
+     * @return 更新请求参数
+     */
+    private UpdateRequest buildUpdateRequest(T entity, String idValue) {
+        UpdateRequest updateRequest = new UpdateRequest();
+        updateRequest.id(idValue);
+        updateRequest.index(getIndexName());
+        String jsonData = buildJsonSource(entity);
+        updateRequest.doc(jsonData, XContentType.JSON);
+        return updateRequest;
+    }
+
+    /**
+     * 从es获取到的数据中解析出对应类型的数组 默认设置id
+     *
+     * @param searchResponse es返回的响应体
+     * @return 指定的返回类型数据列表
+     */
+    private List<T> parseResultList(SearchResponse searchResponse) {
+        SearchHit[] searchHits = parseSearchHit(searchResponse);
+        if (CollectionUtils.isEmpty(searchHits)) {
+            return new ArrayList<>(0);
+        }
+        return Arrays.stream(searchHits)
+                .map(hit -> {
+                    T entity = JSON.parseObject(hit.getSourceAsString(), entityClass);
+                    setId(entity, hit.getId());
+                    return entity;
+                }).collect(Collectors.toList());
+    }
+
+    /**
+     * 从es获取到的数据中解析出对应类型的数组 id根据查询/不查询条件决定是否设置
+     *
+     * @param searchResponse es返回的响应体
+     * @param wrapper        条件
+     * @return 指定的返回类型数据列表
+     */
+    private List<T> parseResultList(SearchResponse searchResponse, EsLambdaQueryWrapper<T> wrapper) {
+        SearchHit[] searchHits = parseSearchHit(searchResponse);
+        if (CollectionUtils.isEmpty(searchHits)) {
+            return new ArrayList<>(0);
+        }
+        return hitsToArray(searchHits, wrapper);
+    }
+
+    /**
+     * 将es返回结果集解析为数组
+     *
+     * @param searchHits es返回结果集
+     * @param wrapper    条件
+     * @return
+     */
+    private List<T> hitsToArray(SearchHit[] searchHits, EsLambdaQueryWrapper<T> wrapper) {
+        return Arrays.stream(searchHits)
+                .map(hit -> {
+                    T entity = JSON.parseObject(hit.getSourceAsString(), entityClass);
+                    boolean includeId = EsWrapperProcessor.includeId(getRealIdFieldName(), wrapper);
+                    if (includeId) {
+                        setId(entity, hit.getId());
+                    }
+                    return entity;
+                }).collect(Collectors.toList());
     }
 }

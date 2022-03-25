@@ -6,6 +6,7 @@ import com.xwl.esplus.core.param.EsBaseParam;
 import com.xwl.esplus.core.param.EsGeoParam;
 import com.xwl.esplus.core.toolkit.CollectionUtils;
 import com.xwl.esplus.core.toolkit.EsQueryTypeUtils;
+import com.xwl.esplus.core.toolkit.ExceptionUtils;
 import com.xwl.esplus.core.toolkit.OptionalUtils;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import org.elasticsearch.index.query.*;
@@ -45,9 +46,9 @@ public class EsWrapperProcessor {
      * @param wrapper 条件
      * @return ES查询参数
      */
-    public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) throws IOException {
+    public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) {
         // 初始化boolQueryBuilder 参数
-        BoolQueryBuilder boolQueryBuilder = initBoolQueryBuilder(wrapper.getBaseParamList());
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList());
 
         // 初始化searchSourceBuilder 参数
         SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper);
@@ -68,12 +69,12 @@ public class EsWrapperProcessor {
     }
 
     /**
-     * 初始化BoolQueryBuilder
+     * 构建BoolQueryBuilder
      *
      * @param baseParamList 基础参数列表
      * @return BoolQueryBuilder
      */
-    public static BoolQueryBuilder initBoolQueryBuilder(List<EsBaseParam> baseParamList) {
+    public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList) {
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         // 用于连接and,or条件内的多个查询条件,包装成boolQuery
         BoolQueryBuilder inner = null;
@@ -114,7 +115,7 @@ public class EsWrapperProcessor {
             }
 
             // 添加字段名称,值,查询类型等
-            if (Objects.isNull(inner)) {
+             if (Objects.isNull(inner)) {
                 addQuery(baseEsParam, boolQueryBuilder);
             } else {
                 addQuery(baseEsParam, inner);
@@ -275,7 +276,7 @@ public class EsWrapperProcessor {
      * @param geoParam Geo相关参数
      * @return GeoShapeQueryBuilder
      */
-    private static GeoShapeQueryBuilder initGeoShapeQueryBuilder(EsGeoParam geoParam) throws IOException {
+    private static GeoShapeQueryBuilder initGeoShapeQueryBuilder(EsGeoParam geoParam)  {
         // 参数校验
         boolean invalidParam = Objects.isNull(geoParam)
                 || (Objects.isNull(geoParam.getIndexedShapeId()) && Objects.isNull(geoParam.getGeometry()));
@@ -283,7 +284,12 @@ public class EsWrapperProcessor {
             return null;
         }
 
-        GeoShapeQueryBuilder builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getGeometry());
+        GeoShapeQueryBuilder builder = null;
+        try {
+            builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getGeometry());
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("initGeoShapeQueryBuilder exception: {}", e.getMessage(), e);
+        }
         Optional.ofNullable(geoParam.getShapeRelation()).ifPresent(builder::relation);
         Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
         return builder;
