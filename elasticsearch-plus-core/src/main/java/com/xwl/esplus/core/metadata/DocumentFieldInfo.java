@@ -62,15 +62,14 @@ public class DocumentFieldInfo {
     private String sqlSelect;
 
     /**
-     * 存在 TableField 注解时, 使用的构造函数
+     * 存在 EsDocumentField 注解时, 使用的构造函数
      *
      * @param dbConfig      索引配置
      * @param field         字段
      * @param column        字段名
      * @param esDocumentField 文档字段注解
      */
-    public DocumentFieldInfo(GlobalConfig.DocumentConfig dbConfig, Field field,
-                             String column, EsDocumentField esDocumentField) {
+    public DocumentFieldInfo(GlobalConfig.DocumentConfig dbConfig, Field field, String column, EsDocumentField esDocumentField) {
         this.clazz = field.getDeclaringClass();
         this.column = column;
         // 优先使用单个字段注解，否则使用全局配置
@@ -81,9 +80,8 @@ public class DocumentFieldInfo {
         }
     }
 
-
     /**
-     * 不存在 TableField 注解时, 使用的构造函数
+     * 不存在 EsDocumentField 注解时, 使用的构造函数
      *
      * @param dbConfig 索引配置
      * @param field    字段

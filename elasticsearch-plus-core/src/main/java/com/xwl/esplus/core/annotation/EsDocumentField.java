@@ -2,15 +2,22 @@ package com.xwl.esplus.core.annotation;
 
 import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * 文档字段注解
  *
  * @author xwl
  * @since 2022/3/11 18:59
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
 public @interface EsDocumentField {
     /**
-     * 是否为数据库表字段 默认 true 存在，false 不存在
+     * 是否为文档字段 默认 true 存在，false 不存在
      *
      * @return 存在
      */

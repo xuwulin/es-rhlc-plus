@@ -97,6 +97,10 @@ public class EsConstants {
      */
     public static final String IGNORE_ABOVE = "ignore_above";
     /**
+     * 日期格式
+     */
+    public static final String FORMAT = "format";
+    /**
      * 拷贝
      */
     public static final String COPY_TO = "copy_to";

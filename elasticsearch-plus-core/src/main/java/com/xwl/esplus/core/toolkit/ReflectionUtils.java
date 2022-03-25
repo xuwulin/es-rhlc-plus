@@ -43,14 +43,14 @@ public class ReflectionUtils {
     public static List<Field> doGetFieldList(Class<?> clazz) {
         if (clazz.getSuperclass() != null) {
             List<Field> fieldList = Stream.of(clazz.getDeclaredFields())
-                    /* 过滤静态属性 */
+                    // 过滤静态属性
                     .filter(field -> !Modifier.isStatic(field.getModifiers()))
-                    /* 过滤 transient关键字修饰的属性 */
+                    // 过滤 transient关键字修饰的属性
                     .filter(field -> !Modifier.isTransient(field.getModifiers()))
                     .collect(toCollection(LinkedList::new));
-            /* 处理父类字段 */
+            // 处理父类字段
             Class<?> superClass = clazz.getSuperclass();
-            /* 排除重载属性 */
+            // 排除重载属性
             return excludeOverrideSuperField(fieldList, getFieldList(superClass));
         } else {
             return Collections.emptyList();

@@ -1,7 +1,5 @@
 package com.xwl.esplus.core.param;
 
-import com.xwl.esplus.core.enums.EsAnalyzerEnum;
-
 import java.util.List;
 
 /**
@@ -29,17 +27,21 @@ public class EsIndexParam {
      */
     private Integer ignoreAbove;
     /**
+     * 时间类型格式
+     */
+    private String format;
+    /**
      * 拷贝
      */
     private String copyTo;
     /**
      * 创建索引时使用的分词器
      */
-    private EsAnalyzerEnum analyzer;
+    private String analyzer;
     /**
      * 搜索时使用的分词器
      */
-    private EsAnalyzerEnum searchAnalyzer;
+    private String searchAnalyzer;
     /**
      * 子对象，如:
      * "name":{
@@ -75,15 +77,6 @@ public class EsIndexParam {
     public EsIndexParam() {
     }
 
-    public EsIndexParam(String fieldName, String fieldType, String copyTo, EsAnalyzerEnum analyzer, EsAnalyzerEnum searchAnalyzer, List<EsIndexParam> properties) {
-        this.fieldName = fieldName;
-        this.fieldType = fieldType;
-        this.copyTo = copyTo;
-        this.analyzer = analyzer;
-        this.searchAnalyzer = searchAnalyzer;
-        this.properties = properties;
-    }
-
     public String getFieldName() {
         return fieldName;
     }
@@ -116,6 +109,14 @@ public class EsIndexParam {
         this.ignoreAbove = ignoreAbove;
     }
 
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
     public String getCopyTo() {
         return copyTo;
     }
@@ -124,19 +125,19 @@ public class EsIndexParam {
         this.copyTo = copyTo;
     }
 
-    public EsAnalyzerEnum getAnalyzer() {
+    public String getAnalyzer() {
         return analyzer;
     }
 
-    public void setAnalyzer(EsAnalyzerEnum analyzer) {
+    public void setAnalyzer(String analyzer) {
         this.analyzer = analyzer;
     }
 
-    public EsAnalyzerEnum getSearchAnalyzer() {
+    public String getSearchAnalyzer() {
         return searchAnalyzer;
     }
 
-    public void setSearchAnalyzer(EsAnalyzerEnum searchAnalyzer) {
+    public void setSearchAnalyzer(String searchAnalyzer) {
         this.searchAnalyzer = searchAnalyzer;
     }
 

@@ -55,12 +55,14 @@ public class ElasticsearchAutoConfiguration implements InitializingBean, Environ
                 .ifPresent(i -> globalConfig.setLogEnable(Boolean.valueOf(i)));
 
         GlobalConfig.DocumentConfig documentConfig = new GlobalConfig.DocumentConfig();
-        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.TABLE_PREFIX))
-                .ifPresent(documentConfig::setTablePrefix);
+        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.INDEX_PREFIX))
+                .ifPresent(documentConfig::setIndexPrefix);
         Optional.ofNullable(environment.getProperty(EsPropertiesConstants.ID_TYPE))
                 .ifPresent(i -> documentConfig.setIdType(Enum.valueOf(EsIdTypeEnum.class, i.toUpperCase(Locale.ROOT))));
         Optional.ofNullable(environment.getProperty(EsPropertiesConstants.FIELD_STRATEGY))
                 .ifPresent(f -> documentConfig.setFieldStrategy(Enum.valueOf(EsFieldStrategyEnum.class, f.toUpperCase(Locale.ROOT))));
+        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.DATA_FORMAT))
+                .ifPresent(documentConfig::setDateFormat);
         globalConfig.setDocumentConfig(documentConfig);
         // 缓存至本地
         GlobalConfigCache.setGlobalConfig(globalConfig);

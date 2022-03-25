@@ -28,19 +28,24 @@ public class GlobalConfig {
         /**
          * 索引前缀
          */
-        private String tablePrefix;
+        private String indexPrefix;
         /**
          * 字段验证策略 (默认 NOT NULL)
          */
         private EsFieldStrategyEnum fieldStrategy = EsFieldStrategyEnum.NOT_NULL;
+        /**
+         * 存储的日期格式
+         */
+        private String dateFormat;
 
         public DocumentConfig() {
         }
 
-        public DocumentConfig(EsIdTypeEnum idType, String tablePrefix, EsFieldStrategyEnum fieldStrategy) {
+        public DocumentConfig(EsIdTypeEnum idType, String indexPrefix, EsFieldStrategyEnum fieldStrategy, String dateFormat) {
             this.idType = idType;
-            this.tablePrefix = tablePrefix;
+            this.indexPrefix = indexPrefix;
             this.fieldStrategy = fieldStrategy;
+            this.dateFormat = dateFormat;
         }
 
         public EsIdTypeEnum getIdType() {
@@ -51,12 +56,12 @@ public class GlobalConfig {
             this.idType = idType;
         }
 
-        public String getTablePrefix() {
-            return tablePrefix;
+        public String getIndexPrefix() {
+            return indexPrefix;
         }
 
-        public void setTablePrefix(String tablePrefix) {
-            this.tablePrefix = tablePrefix;
+        public void setIndexPrefix(String indexPrefix) {
+            this.indexPrefix = indexPrefix;
         }
 
         public EsFieldStrategyEnum getFieldStrategy() {
@@ -65,6 +70,14 @@ public class GlobalConfig {
 
         public void setFieldStrategy(EsFieldStrategyEnum fieldStrategy) {
             this.fieldStrategy = fieldStrategy;
+        }
+
+        public String getDateFormat() {
+            return dateFormat;
+        }
+
+        public void setDateFormat(String dateFormat) {
+            this.dateFormat = dateFormat;
         }
     }
 

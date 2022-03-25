@@ -77,6 +77,7 @@ public class DynamicEnumUtil {
 
     /**
      * Add an enum instance to the enum class given as argument
+     * 动态添加枚举
      *
      * @param <T>      the type of the enum (implicit)
      * @param enumType the class of the enum to be modified
@@ -135,5 +136,6 @@ public class DynamicEnumUtil {
         addEnum(EsAnalyzerEnum.class, "CUSTOMIZE", new Class<?>[]{}, new Object[]{});
         EsAnalyzerEnum[] values2 = EsAnalyzerEnum.values();
         System.out.println();
+        System.out.println(EsAnalyzerEnum.IK_MAX_WORD.toString());
     }
 }

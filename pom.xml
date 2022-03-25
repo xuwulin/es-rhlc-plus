@@ -42,6 +42,8 @@
         <commons-codec.version>1.6</commons-codec.version>
         <fastjson.version>1.2.78</fastjson.version>
         <lombok.version>1.18.20</lombok.version>
+        <hutool.version>5.7.16</hutool.version>
+        <jackson.version>2.11.4</jackson.version>
 
         <!-- maven plugins -->
         <compiler-plugin.version>3.5.1</compiler-plugin.version>
@@ -103,6 +105,12 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

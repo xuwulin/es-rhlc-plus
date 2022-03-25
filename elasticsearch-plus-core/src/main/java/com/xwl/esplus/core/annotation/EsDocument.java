@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
-public @interface EsIndexName {
+public @interface EsDocument {
     /**
      * 实体对应的索引名
      *
@@ -22,11 +22,9 @@ public @interface EsIndexName {
     String value() default "";
 
     /**
-     * 是否保持使用全局的 tablePrefix 的值
-     * 只生效于 既设置了全局的 tablePrefix 也设置了上面 value 的值
-     * 如果是 false , 全局的 tablePrefix 不生效
+     * 是否保持索引使用全局的 index-prefix 的值
      *
-     * @return 默认为false
+     * @return 默认为true
      */
-    boolean keepGlobalPrefix() default false;
+    boolean keepGlobalIndexPrefix() default true;
 }

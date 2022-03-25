@@ -2,7 +2,7 @@ package com.xwl.esplus.core.toolkit;
 
 import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.annotation.EsDocumentId;
-import com.xwl.esplus.core.annotation.EsIndexName;
+import com.xwl.esplus.core.annotation.EsDocument;
 import com.xwl.esplus.core.cache.GlobalConfigCache;
 import com.xwl.esplus.core.metadata.DocumentFieldInfo;
 import com.xwl.esplus.core.metadata.DocumentInfo;
@@ -46,13 +46,15 @@ public class DocumentInfoUtils {
         if (clazz == null) {
             return null;
         }
+        // ClassUtils.getUserClass(clazz)：获取用户定义的本来的类型，大部分情况下就是类型本身，主要针对cglib做了额外的判断，获取cglib代理之后的父类；
         DocumentInfo documentInfo = DOCUMENT_INFO_CACHE.get(ClassUtils.getUserClass(clazz));
         if (null != documentInfo) {
             return documentInfo;
         }
         // 尝试获取父类缓存
         Class currentClass = clazz;
-        while (null == documentInfo && Object.class != currentClass) {
+        while (documentInfo == null && Object.class != currentClass) {
+            // 获取父类
             currentClass = currentClass.getSuperclass();
             documentInfo = DOCUMENT_INFO_CACHE.get(ClassUtils.getUserClass(currentClass));
         }
@@ -87,11 +89,11 @@ public class DocumentInfoUtils {
             return documentInfo;
         }
 
-        // 没有获取到缓存信息,则初始化
+        // 缓存中没有获取到DocumentInfo，则初始化
         documentInfo = new DocumentInfo();
-        // 初始化表名(索引名)相关
+        // 初始化索引名称
         initIndexName(clazz, globalConfig, documentInfo);
-        // 初始化字段相关
+        // 初始化文档字段
         initDocumentFields(clazz, globalConfig, documentInfo);
 
         // 放入缓存
@@ -105,25 +107,26 @@ public class DocumentInfoUtils {
      *
      * @param clazz        类
      * @param globalConfig 全局配置
-     * @param entityInfo   实体信息
+     * @param documentInfo   实体信息
      */
-    public static void initDocumentFields(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo entityInfo) {
-        // 数据库全局配置
+    public static void initDocumentFields(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo documentInfo) {
+        // 文档全局配置
         GlobalConfig.DocumentConfig documentConfig = globalConfig.getDocumentConfig();
+        // 获取实体类的所有字段（排除标注@EsDocumentField(exist = false)注解的字段）
         List<Field> list = getAllFields(clazz);
         // 标记是否读取到主键
         boolean isReadPK = false;
         // 是否存在 @EsDocumentId 注解
-        boolean existTableId = isExistDocumentId(list);
+        boolean existDocumentId = isExistDocumentId(list);
 
         List<DocumentFieldInfo> fieldList = new ArrayList<>();
         for (Field field : list) {
             // 主键ID 初始化
             if (!isReadPK) {
-                if (existTableId) {
-                    isReadPK = initDocumentIdWithAnnotation(documentConfig, entityInfo, field, clazz);
+                if (existDocumentId) {
+                    isReadPK = initDocumentIdWithAnnotation(documentConfig, documentInfo, field, clazz);
                 } else {
-                    isReadPK = initDocumentIdWithoutAnnotation(documentConfig, entityInfo, field, clazz);
+                    isReadPK = initDocumentIdWithoutAnnotation(documentConfig, documentInfo, field, clazz);
                 }
                 if (isReadPK) {
                     continue;
@@ -140,8 +143,7 @@ public class DocumentInfoUtils {
         }
 
         // 字段列表
-        entityInfo.setFieldList(fieldList);
-
+        documentInfo.setFieldList(fieldList);
     }
 
     /**
@@ -170,13 +172,15 @@ public class DocumentInfoUtils {
      * 文档主键属性初始化
      *
      * @param dbConfig     索引配置
-     * @param documentInfo 实体信息
+     * @param documentInfo 文档信息
      * @param field        字段
      * @param clazz        类
      * @return 布尔值
      */
-    private static boolean initDocumentIdWithAnnotation(GlobalConfig.DocumentConfig dbConfig, DocumentInfo documentInfo,
-                                                        Field field, Class<?> clazz) {
+    private static boolean initDocumentIdWithAnnotation(GlobalConfig.DocumentConfig dbConfig,
+                                                        DocumentInfo documentInfo,
+                                                        Field field,
+                                                        Class<?> clazz) {
         EsDocumentId esDocumentId = field.getAnnotation(EsDocumentId.class);
         if (esDocumentId != null) {
             if (StringUtils.isEmpty(documentInfo.getKeyColumn())) {
@@ -262,9 +266,12 @@ public class DocumentInfoUtils {
         if (CollectionUtils.isNotEmpty(fieldList)) {
             return fieldList.stream()
                     .filter(i -> {
-                        // 过滤注解非表字段属性
-                        EsDocumentField tableField = i.getAnnotation(EsDocumentField.class);
-                        return (tableField == null || tableField.exist());
+                        // 过滤注解非文档字段属性
+                        EsDocumentField esDocumentField = i.getAnnotation(EsDocumentField.class);
+                        if (esDocumentField != null && !esDocumentField.exist()) {
+                            return false;
+                        }
+                        return true;
                     }).collect(toList());
         }
         return fieldList;
@@ -275,36 +282,29 @@ public class DocumentInfoUtils {
      *
      * @param clazz        类
      * @param globalConfig 全局配置
-     * @param entityInfo   实体信息
+     * @param documentInfo   实体信息
      */
-    private static void initIndexName(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo entityInfo) {
+    private static void initIndexName(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo documentInfo) {
         // 数据库全局配置
         GlobalConfig.DocumentConfig documentConfig = globalConfig.getDocumentConfig();
-        EsIndexName index = clazz.getAnnotation(EsIndexName.class);
-        String tableName = clazz.getSimpleName().toLowerCase(Locale.ROOT);
-        String tablePrefix = documentConfig.getTablePrefix();
+        // 获取类上的注解@EsDocument
+        EsDocument esDocument = clazz.getAnnotation(EsDocument.class);
+        // 类名驼峰转下划线
+        String simpleName = StringUtils.camelToUnderline(clazz.getSimpleName());
+        // 索引前缀
+        String indexPrefix = documentConfig.getIndexPrefix();
+        // 索引名称
+        String indexName = simpleName;
 
-        boolean tablePrefixEffect = true;
-        String indexName;
-        if (Objects.isNull(index)) {
-            // 无注解, 直接使用类名
-            indexName = tableName;
-        } else {
-            // 有注解,看注解中是否有指定
-            if (StringUtils.isNotBlank(index.value())) {
-                indexName = index.value();
-                if (StringUtils.isNotBlank(tablePrefix) && !index.keepGlobalPrefix()) {
-                    tablePrefixEffect = false;
-                }
-            } else {
-                indexName = tableName;
+        if (Objects.nonNull(esDocument)) {
+            // 获取注解中设置的索引名
+            if (StringUtils.isNotBlank(esDocument.value())) {
+                indexName = esDocument.value();
+            }
+            if (esDocument.keepGlobalIndexPrefix() && StringUtils.isNotBlank(indexPrefix)) {
+                indexName = indexPrefix + indexName;
             }
         }
-
-        String targetIndexName = indexName;
-        if (StringUtils.isNotBlank(tablePrefix) && tablePrefixEffect) {
-            targetIndexName = tablePrefix + targetIndexName;
-        }
-        entityInfo.setIndexName(targetIndexName);
+        documentInfo.setIndexName(indexName);
     }
 }

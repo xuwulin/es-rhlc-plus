@@ -1,10 +1,15 @@
 package com.xwl.esplus.example.index;
-import com.xwl.esplus.example.document.TestDocument;
-import com.xwl.esplus.example.mapper.TestDocumentBaseMapper;
+
+import com.xwl.esplus.example.document.UserDocument;
+import com.xwl.esplus.example.document.UserDocument.FullName;
+import com.xwl.esplus.example.mapper.UserDocumentMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 
 /**
  * @author xwl
@@ -13,16 +18,25 @@ import javax.annotation.Resource;
 @SpringBootTest
 public class InsertTest {
     @Resource
-    private TestDocumentBaseMapper testDocumentMapper;
+    private UserDocumentMapper userDocumentMapper;
 
     @Test
-    public void test() {
-        TestDocument testDocument = new TestDocument();
-        testDocument.setTitle("测试es-plus");
-        testDocument.setContent("一个是阆苑仙葩，一个是美玉无瑕");
-        testDocument.setAuthor("曹雪芹");
-        testDocument.setNotExistsField("高鹗");
-        testDocument.setLocation("30.643077,104.023769");
-        testDocumentMapper.insert(testDocument);
+    public void test() throws ParseException {
+        UserDocument userDocument = new UserDocument();
+//        userDocument.setId("1");
+        userDocument.setNickname("张三疯");
+        userDocument.setFullName(new FullName().setFirstName("张").setLastName("三疯"));
+        userDocument.setIdNumber("1001");
+        userDocument.setAge(100);
+        userDocument.setGender("男");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        userDocument.setBirthdate(formatter.parse("1922-03-25 00:00:00"));
+        userDocument.setCompanyName("四川云恒数联科技有限公司");
+        userDocument.setCompanyAddress("成都市武侯区天府二街151号");
+        userDocument.setCompanyLocation("30.584736,104.074091");
+        userDocument.setRemark("软件开发");
+        userDocument.setCreatedTime(LocalDateTime.now());
+        userDocumentMapper.insert(userDocument);
     }
+
 }

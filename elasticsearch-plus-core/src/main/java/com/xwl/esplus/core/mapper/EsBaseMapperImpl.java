@@ -2,10 +2,14 @@ package com.xwl.esplus.core.mapper;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson.serializer.SerializeConfig;
+import com.alibaba.fastjson.serializer.SerializeFilter;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
 import com.xwl.esplus.core.cache.BaseCache;
 import com.xwl.esplus.core.cache.GlobalConfigCache;
+import com.xwl.esplus.core.config.GlobalConfig;
 import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
@@ -301,38 +305,43 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         Map<String, Object> mapping = new HashMap<>(1);
         Map<String, Object> properties = new HashMap<>(indexParamList.size());
         indexParamList.forEach(indexParam -> {
-            Map<String, Object> info = new HashMap<>();
+            Map<String, Object> fieldInfo = new HashMap<>();
             // 设置字段类型
             Optional.ofNullable(indexParam.getFieldType())
-                    .ifPresent(fieldType -> info.put(EsConstants.TYPE, fieldType));
+                    .ifPresent(fieldType -> fieldInfo.put(EsConstants.TYPE, fieldType));
             // 设置是否索引该字段，默认true
             Optional.ofNullable(indexParam.getIndex())
-                    .ifPresent(index -> info.put(EsConstants.INDEX, index));
+                    .ifPresent(index -> fieldInfo.put(EsConstants.INDEX, index));
             // 设置ignoreAbove，只有keyword类型才有此属性
-            if (EsFieldTypeEnum.KEYWORD.getType().equals(indexParam.getFieldType())) {
+            if (StringUtils.equals(indexParam.getFieldType(), EsFieldTypeEnum.KEYWORD.getType())) {
                 Optional.ofNullable(indexParam.getIgnoreAbove())
-                        .ifPresent(ignoreAbove -> info.put(EsConstants.IGNORE_ABOVE, ignoreAbove));
+                        .ifPresent(ignoreAbove -> fieldInfo.put(EsConstants.IGNORE_ABOVE, ignoreAbove));
+            }
+            // 设置format
+            if (StringUtils.equals(indexParam.getFieldType(), EsFieldTypeEnum.DATE.getType())) {
+                Optional.ofNullable(indexParam.getFormat())
+                        .ifPresent(format -> fieldInfo.put(EsConstants.FORMAT, format));
             }
             // 设置copy_to
             Optional.ofNullable(indexParam.getCopyTo())
-                    .ifPresent(copyTo -> info.put(EsConstants.COPY_TO, copyTo));
-            // 设置分词器
-            if (EsFieldTypeEnum.TEXT.getType().equals(indexParam.getFieldType())) {
+                    .ifPresent(copyTo -> fieldInfo.put(EsConstants.COPY_TO, copyTo));
+            // 设置分词器，只有text类型才有此属性
+            if (StringUtils.equals(indexParam.getFieldType(), EsFieldTypeEnum.TEXT.getType())) {
                 // 创建索引时的分词器
                 Optional.ofNullable(indexParam.getAnalyzer())
-                        .ifPresent(analyzer -> info.put(EsConstants.ANALYZER, analyzer.toString().toLowerCase()));
+                        .ifPresent(analyzer -> fieldInfo.put(EsConstants.ANALYZER, analyzer));
                 // 搜索时的分词器
                 Optional.ofNullable(indexParam.getSearchAnalyzer())
-                        .ifPresent(searchAnalyzer -> info.put(EsConstants.SEARCH_ANALYZER, searchAnalyzer.toString().toLowerCase()));
+                        .ifPresent(searchAnalyzer -> fieldInfo.put(EsConstants.SEARCH_ANALYZER, searchAnalyzer));
             }
             // 子字段properties
             Optional.ofNullable(indexParam.getProperties())
-                    .ifPresent(property -> info.put(EsConstants.PROPERTIES, buildMapping(property).get(EsConstants.PROPERTIES)));
+                    .ifPresent(property -> fieldInfo.put(EsConstants.PROPERTIES, buildMapping(property).get(EsConstants.PROPERTIES)));
             // 子属性fields
             Optional.ofNullable(indexParam.getFields())
-                    .ifPresent(field -> info.put(EsConstants.FIELDS, buildMapping(field).get(EsConstants.PROPERTIES)));
+                    .ifPresent(field -> fieldInfo.put(EsConstants.FIELDS, buildMapping(field).get(EsConstants.PROPERTIES)));
 
-            properties.put(indexParam.getFieldName(), info);
+            properties.put(indexParam.getFieldName(), fieldInfo);
         });
         mapping.put(EsConstants.PROPERTIES, properties);
         return mapping;
@@ -355,22 +364,20 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      */
     private IndexRequest buildIndexRequest(T entity) {
         IndexRequest indexRequest = new IndexRequest();
-
-        // id预处理,除下述情况,其它情况使用es默认的id
-        DocumentInfo entityInfo = DocumentInfoUtils.getDocumentInfo(entity.getClass());
-        if (!StringUtils.isEmpty(entityInfo.getId())) {
-            if (EsIdTypeEnum.UUID.equals(entityInfo.getIdType())) {
+        // id预处理，除下述情况，其它情况使用es默认的id
+        DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entity.getClass());
+        if (StringUtils.isNotBlank(documentInfo.getId())) {
+            if (EsIdTypeEnum.UUID.equals(documentInfo.getIdType())) {
                 indexRequest.id(UUID.randomUUID().toString());
-            } else if (EsIdTypeEnum.CUSTOMIZE.equals(entityInfo.getIdType())) {
+            } else if (EsIdTypeEnum.CUSTOMIZE.equals(documentInfo.getIdType())) {
                 indexRequest.id(getIdValue(entityClass, entity));
             }
         }
 
         // 构建插入的json格式数据
         String jsonData = buildJsonIndexSource(entity);
-
-        indexRequest.index(entityInfo.getIndexName());
-        indexRequest.source(jsonData, XContentType.JSON);
+        indexRequest.index(documentInfo.getIndexName())
+                .source(jsonData, XContentType.JSON);
         return indexRequest;
     }
 
@@ -386,6 +393,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
             Field keyField = Optional.ofNullable(documentInfo.getKeyField())
                     .orElseThrow(() -> ExceptionUtils.epe("the entity id field not found"));
+            // 获取id值
             Object value = keyField.get(entity);
             return Optional.ofNullable(value)
                     .map(Object::toString)
@@ -438,8 +446,36 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             }
         });
 
+        String jsonString;
         SimplePropertyPreFilter simplePropertyPreFilter = getSimplePropertyPreFilter(entity.getClass(), goodColumn);
-        return JSON.toJSONString(entity, simplePropertyPreFilter, SerializerFeature.WriteMapNullValue);
+        GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
+        String dateFormat = globalConfig.getDocumentConfig().getDateFormat();
+        boolean globalDateFormatEffect = false;
+        boolean annotationFormatEffect = false;
+        if (StringUtils.isNotBlank(dateFormat)) {
+            globalDateFormatEffect = true;
+        }
+        // 注解 > 配置
+        // 判断当前类中是否使用了@JSONField注解
+        Field[] fields = entityClass.getDeclaredFields();
+        for (Field field : fields) {
+            JSONField jsonField = field.getAnnotation(JSONField.class);
+            if (jsonField != null) {
+                annotationFormatEffect = true;
+                break;
+            }
+        }
+        if (annotationFormatEffect) {
+            // 使用@JSONField注解配置的日期格式
+            jsonString = JSON.toJSONString(entity, simplePropertyPreFilter, SerializerFeature.WriteDateUseDateFormat);
+        } else if (globalDateFormatEffect) {
+            // 使用全局日期格式
+            jsonString = JSON.toJSONString(entity, SerializeConfig.globalInstance, new SerializeFilter[]{simplePropertyPreFilter}, dateFormat, JSON.DEFAULT_GENERATE_FEATURE, SerializerFeature.WriteDateUseDateFormat);
+        } else {
+            // 不格式化日期
+            jsonString = JSON.toJSONString(entity, simplePropertyPreFilter, SerializerFeature.WriteMapNullValue);
+        }
+        return jsonString;
     }
 
     /**
@@ -465,7 +501,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         try {
             invokeMethod.invoke(entity, id);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw ExceptionUtils.epe("setId Exception", e);
         }
     }
 

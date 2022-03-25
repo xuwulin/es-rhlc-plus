@@ -33,7 +33,7 @@ public class EsPropertiesConstants {
     /**
      * es索引前缀
      */
-    public static final String TABLE_PREFIX = "es-plus.global-config.document-config.table-prefix";
+    public static final String INDEX_PREFIX = "es-plus.global-config.document-config.index-prefix";
     /**
      * es id类型
      */
@@ -42,4 +42,8 @@ public class EsPropertiesConstants {
      * es 字段策略
      */
     public static final String FIELD_STRATEGY = "es-plus.global-config.document-config.field-strategy";
+    /**
+     * es 全局日期格式
+     */
+    public static final String DATA_FORMAT = "es-plus.global-config.document-config.data-format";
 }

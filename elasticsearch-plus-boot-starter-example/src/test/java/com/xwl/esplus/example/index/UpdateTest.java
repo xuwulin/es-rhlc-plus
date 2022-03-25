@@ -2,8 +2,8 @@ package com.xwl.esplus.example.index;
 
 import com.xwl.esplus.core.toolkit.Wrappers;
 import com.xwl.esplus.core.wrapper.update.EsLambdaUpdateWrapper;
-import com.xwl.esplus.example.document.TestDocument;
-import com.xwl.esplus.example.mapper.TestDocumentBaseMapper;
+import com.xwl.esplus.example.document.UserDocument;
+import com.xwl.esplus.example.mapper.UserDocumentMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -16,14 +16,14 @@ import javax.annotation.Resource;
 @SpringBootTest
 public class UpdateTest {
     @Resource
-    private TestDocumentBaseMapper testDocumentMapper;
+    private UserDocumentMapper userDocumentMapper;
 
     @Test
     public void test() {
-        TestDocument testDocument = new TestDocument();
-        testDocument.setContent("滴不尽相思血泪抛红豆");
-        EsLambdaUpdateWrapper<TestDocument> wrapper = Wrappers.<TestDocument>lambdaUpdate()
-                .eq(TestDocument::getAuthor, "曹雪芹");
-        testDocumentMapper.update(testDocument, wrapper);
+        UserDocument userDocument = new UserDocument();
+        userDocument.setNickname("雪芹");
+        EsLambdaUpdateWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaUpdate()
+                .eq(UserDocument::getNickname, "曹雪芹");
+        userDocumentMapper.update(userDocument, wrapper);
     }
 }

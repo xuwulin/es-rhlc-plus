@@ -1,10 +1,10 @@
 package com.xwl.esplus.core.wrapper.index;
 
+import com.alibaba.fastjson.JSONObject;
 import com.xwl.esplus.core.enums.EsAnalyzerEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
 import com.xwl.esplus.core.param.EsIndexParam;
 import com.xwl.esplus.core.param.EsIndexSettingParam;
-import com.xwl.esplus.core.toolkit.DynamicEnumUtil;
 import com.xwl.esplus.core.toolkit.ExceptionUtils;
 import com.xwl.esplus.core.toolkit.FieldUtils;
 import com.xwl.esplus.core.toolkit.StringUtils;
@@ -56,7 +56,6 @@ public class EsLambdaIndexWrapper<T>
      * 此包装类本身
      */
     protected final EsLambdaIndexWrapper<T> typedThis = this;
-
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
      */
@@ -123,6 +122,32 @@ public class EsLambdaIndexWrapper<T>
     }
 
     @Override
+    public EsLambdaIndexWrapper<T> settings(EsIndexSettingParam settingParam) {
+        this.setting = settingParam;
+        return typedThis;
+    }
+
+    @Override
+    public EsLambdaIndexWrapper<T> settings(Integer shards, Integer replicas) {
+        EsIndexSettingParam esIndexSettingParam = new EsIndexSettingParam();
+        esIndexSettingParam.setNumberOfShards(shards);
+        esIndexSettingParam.setNumberOfReplicas(replicas);
+        this.setting = esIndexSettingParam;
+        return typedThis;
+    }
+
+    @Override
+    public EsLambdaIndexWrapper<T> settings(Integer shards, Integer replicas, String analysis) {
+        EsIndexSettingParam esIndexSettingParam = new EsIndexSettingParam();
+        esIndexSettingParam.setNumberOfShards(shards);
+        esIndexSettingParam.setNumberOfReplicas(replicas);
+        Map map = JSONObject.parseObject(analysis, Map.class);
+        esIndexSettingParam.setAnalysis(map);
+        this.setting = esIndexSettingParam;
+        return typedThis;
+    }
+
+    @Override
     public EsLambdaIndexWrapper<T> settings(Integer shards, Integer replicas, Map<String, Object> analysis) {
         EsIndexSettingParam esIndexSettingParam = new EsIndexSettingParam();
         esIndexSettingParam.setNumberOfShards(shards);
@@ -133,8 +158,13 @@ public class EsLambdaIndexWrapper<T>
     }
 
     @Override
-    public EsLambdaIndexWrapper<T> settings(EsIndexSettingParam settingParam) {
-        this.setting = settingParam;
+    public EsLambdaIndexWrapper<T> mapping(SFunction<T, ?> column, String dateFormat) {
+        String fieldName = FieldUtils.getFieldName(column);
+        EsIndexParam esIndexParam = new EsIndexParam();
+        esIndexParam.setFieldName(fieldName);
+        esIndexParam.setFieldType(EsFieldTypeEnum.DATE.getType());
+        esIndexParam.setFormat(dateFormat);
+        esIndexParamList.add(esIndexParam);
         return typedThis;
     }
 
@@ -146,9 +176,12 @@ public class EsLambdaIndexWrapper<T>
         String fieldName = FieldUtils.getFieldName(column);
         EsIndexParam esIndexParam = new EsIndexParam();
         esIndexParam.setFieldName(fieldName);
-        esIndexParam.setFieldType(fieldType.getType());
-        esIndexParam.setAnalyzer(analyzer);
-        esIndexParam.setSearchAnalyzer(searchAnalyzer);
+        Optional.ofNullable(fieldType)
+                .ifPresent(type -> esIndexParam.setFieldType(type.getType()));
+        Optional.ofNullable(analyzer)
+                .ifPresent(analyze -> esIndexParam.setAnalyzer(analyze.getType()));
+        Optional.ofNullable(searchAnalyzer)
+                .ifPresent(search -> esIndexParam.setSearchAnalyzer(search.getType()));
         esIndexParamList.add(esIndexParam);
         return typedThis;
     }
@@ -160,7 +193,8 @@ public class EsLambdaIndexWrapper<T>
         String fieldName = FieldUtils.getFieldName(column);
         EsIndexParam esIndexParam = new EsIndexParam();
         esIndexParam.setFieldName(fieldName);
-        esIndexParam.setFieldType(fieldType.getType());
+        Optional.ofNullable(fieldType)
+                .ifPresent(type -> esIndexParam.setFieldType(type.getType()));
         esIndexParam.setIndex(index);
         esIndexParamList.add(esIndexParam);
         return typedThis;
@@ -174,7 +208,8 @@ public class EsLambdaIndexWrapper<T>
         String fieldName = FieldUtils.getFieldName(column);
         EsIndexParam esIndexParam = new EsIndexParam();
         esIndexParam.setFieldName(fieldName);
-        esIndexParam.setFieldType(fieldType.getType());
+        Optional.ofNullable(fieldType)
+                .ifPresent(type -> esIndexParam.setFieldType(type.getType()));
         esIndexParam.setIndex(index);
         esIndexParam.setIgnoreAbove(ignoreAbove);
         esIndexParamList.add(esIndexParam);
@@ -190,10 +225,13 @@ public class EsLambdaIndexWrapper<T>
         String fieldName = FieldUtils.getFieldName(column);
         EsIndexParam esIndexParam = new EsIndexParam();
         esIndexParam.setFieldName(fieldName);
-        esIndexParam.setFieldType(fieldType.getType());
+        Optional.ofNullable(fieldType)
+                .ifPresent(type -> esIndexParam.setFieldType(type.getType()));
         esIndexParam.setCopyTo(FieldUtils.getFieldName(copyTo));
-        esIndexParam.setAnalyzer(analyzer);
-        esIndexParam.setSearchAnalyzer(searchAnalyzer);
+        Optional.ofNullable(analyzer)
+                .ifPresent(analyze -> esIndexParam.setAnalyzer(analyze.getType()));
+        Optional.ofNullable(searchAnalyzer)
+                .ifPresent(search -> esIndexParam.setSearchAnalyzer(search.getType()));
         esIndexParamList.add(esIndexParam);
         return typedThis;
     }
@@ -210,13 +248,16 @@ public class EsLambdaIndexWrapper<T>
         String fieldName = FieldUtils.getFieldName(column);
         EsIndexParam esIndexParam = new EsIndexParam();
         esIndexParam.setFieldName(fieldName);
-        esIndexParam.setFieldType(fieldType.getType());
+        Optional.ofNullable(fieldType)
+                .ifPresent(type -> esIndexParam.setFieldType(type.getType()));
         esIndexParam.setIndex(index);
         esIndexParam.setIgnoreAbove(ignoreAbove);
         Optional.ofNullable(copyTo)
                 .ifPresent(copy -> esIndexParam.setCopyTo(FieldUtils.getFieldName(copy)));
-        esIndexParam.setAnalyzer(analyzer);
-        esIndexParam.setSearchAnalyzer(searchAnalyzer);
+        Optional.ofNullable(analyzer)
+                .ifPresent(analyze -> esIndexParam.setAnalyzer(analyze.getType()));
+        Optional.ofNullable(searchAnalyzer)
+                .ifPresent(search -> esIndexParam.setSearchAnalyzer(search.getType()));
         esIndexParam.setFields(fields);
         esIndexParamList.add(esIndexParam);
         return typedThis;
@@ -234,14 +275,37 @@ public class EsLambdaIndexWrapper<T>
         String fieldName = FieldUtils.getFieldName(column);
         EsIndexParam esIndexParam = new EsIndexParam();
         esIndexParam.setFieldName(fieldName);
-        esIndexParam.setFieldType(fieldType.getType());
+        Optional.ofNullable(fieldType)
+                .ifPresent(type -> esIndexParam.setFieldType(type.getType()));
         esIndexParam.setIndex(index);
         esIndexParam.setIgnoreAbove(ignoreAbove);
         Optional.ofNullable(copyTo)
                 .ifPresent(copy -> esIndexParam.setCopyTo(FieldUtils.getFieldName(copy)));
-        // 动态生成EsAnalyzerEnum枚举项
-        Optional.ofNullable(analyzer)
-                .ifPresent(analyze -> esIndexParam.setAnalyzer(DynamicEnumUtil.addEnum(EsAnalyzerEnum.class, analyze.toUpperCase(), new Class<?>[]{}, new Object[]{})));
+        esIndexParam.setAnalyzer(analyzer);
+        Optional.ofNullable(searchAnalyzer)
+                .ifPresent(search -> esIndexParam.setSearchAnalyzer(search.getType()));
+        esIndexParam.setFields(fields);
+        esIndexParamList.add(esIndexParam);
+        return typedThis;
+    }
+
+    @Override
+    public EsLambdaIndexWrapper<T> mapping(String column,
+                                           EsFieldTypeEnum fieldType,
+                                           boolean index,
+                                           Integer ignoreAbove,
+                                           String copyTo,
+                                           String analyzer,
+                                           String searchAnalyzer,
+                                           List<EsIndexParam> fields) {
+        EsIndexParam esIndexParam = new EsIndexParam();
+        esIndexParam.setFieldName(column);
+        Optional.ofNullable(fieldType)
+                .ifPresent(type -> esIndexParam.setFieldType(type.getType()));
+        esIndexParam.setIndex(index);
+        esIndexParam.setIgnoreAbove(ignoreAbove);
+        esIndexParam.setCopyTo(copyTo);
+        esIndexParam.setAnalyzer(analyzer);
         esIndexParam.setSearchAnalyzer(searchAnalyzer);
         esIndexParam.setFields(fields);
         esIndexParamList.add(esIndexParam);
