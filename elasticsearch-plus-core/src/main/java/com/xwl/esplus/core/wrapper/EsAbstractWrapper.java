@@ -1,6 +1,5 @@
 package com.xwl.esplus.core.wrapper;
 
-import com.xwl.esplus.core.wrapper.condition.*;
 import com.xwl.esplus.core.constant.EsAggregationTypeEnum;
 import com.xwl.esplus.core.enums.EsAttachTypeEnum;
 import com.xwl.esplus.core.enums.EsBaseParamTypeEnum;
@@ -8,12 +7,18 @@ import com.xwl.esplus.core.enums.EsQueryTypeEnum;
 import com.xwl.esplus.core.param.*;
 import com.xwl.esplus.core.toolkit.CollectionUtils;
 import com.xwl.esplus.core.toolkit.FieldUtils;
+import com.xwl.esplus.core.wrapper.condition.*;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.geometry.Geometry;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.util.Assert;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,6 +63,18 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * geo相关参数
      */
     protected EsGeoParam geoParam;
+    /**
+     * 用户自定义的排序规则
+     */
+    protected List<SortBuilder<?>> sortBuilders;
+    /**
+     * 得分排序规则
+     */
+    protected SortOrder sortOrder;
+    /**
+     * 排序参数列表
+     */
+    protected List<EsOrderByParam> orderByParams;
     /**
      * 实体对象
      */
@@ -116,6 +133,18 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
 
     public EsGeoParam getGeoParam() {
         return geoParam;
+    }
+
+    public List<SortBuilder<?>> getSortBuilders() {
+        return sortBuilders;
+    }
+
+    public SortOrder getSortOrder() {
+        return sortOrder;
+    }
+
+    public List<EsOrderByParam> getOrderByParams() {
+        return orderByParams;
     }
 
     public T getEntity() {
@@ -250,6 +279,14 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     }
 
     @Override
+    public Children orderBy(boolean condition, List<EsOrderByParam> orderByParams) {
+        if (CollectionUtils.isNotEmpty(orderByParams)) {
+            this.orderByParams = orderByParams;
+        }
+        return typedThis;
+    }
+
+    @Override
     public Children in(boolean condition, R column, Collection<?> coll, Float boost) {
         if (CollectionUtils.isEmpty(coll)) {
             return typedThis;
@@ -276,70 +313,130 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     }
 
     @Override
-    public Children groupBy(boolean condition, R... columns) {
+    public Children groupBy(boolean condition, Integer size, R... columns) {
         if (CollectionUtils.isEmpty(columns)) {
             return typedThis;
         }
         Arrays.stream(columns).forEach(column -> {
             String returnName = FieldUtils.getFieldName(column);
-            doIt(condition, EsAggregationTypeEnum.TERMS, returnName, column);
+            doIt(condition, EsAggregationTypeEnum.TERMS, returnName, size, column);
         });
         return typedThis;
     }
 
     @Override
-    public Children termsAggregation(boolean condition, String returnName, R column) {
-        return doIt(condition, EsAggregationTypeEnum.TERMS, returnName, column);
+    public Children termsAggregation(boolean condition, String returnName, Integer size, R column) {
+        return doIt(condition, EsAggregationTypeEnum.TERMS, returnName, size, column);
+    }
+
+    @Override
+    public Children dateHistogram(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
+        return doIt(condition, returnName, interval, format, minDocCount, extendedBounds, timeZone, column);
     }
 
     @Override
     public Children avg(boolean condition, String returnName, R column) {
-        return doIt(condition, EsAggregationTypeEnum.AVG, returnName, column);
+        return doIt(condition, EsAggregationTypeEnum.AVG, returnName, null, column);
     }
 
     @Override
     public Children min(boolean condition, String returnName, R column) {
-        return doIt(condition, EsAggregationTypeEnum.MIN, returnName, column);
+        return doIt(condition, EsAggregationTypeEnum.MIN, returnName, null, column);
     }
 
     @Override
     public Children max(boolean condition, String returnName, R column) {
-        return doIt(condition, EsAggregationTypeEnum.MAX, returnName, column);
+        return doIt(condition, EsAggregationTypeEnum.MAX, returnName, null, column);
     }
 
     @Override
     public Children sum(boolean condition, String returnName, R column) {
-        return doIt(condition, EsAggregationTypeEnum.SUM, returnName, column);
+        return doIt(condition, EsAggregationTypeEnum.SUM, returnName, null, column);
+    }
+
+    @Override
+    public Children stats(boolean condition, String returnName, R column) {
+        return doIt(condition, EsAggregationTypeEnum.STATS, returnName, null, column);
     }
 
     @Override
     public Children geoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, boost, true);
+    }
+
+    @Override
+    public Children notInGeoBoundingBox(boolean condition, R column, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), topLeft, bottomRight, boost, false);
     }
 
     @Override
     public Children geoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost, true);
+    }
+
+    @Override
+    public Children notInGeoDistance(boolean condition, R column, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), distance, distanceUnit, centralGeoPoint, boost, false);
     }
 
     @Override
     public Children geoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost, true);
+    }
+
+    @Override
+    public Children notInGeoDistance(boolean condition, R column, String distance, GeoPoint centralGeoPoint, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), distance, centralGeoPoint, boost, false);
     }
 
     @Override
     public Children geoPolygon(boolean condition, R column, List<GeoPoint> geoPoints, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), geoPoints, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), geoPoints, boost, true);
+    }
+
+    @Override
+    public Children notInGeoPolygon(boolean condition, R column, Collection<GeoPoint> geoPoints, Float boost) {
+        List<GeoPoint> geoPointList = new ArrayList<>(geoPoints);
+        return doIt(condition, FieldUtils.getFieldName(column), geoPointList, boost, false);
     }
 
     @Override
     public Children geoShape(boolean condition, R column, String indexedShapeId, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), indexedShapeId, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), indexedShapeId, boost, true);
+    }
+
+    @Override
+    public Children notInGeoShape(boolean condition, R column, String indexedShapeId, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), indexedShapeId, boost, false);
     }
 
     @Override
     public Children geoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
-        return doIt(condition, FieldUtils.getFieldName(column), geometry, shapeRelation, boost);
+        return doIt(condition, FieldUtils.getFieldName(column), geometry, shapeRelation, boost, true);
+    }
+
+    @Override
+    public Children notInGeoShape(boolean condition, R column, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+        return doIt(condition, FieldUtils.getFieldName(column), geometry, shapeRelation, boost, false);
+    }
+
+    @Override
+    public Children sort(boolean condition, List<SortBuilder<?>> sortBuilders) {
+        if (CollectionUtils.isEmpty(sortBuilders)) {
+            return typedThis;
+        }
+        if (condition) {
+            this.sortBuilders = sortBuilders;
+        }
+        return typedThis;
+    }
+
+    @Override
+    public Children sortByScore(boolean condition, SortOrder sortOrder) {
+        if (condition) {
+            this.sortOrder = sortOrder;
+        }
+        return typedThis;
     }
 
     /**
@@ -355,15 +452,46 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param condition           条件
      * @param aggregationTypeEnum 聚合类型
      * @param returnName          返回的聚合字段名称
+     * @param size                返回的聚合字段大小
      * @param column              列
      * @return 泛型
      */
-    private Children doIt(boolean condition, EsAggregationTypeEnum aggregationTypeEnum, String returnName, R column) {
+    private Children doIt(boolean condition, EsAggregationTypeEnum aggregationTypeEnum, String returnName, Integer size, R column) {
         if (condition) {
             EsAggregationParam aggregationParam = new EsAggregationParam();
             aggregationParam.setName(returnName);
             aggregationParam.setField(FieldUtils.getFieldName(column));
+            aggregationParam.setSize(size);
             aggregationParam.setAggregationType(aggregationTypeEnum);
+            aggregationParamList.add(aggregationParam);
+        }
+        return typedThis;
+    }
+
+    /**
+     * 封装查询参数 聚合类
+     *
+     * @param condition      条件
+     * @param returnName     返回的聚合字段名称
+     * @param interval       按什么时间段聚合
+     * @param format         日期格式
+     * @param minDocCount    为空的话则填充值
+     * @param extendedBounds 强制返回的日期区间；如果不加这个就只返回有数据的区间
+     * @param timeZone       设置时区
+     * @param column         列
+     * @return 泛型
+     */
+    private Children doIt(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
+        if (condition) {
+            EsAggregationParam aggregationParam = new EsAggregationParam();
+            aggregationParam.setName(returnName);
+            aggregationParam.setField(FieldUtils.getFieldName(column));
+            aggregationParam.setInterval(interval);
+            aggregationParam.setFormat(format);
+            aggregationParam.setMinDocCount(minDocCount);
+            aggregationParam.setExtendedBounds(extendedBounds);
+            aggregationParam.setTimeZone(timeZone);
+            aggregationParam.setAggregationType(EsAggregationTypeEnum.DATE_HISTOGRAM);
             aggregationParamList.add(aggregationParam);
         }
         return typedThis;
@@ -504,15 +632,17 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param topLeft     左上点坐标
      * @param bottomRight 右下点坐标
      * @param boost       权重值
+     * @param isIn        是否在范围内
      * @return 泛型
      */
-    private Children doIt(boolean condition, String field, GeoPoint topLeft, GeoPoint bottomRight, Float boost) {
+    private Children doIt(boolean condition, String field, GeoPoint topLeft, GeoPoint bottomRight, Float boost, boolean isIn) {
         if (condition) {
             EsGeoParam esGeoParam = new EsGeoParam();
             esGeoParam.setField(field);
             esGeoParam.setTopLeft(topLeft);
             esGeoParam.setBottomRight(bottomRight);
             esGeoParam.setBoost(boost);
+            esGeoParam.setIn(isIn);
             this.geoParam = esGeoParam;
         }
         return typedThis;
@@ -527,9 +657,10 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param distanceUnit    距离单位
      * @param centralGeoPoint 中心点
      * @param boost           权重
+     * @param isIn            是否在范围内
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost) {
+    private Children doIt(boolean condition, String fieldName, Double distance, DistanceUnit distanceUnit, GeoPoint centralGeoPoint, Float boost, boolean isIn) {
         if (condition) {
             EsGeoParam esGeoParam = new EsGeoParam();
             esGeoParam.setField(fieldName);
@@ -537,6 +668,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
             esGeoParam.setDistance(distance);
             esGeoParam.setDistanceUnit(distanceUnit);
             esGeoParam.setCentralGeoPoint(centralGeoPoint);
+            esGeoParam.setIn(isIn);
             this.geoParam = esGeoParam;
         }
         return typedThis;
@@ -550,15 +682,17 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param distance        距离 字符串
      * @param centralGeoPoint 中心点
      * @param boost           权重值
+     * @param isIn            是否在范围内
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, String distance, GeoPoint centralGeoPoint, Float boost) {
+    private Children doIt(boolean condition, String fieldName, String distance, GeoPoint centralGeoPoint, Float boost, boolean isIn) {
         if (condition) {
             EsGeoParam esGeoParam = new EsGeoParam();
             esGeoParam.setField(fieldName);
             esGeoParam.setBoost(boost);
             esGeoParam.setDistanceStr(distance);
             esGeoParam.setCentralGeoPoint(centralGeoPoint);
+            esGeoParam.setIn(isIn);
             this.geoParam = esGeoParam;
         }
         return typedThis;
@@ -571,14 +705,16 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param fieldName 字段名
      * @param geoPoints 多边形点坐标列表
      * @param boost     权重值
+     * @param isIn      是否在范围内
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, List<GeoPoint> geoPoints, Float boost) {
+    private Children doIt(boolean condition, String fieldName, List<GeoPoint> geoPoints, Float boost, boolean isIn) {
         if (condition) {
             EsGeoParam esGeoParam = new EsGeoParam();
             esGeoParam.setField(fieldName);
             esGeoParam.setBoost(boost);
             esGeoParam.setGeoPoints(geoPoints);
+            esGeoParam.setIn(isIn);
             this.geoParam = esGeoParam;
         }
         return typedThis;
@@ -591,14 +727,16 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param fieldName      字段名
      * @param indexedShapeId 已被索引的图形索引id
      * @param boost          权重值
+     * @param isIn           是否在范围内
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, String indexedShapeId, Float boost) {
+    private Children doIt(boolean condition, String fieldName, String indexedShapeId, Float boost, boolean isIn) {
         if (condition) {
             EsGeoParam esGeoParam = new EsGeoParam();
             esGeoParam.setField(fieldName);
             esGeoParam.setBoost(boost);
             esGeoParam.setIndexedShapeId(indexedShapeId);
+            esGeoParam.setIn(isIn);
             this.geoParam = esGeoParam;
         }
         return typedThis;
@@ -611,15 +749,17 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param fieldName 字段名
      * @param geometry  图形
      * @param boost     权重值
+     * @param isIn      是否在范围内
      * @return 泛型
      */
-    private Children doIt(boolean condition, String fieldName, Geometry geometry, ShapeRelation shapeRelation, Float boost) {
+    private Children doIt(boolean condition, String fieldName, Geometry geometry, ShapeRelation shapeRelation, Float boost, boolean isIn) {
         if (condition) {
             EsGeoParam esGeoParam = new EsGeoParam();
             esGeoParam.setField(fieldName);
             esGeoParam.setBoost(boost);
             esGeoParam.setGeometry(geometry);
             esGeoParam.setShapeRelation(shapeRelation);
+            esGeoParam.setIn(isIn);
             this.geoParam = esGeoParam;
         }
         return typedThis;

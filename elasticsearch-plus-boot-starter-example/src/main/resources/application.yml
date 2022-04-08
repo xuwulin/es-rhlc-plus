@@ -1,7 +1,6 @@
 spring:
   application:
     name: es-plus-example
-
 # es-plus配置
 es-plus:
   # 是否开启es-plus自动配置

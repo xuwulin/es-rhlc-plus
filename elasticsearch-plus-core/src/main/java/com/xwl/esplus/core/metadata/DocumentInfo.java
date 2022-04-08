@@ -3,12 +3,15 @@ package com.xwl.esplus.core.metadata;
 import com.xwl.esplus.core.enums.EsIdTypeEnum;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
  * 文档信息（相当于实体类信息）
+ *
  * @author xwl
  * @since 2022/3/11 18:57
  */
@@ -17,6 +20,10 @@ public class DocumentInfo {
      * 表主键ID 类型
      */
     private EsIdTypeEnum idType = EsIdTypeEnum.NONE;
+    /**
+     * id数据类型 如Long.class String.class
+     */
+    private Class<?> idClass;
     /**
      * 索引名称
      */
@@ -49,7 +56,10 @@ public class DocumentInfo {
      * 是否有id注解
      */
     private Boolean hasIdAnnotation;
-
+    /**
+     * 高亮
+     */
+    private Map<String, String> highlightFieldMap = new HashMap<>();
 
     /**
      * 获取需要进行查询的字段列表
@@ -76,24 +86,20 @@ public class DocumentInfo {
     public DocumentInfo() {
     }
 
-    public DocumentInfo(EsIdTypeEnum idType, String indexName, String resultMap, Field keyField, String keyProperty, String keyColumn, List<DocumentFieldInfo> fieldList, Class<?> clazz, Boolean hasIdAnnotation) {
-        this.idType = idType;
-        this.indexName = indexName;
-        this.resultMap = resultMap;
-        this.keyField = keyField;
-        this.keyProperty = keyProperty;
-        this.keyColumn = keyColumn;
-        this.fieldList = fieldList;
-        this.clazz = clazz;
-        this.hasIdAnnotation = hasIdAnnotation;
-    }
-
     public EsIdTypeEnum getIdType() {
         return idType;
     }
 
     public void setIdType(EsIdTypeEnum idType) {
         this.idType = idType;
+    }
+
+    public Class<?> getIdClass() {
+        return idClass;
+    }
+
+    public void setIdClass(Class<?> idClass) {
+        this.idClass = idClass;
     }
 
     public String getIndexName() {
@@ -158,5 +164,13 @@ public class DocumentInfo {
 
     public void setHasIdAnnotation(Boolean hasIdAnnotation) {
         this.hasIdAnnotation = hasIdAnnotation;
+    }
+
+    public Map<String, String> getHighlightFieldMap() {
+        return highlightFieldMap;
+    }
+
+    public void setHighlightFieldMap(Map<String, String> highlightFieldMap) {
+        this.highlightFieldMap = highlightFieldMap;
     }
 }

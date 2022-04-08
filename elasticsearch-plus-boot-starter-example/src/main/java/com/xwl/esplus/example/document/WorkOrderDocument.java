@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-@EsDocument("work_order")
+@EsDocument(value = "work_order", keepGlobalIndexPrefix = false)
 public class WorkOrderDocument {
     /**
      * id

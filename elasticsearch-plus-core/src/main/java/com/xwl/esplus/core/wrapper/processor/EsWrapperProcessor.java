@@ -1,5 +1,6 @@
 package com.xwl.esplus.core.wrapper.processor;
 
+import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.enums.EsAttachTypeEnum;
 import com.xwl.esplus.core.param.EsAggregationParam;
 import com.xwl.esplus.core.param.EsBaseParam;
@@ -11,11 +12,9 @@ import com.xwl.esplus.core.toolkit.OptionalUtils;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.AvgAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.MaxAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.MinAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.SumAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.*;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -41,30 +40,103 @@ public class EsWrapperProcessor {
     }
 
     /**
-     * 构建es查询入参
+     * 构建es查询参数
      *
      * @param wrapper 条件
-     * @return ES查询参数
+     * @return SearchSourceBuilder
      */
     public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) {
-        // 初始化boolQueryBuilder 参数
-        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList());
-
-        // 初始化searchSourceBuilder 参数
         SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper);
-
+        // 构建BoolQueryBuilder
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList());
         // 初始化geo相关: BoundingBox,geoDistance,geoPolygon,geoShape
-        GeoBoundingBoxQueryBuilder geoBoundingBoxQueryBuilder = initGeoBoundingBoxQueryBuilder(wrapper.getGeoParam());
-        GeoDistanceQueryBuilder geoDistanceQueryBuilder = initGeoDistanceQueryBuilder(wrapper.getGeoParam());
-        GeoPolygonQueryBuilder geoPolygonQueryBuilder = initGeoPolygonQueryBuilder(wrapper.getGeoParam());
-        GeoShapeQueryBuilder geoShapeQueryBuilder = initGeoShapeQueryBuilder(wrapper.getGeoParam());
-
+        Optional.ofNullable(wrapper.getGeoParam())
+                .ifPresent(esGeoParam -> setGeoQuery(esGeoParam, boolQueryBuilder));
         // 设置参数
-        Optional.ofNullable(geoBoundingBoxQueryBuilder).ifPresent(boolQueryBuilder::filter);
-        Optional.ofNullable(geoDistanceQueryBuilder).ifPresent(boolQueryBuilder::filter);
-        Optional.ofNullable(geoPolygonQueryBuilder).ifPresent(boolQueryBuilder::filter);
-        Optional.ofNullable(geoShapeQueryBuilder).ifPresent(boolQueryBuilder::filter);
         searchSourceBuilder.query(boolQueryBuilder);
+        return searchSourceBuilder;
+    }
+
+    /**
+     * 设置Geo相关查询参数 geoBoundingBox, geoDistance, geoPolygon, geoShape
+     *
+     * @param geoParam         geo参数
+     * @param boolQueryBuilder boolQuery参数建造者
+     */
+    private static void setGeoQuery(EsGeoParam geoParam, BoolQueryBuilder boolQueryBuilder) {
+        GeoBoundingBoxQueryBuilder geoBoundingBox = buildGeoBoundingBoxQueryBuilder(geoParam);
+        doGeoSet(geoParam.isIn(), geoBoundingBox, boolQueryBuilder);
+
+        GeoDistanceQueryBuilder geoDistance = buildGeoDistanceQueryBuilder(geoParam);
+        doGeoSet(geoParam.isIn(), geoDistance, boolQueryBuilder);
+
+        GeoPolygonQueryBuilder geoPolygon = buildGeoPolygonQueryBuilder(geoParam);
+        doGeoSet(geoParam.isIn(), geoPolygon, boolQueryBuilder);
+
+        GeoShapeQueryBuilder geoShape = buildGeoShapeQueryBuilder(geoParam);
+        doGeoSet(geoParam.isIn(), geoShape, boolQueryBuilder);
+    }
+
+    /**
+     * 根据查询是否在指定范围内设置geo查询过滤条件
+     *
+     * @param isIn
+     * @param queryBuilder
+     * @param boolQueryBuilder
+     */
+    private static void doGeoSet(Boolean isIn, QueryBuilder queryBuilder, BoolQueryBuilder boolQueryBuilder) {
+        Optional.ofNullable(queryBuilder)
+                .ifPresent(present -> {
+                    if (isIn) {
+                        boolQueryBuilder.filter(present);
+                    } else {
+                        boolQueryBuilder.mustNot(present);
+                    }
+                });
+    }
+
+    /**
+     * 初始化SearchSourceBuilder
+     *
+     * @param wrapper 查询条件
+     * @return SearchSourceBuilder
+     */
+    private static SearchSourceBuilder initSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) {
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        // 查询字段或排除字段
+        if (CollectionUtils.isNotEmpty(wrapper.getInclude()) || CollectionUtils.isNotEmpty(wrapper.getExclude())) {
+            searchSourceBuilder.fetchSource(wrapper.getInclude(), wrapper.getExclude());
+        }
+
+        // from & size
+        Optional.ofNullable(wrapper.getFrom()).ifPresent(searchSourceBuilder::from);
+        OptionalUtils.ofNullable(wrapper.getSize()).ifPresent(searchSourceBuilder::size, DEFAULT_SIZE);
+
+        // 高亮
+        if (CollectionUtils.isNotEmpty(wrapper.getHighLightParamList())) {
+            wrapper.getHighLightParamList().forEach(highLightParam -> {
+                HighlightBuilder highlightBuilder = new HighlightBuilder();
+                highLightParam.getFields().forEach(highlightBuilder::field);
+                highlightBuilder.preTags(highLightParam.getPreTag());
+                highlightBuilder.postTags(highLightParam.getPostTag());
+                searchSourceBuilder.highlighter(highlightBuilder);
+            });
+        }
+
+        // 设置用户指定的各种排序规则
+        setSort(wrapper, searchSourceBuilder);
+
+        // 聚合
+        if (CollectionUtils.isNotEmpty(wrapper.getAggregationParamList())) {
+            buildAggregations(wrapper.getAggregationParamList(), searchSourceBuilder);
+        }
+
+        // 大于一万条, trackTotalHists自动开启
+        if (searchSourceBuilder.size() > DEFAULT_SIZE) {
+            searchSourceBuilder.trackTotalHits(true);
+        }
+
         return searchSourceBuilder;
     }
 
@@ -76,7 +148,7 @@ public class EsWrapperProcessor {
      */
     public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList) {
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        // 用于连接and,or条件内的多个查询条件,包装成boolQuery
+        // 用于连接and，or条件内的多个查询条件，包装成boolQuery
         BoolQueryBuilder inner = null;
         // 是否有外层or
         boolean hasOuterOr = false;
@@ -88,7 +160,7 @@ public class EsWrapperProcessor {
                     if (Objects.equals(baseParamList.get(j).getType(), OR_ALL.getType())) {
                         // 说明左括号内出现了内层or查询条件
                         for (int k = i + 1; k < j; k++) {
-                            // 内层or只会出现在中间,此处将内层or之前的查询条件类型进行处理
+                            // 内层or只会出现在中间，此处将内层or之前的查询条件类型进行处理
                             EsBaseParam.setUp(baseParamList.get(k));
                         }
                     }
@@ -104,7 +176,7 @@ public class EsWrapperProcessor {
                 EsBaseParam.setUp(baseEsParam);
             }
 
-            // 处理括号中and和or的最终连接类型 and->must, or->should
+            // 处理括号中and和or的最终连接类型 and->must，or->should
             if (Objects.equals(AND_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
                 boolQueryBuilder.must(inner);
                 inner = null;
@@ -115,7 +187,7 @@ public class EsWrapperProcessor {
             }
 
             // 添加字段名称,值,查询类型等
-             if (Objects.isNull(inner)) {
+            if (Objects.isNull(inner)) {
                 addQuery(baseEsParam, boolQueryBuilder);
             } else {
                 addQuery(baseEsParam, inner);
@@ -125,103 +197,80 @@ public class EsWrapperProcessor {
     }
 
     /**
-     * 初始化SearchSourceBuilder
-     *
-     * @param wrapper 条件
-     * @return SearchSourceBuilder
-     */
-    private static SearchSourceBuilder initSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) {
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        // 设置高亮字段
-        if (!CollectionUtils.isEmpty(wrapper.getHighLightParamList())) {
-            wrapper.getHighLightParamList().forEach(highLightParam -> {
-                HighlightBuilder highlightBuilder = new HighlightBuilder();
-                highLightParam.getFields().forEach(highlightBuilder::field);
-                highlightBuilder.preTags(highLightParam.getPreTag());
-                highlightBuilder.postTags(highLightParam.getPostTag());
-                searchSourceBuilder.highlighter(highlightBuilder);
-            });
-        }
-
-        // 设置排序字段
-        if (!CollectionUtils.isEmpty(wrapper.getSortParamList())) {
-            wrapper.getSortParamList().forEach(sortParam -> {
-                SortOrder sortOrder = sortParam.getAsc() ? SortOrder.ASC : SortOrder.DESC;
-                sortParam.getFields().forEach(field -> {
-                    FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
-                    searchSourceBuilder.sort(fieldSortBuilder);
-                });
-            });
-        }
-
-        // 设置查询或不查询字段
-        if (CollectionUtils.isNotEmpty(wrapper.getInclude()) || CollectionUtils.isNotEmpty(wrapper.getExclude())) {
-            searchSourceBuilder.fetchSource(wrapper.getInclude(), wrapper.getExclude());
-        }
-
-        // 设置查询起止参数
-        Optional.ofNullable(wrapper.getFrom()).ifPresent(searchSourceBuilder::from);
-        OptionalUtils.ofNullable(wrapper.getSize()).ifPresent(searchSourceBuilder::size, DEFAULT_SIZE);
-
-        // 设置聚合参数
-        if (!CollectionUtils.isEmpty(wrapper.getAggregationParamList())) {
-            initAggregations(wrapper.getAggregationParamList(), searchSourceBuilder);
-        }
-
-        return searchSourceBuilder;
-    }
-
-    /**
      * 设置聚合参数
      *
      * @param aggregationParamList 聚合参数列表
      * @param searchSourceBuilder  es searchSourceBuilder
      */
-    private static void initAggregations(List<EsAggregationParam> aggregationParamList, SearchSourceBuilder searchSourceBuilder) {
+    private static void buildAggregations(List<EsAggregationParam> aggregationParamList, SearchSourceBuilder searchSourceBuilder) {
         aggregationParamList.forEach(aggregationParam -> {
             switch (aggregationParam.getAggregationType()) {
                 case AVG:
-                    AvgAggregationBuilder avg = AggregationBuilders.avg(aggregationParam.getName()).field(aggregationParam.getField());
+                    AvgAggregationBuilder avg = AggregationBuilders
+                            .avg(aggregationParam.getName())
+                            .field(aggregationParam.getField());
                     searchSourceBuilder.aggregation(avg);
                     break;
                 case MIN:
-                    MinAggregationBuilder min = AggregationBuilders.min(aggregationParam.getName()).field(aggregationParam.getField());
+                    MinAggregationBuilder min = AggregationBuilders
+                            .min(aggregationParam.getName())
+                            .field(aggregationParam.getField());
                     searchSourceBuilder.aggregation(min);
                     break;
                 case MAX:
-                    MaxAggregationBuilder max = AggregationBuilders.max(aggregationParam.getName()).field(aggregationParam.getField());
+                    MaxAggregationBuilder max = AggregationBuilders
+                            .max(aggregationParam.getName())
+                            .field(aggregationParam.getField());
                     searchSourceBuilder.aggregation(max);
                     break;
                 case SUM:
-                    SumAggregationBuilder sum = AggregationBuilders.sum(aggregationParam.getName()).field(aggregationParam.getField());
+                    SumAggregationBuilder sum = AggregationBuilders
+                            .sum(aggregationParam.getName())
+                            .field(aggregationParam.getField());
                     searchSourceBuilder.aggregation(sum);
                     break;
+                case STATS:
+                    StatsAggregationBuilder stats = AggregationBuilders
+                            .stats(aggregationParam.getName())
+                            .field(aggregationParam.getField());
+                    searchSourceBuilder.aggregation(stats);
+                    break;
                 case TERMS:
-                    TermsAggregationBuilder terms = AggregationBuilders.terms(aggregationParam.getName()).field(aggregationParam.getField());
+                    TermsAggregationBuilder terms = AggregationBuilders
+                            .terms(aggregationParam.getName())
+                            .field(aggregationParam.getField())
+                            .size(aggregationParam.getSize() == null ? EsConstants.TEN : aggregationParam.getSize());
                     searchSourceBuilder.aggregation(terms);
                     break;
+                case DATE_HISTOGRAM:
+                    DateHistogramAggregationBuilder dateHistogram = AggregationBuilders
+                            .dateHistogram(aggregationParam.getName())
+                            .field(aggregationParam.getField())
+                            .calendarInterval(aggregationParam.getInterval())
+                            .format(aggregationParam.getFormat())
+                            .minDocCount(aggregationParam.getMinDocCount())
+                            .extendedBounds(aggregationParam.getExtendedBounds())
+                            .timeZone(aggregationParam.getTimeZone());
+                    searchSourceBuilder.aggregation(dateHistogram);
+                    break;
                 default:
-                    throw new UnsupportedOperationException("不支持的聚合类型,参见AggregationTypeEnum");
+                    throw new UnsupportedOperationException("不支持的聚合类型，聚合类型参见EsAggregationTypeEnum");
             }
-
         });
     }
 
-
     /**
-     * 初始化GeoBoundingBoxQueryBuilder
+     * 构建GeoBoundingBoxQueryBuilder
      *
      * @param geoParam Geo相关参数
      * @return GeoBoundingBoxQueryBuilder
      */
-    private static GeoBoundingBoxQueryBuilder initGeoBoundingBoxQueryBuilder(EsGeoParam geoParam) {
+    private static GeoBoundingBoxQueryBuilder buildGeoBoundingBoxQueryBuilder(EsGeoParam geoParam) {
         // 参数校验
-        boolean invalidParam = Objects.isNull(geoParam)
-                || (Objects.isNull(geoParam.getTopLeft()) || Objects.isNull(geoParam.getBottomRight()));
+        boolean invalidParam = Objects.isNull(geoParam) || (Objects.isNull(geoParam.getTopLeft()) || Objects.isNull(geoParam.getBottomRight()));
         if (invalidParam) {
             return null;
         }
-
         GeoBoundingBoxQueryBuilder builder = QueryBuilders.geoBoundingBoxQuery(geoParam.getField());
         Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
         builder.setCorners(geoParam.getTopLeft(), geoParam.getBottomRight());
@@ -229,66 +278,60 @@ public class EsWrapperProcessor {
     }
 
     /**
-     * 初始化GeoDistanceQueryBuilder
+     * 构建GeoDistanceQueryBuilder
      *
      * @param geoParam Geo相关参数
      * @return GeoDistanceQueryBuilder
      */
-    private static GeoDistanceQueryBuilder initGeoDistanceQueryBuilder(EsGeoParam geoParam) {
+    private static GeoDistanceQueryBuilder buildGeoDistanceQueryBuilder(EsGeoParam geoParam) {
         // 参数校验
-        boolean invalidParam = Objects.isNull(geoParam)
-                || (Objects.isNull(geoParam.getDistanceStr()) && Objects.isNull(geoParam.getDistance()));
+        boolean invalidParam = Objects.isNull(geoParam) || (Objects.isNull(geoParam.getDistanceStr()) && Objects.isNull(geoParam.getDistance()));
         if (invalidParam) {
             return null;
         }
-
         GeoDistanceQueryBuilder builder = QueryBuilders.geoDistanceQuery(geoParam.getField());
         Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
         // 距离来源: 双精度类型+单位或字符串类型
         Optional.ofNullable(geoParam.getDistanceStr()).ifPresent(builder::distance);
-        Optional.ofNullable(geoParam.getDistance())
-                .ifPresent(distance -> builder.distance(distance, geoParam.getDistanceUnit()));
+        Optional.ofNullable(geoParam.getDistance()).ifPresent(distance -> builder.distance(distance, geoParam.getDistanceUnit()));
         Optional.ofNullable(geoParam.getCentralGeoPoint()).ifPresent(builder::point);
         return builder;
     }
 
     /**
-     * 初始化 GeoPolygonQueryBuilder
+     * 构建GeoPolygonQueryBuilder
      *
      * @param geoParam Geo相关参数
      * @return GeoPolygonQueryBuilder
      */
-    private static GeoPolygonQueryBuilder initGeoPolygonQueryBuilder(EsGeoParam geoParam) {
+    private static GeoPolygonQueryBuilder buildGeoPolygonQueryBuilder(EsGeoParam geoParam) {
         // 参数校验
         boolean invalidParam = Objects.isNull(geoParam) || CollectionUtils.isEmpty(geoParam.getGeoPoints());
         if (invalidParam) {
             return null;
         }
-
         GeoPolygonQueryBuilder builder = QueryBuilders.geoPolygonQuery(geoParam.getField(), geoParam.getGeoPoints());
         Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
         return builder;
     }
 
     /**
-     * 初始化 GeoShapeQueryBuilder
+     * 构建GeoShapeQueryBuilder
      *
      * @param geoParam Geo相关参数
      * @return GeoShapeQueryBuilder
      */
-    private static GeoShapeQueryBuilder initGeoShapeQueryBuilder(EsGeoParam geoParam)  {
+    private static GeoShapeQueryBuilder buildGeoShapeQueryBuilder(EsGeoParam geoParam) {
         // 参数校验
-        boolean invalidParam = Objects.isNull(geoParam)
-                || (Objects.isNull(geoParam.getIndexedShapeId()) && Objects.isNull(geoParam.getGeometry()));
+        boolean invalidParam = Objects.isNull(geoParam) || (Objects.isNull(geoParam.getIndexedShapeId()) && Objects.isNull(geoParam.getGeometry()));
         if (invalidParam) {
             return null;
         }
-
         GeoShapeQueryBuilder builder = null;
         try {
             builder = QueryBuilders.geoShapeQuery(geoParam.getField(), geoParam.getGeometry());
         } catch (IOException e) {
-            throw ExceptionUtils.epe("initGeoShapeQueryBuilder exception: {}", e.getMessage(), e);
+            throw ExceptionUtils.epe("buildGeoShapeQueryBuilder exception: {}", e, e.getMessage());
         }
         Optional.ofNullable(geoParam.getShapeRelation()).ifPresent(builder::relation);
         Optional.ofNullable(geoParam.getBoost()).ifPresent(builder::boost);
@@ -352,5 +395,41 @@ public class EsWrapperProcessor {
         } else {
             return CollectionUtils.isNotEmpty(wrapper.getExclude()) && !Arrays.asList(wrapper.getExclude()).contains(idField);
         }
+    }
+
+    private static void setSort(EsLambdaQueryWrapper<?> wrapper, SearchSourceBuilder searchSourceBuilder) {
+        // 设置排序字段
+        if (CollectionUtils.isNotEmpty(wrapper.getSortParamList())) {
+            wrapper.getSortParamList().forEach(sortParam -> {
+                SortOrder sortOrder = sortParam.getAsc() ? SortOrder.ASC : SortOrder.DESC;
+                sortParam.getFields().forEach(field -> {
+                    FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
+                    searchSourceBuilder.sort(fieldSortBuilder);
+                });
+            });
+        }
+
+        // 设置以String形式指定的排序字段及规则
+        if (CollectionUtils.isNotEmpty(wrapper.getOrderByParams())) {
+            wrapper.getOrderByParams().forEach(orderByParam -> {
+                FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(orderByParam.getOrder());
+                if (SortOrder.ASC.toString().equalsIgnoreCase(orderByParam.getSort())) {
+                    fieldSortBuilder.order(SortOrder.ASC);
+                }
+                if (SortOrder.DESC.toString().equalsIgnoreCase(orderByParam.getSort())) {
+                    fieldSortBuilder.order(SortOrder.DESC);
+                }
+                searchSourceBuilder.sort(fieldSortBuilder);
+            });
+        }
+
+        // 设置用户自定义的sort
+        if (CollectionUtils.isNotEmpty(wrapper.getSortBuilders())) {
+            wrapper.getSortBuilders().forEach(searchSourceBuilder::sort);
+        }
+
+        // 设置得分排序规则
+        Optional.ofNullable(wrapper.getSortOrder())
+                .ifPresent(sortOrder -> searchSourceBuilder.sort(EsConstants.SCORE_FIELD, sortOrder));
     }
 }

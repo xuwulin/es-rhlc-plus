@@ -60,6 +60,10 @@ public class EsGeoParam {
      * 权重值
      */
     private Float boost;
+    /**
+     * 是否在范围内
+     */
+    private boolean isIn;
 
     public EsGeoParam() {
     }
@@ -158,5 +162,13 @@ public class EsGeoParam {
 
     public void setBoost(Float boost) {
         this.boost = boost;
+    }
+
+    public boolean isIn() {
+        return isIn;
+    }
+
+    public void setIn(boolean in) {
+        isIn = in;
     }
 }

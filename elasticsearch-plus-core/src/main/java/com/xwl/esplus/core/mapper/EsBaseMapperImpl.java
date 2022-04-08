@@ -2,6 +2,7 @@ package com.xwl.esplus.core.mapper;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.alibaba.fastjson.serializer.SerializeFilter;
@@ -16,6 +17,7 @@ import com.xwl.esplus.core.enums.EsFieldTypeEnum;
 import com.xwl.esplus.core.enums.EsIdTypeEnum;
 import com.xwl.esplus.core.metadata.DocumentFieldInfo;
 import com.xwl.esplus.core.metadata.DocumentInfo;
+import com.xwl.esplus.core.page.PageInfo;
 import com.xwl.esplus.core.param.EsIndexParam;
 import com.xwl.esplus.core.param.EsIndexSettingParam;
 import com.xwl.esplus.core.param.EsUpdateParam;
@@ -40,19 +42,25 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.core.CountRequest;
+import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
@@ -62,6 +70,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.xwl.esplus.core.constant.EsConstants.EMPTY_STR;
 import static com.xwl.esplus.core.wrapper.processor.EsWrapperProcessor.buildBoolQueryBuilder;
 import static com.xwl.esplus.core.wrapper.processor.EsWrapperProcessor.buildSearchSourceBuilder;
 
@@ -366,25 +375,30 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
         searchRequest.source(searchSourceBuilder);
-        if (GlobalConfigCache.getGlobalConfig().isLogEnable()) {
-            log.info("DSL:\n==> {}", searchRequest.source().toString());
-        }
         // 执行查询
         try {
+            // 记录日志
+            logQueryDSL(wrapper);
             return restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            throw ExceptionUtils.epe("Elasticsearch original search （restHighLevelClient.search()）exception: {}", e.getMessage(), e);
+            throw ExceptionUtils.epe("Elasticsearch original search （restHighLevelClient.search()）exception: {}", e, e.getMessage());
+        }
+    }
+
+    @Override
+    public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) {
+        try {
+            // 记录日志
+            logQueryDSL(searchRequest.source());
+            return restHighLevelClient.search(searchRequest, requestOptions);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("Elasticsearch original search （restHighLevelClient.search()）exception: {}", e, e.getMessage());
         }
     }
 
     @Override
     public SearchSourceBuilder getSearchSourceBuilder(EsLambdaQueryWrapper<T> wrapper) {
         return buildSearchSourceBuilder(wrapper);
-    }
-
-    @Override
-    public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException {
-        return restHighLevelClient.search(searchRequest, requestOptions);
     }
 
     @Override
@@ -399,16 +413,156 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
+    public Long selectCount(EsLambdaQueryWrapper<T> wrapper) {
+        CountRequest countRequest = new CountRequest(getIndexName());
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList());
+        countRequest.query(boolQueryBuilder);
+        CountResponse count;
+        try {
+            logQueryCountDSL(wrapper);
+            count = restHighLevelClient.count(countRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("selectCount exception", e);
+        }
+        return Optional.ofNullable(count)
+                .map(CountResponse::getCount)
+                .orElseThrow(() -> ExceptionUtils.epe("get long count exception"));
+    }
+
+    @Override
+    public T selectOne(EsLambdaQueryWrapper<T> wrapper) {
+        long count = this.selectCount(wrapper);
+        if (count > EsConstants.ONE && (wrapper.getSize() == null || wrapper.getSize() > EsConstants.ONE)) {
+            throw ExceptionUtils.epe("find out more than one result: %d , please use limit function to limit 1", count);
+        }
+        SearchRequest searchRequest = new SearchRequest(getIndexName());
+        SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
+        searchRequest.source(searchSourceBuilder);
+        try {
+            logQueryDSL(wrapper);
+            SearchResponse response = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            return parseResult(response, wrapper);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("selectOne IOException", e);
+        }
+    }
+
+    @Override
+    public T selectById(Serializable id) {
+        if (Objects.isNull(id) || StringUtils.isEmpty(id.toString())) {
+            throw ExceptionUtils.epe("id must not be null or empty");
+        }
+        SearchRequest searchRequest = new SearchRequest(getIndexName());
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        searchSourceBuilder.query(QueryBuilders.termQuery(getIdFieldName(), id));
+        searchRequest.source(searchSourceBuilder);
+        try {
+            logQueryDSL(searchSourceBuilder);
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            return parseResult(searchResponse);
+        } catch (Exception e) {
+            throw ExceptionUtils.epe("selectById exception,id:%s", e, id);
+        }
+    }
+
+    @Override
+    public List<T> selectBatchIds(Collection<? extends Serializable> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            throw ExceptionUtils.epe("id collection must not be null or empty");
+        }
+        List<String> stringIdList = idList.stream().map(Object::toString).collect(Collectors.toList());
+        SearchRequest searchRequest = new SearchRequest(getIndexName());
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.query(QueryBuilders.termsQuery(getIdFieldName(), stringIdList));
+        searchRequest.source(sourceBuilder);
+        try {
+            logQueryDSL(sourceBuilder);
+            SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+            return parseResultList(searchResponse);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("selectBatchIds exception,idList:%s", e, idList);
+        }
+    }
+
+    @Override
     public List<T> selectList(EsLambdaQueryWrapper<T> wrapper) {
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
         searchRequest.source(searchSourceBuilder);
         try {
+            logQueryDSL(wrapper);
             SearchResponse response = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
             return parseResultList(response, wrapper);
         } catch (Exception e) {
             throw ExceptionUtils.epe("selectList exception", e);
         }
+    }
+
+    @Override
+    public List<Map<String, Object>> selectMaps(EsLambdaQueryWrapper<T> wrapper) {
+        List<T> list = this.selectList(wrapper);
+        String jsonString = JSONObject.toJSONString(list);
+        List<Map<String, Object>> maps = JSON.parseObject(jsonString, new TypeReference<List<Map<String, Object>>>() {
+        });
+        return maps;
+    }
+
+    @Override
+    public PageInfo<SearchHit> pageOriginal(EsLambdaQueryWrapper<T> wrapper) {
+        return this.pageOriginal(wrapper, EsConstants.PAGE_NUM, EsConstants.PAGE_SIZE);
+    }
+
+    @Override
+    public PageInfo<SearchHit> pageOriginal(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
+        PageInfo<SearchHit> pageInfo = new PageInfo<>();
+        long total = this.selectCount(wrapper);
+        if (total <= EsConstants.ZERO) {
+            return pageInfo;
+        }
+
+        // 查询数据
+        SearchHit[] searchHitArray = new SearchHit[0];
+        try {
+            searchHitArray = getSearchHitArray(wrapper, pageNum, pageSize);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("pageOriginal exception", e);
+        }
+        List<SearchHit> list = Arrays.stream(searchHitArray).collect(Collectors.toList());
+        pageInfo.setList(list);
+        pageInfo.setSize(list.size());
+        pageInfo.setTotal(total);
+        pageInfo.setPageNum(pageNum);
+        pageInfo.setPageSize(pageSize);
+        return pageInfo;
+    }
+
+    @Override
+    public PageInfo<T> selectPage(EsLambdaQueryWrapper<T> wrapper) {
+        return initPageInfo(wrapper, EsConstants.PAGE_NUM, EsConstants.PAGE_SIZE);
+    }
+
+    @Override
+    public PageInfo<T> selectPage(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
+        return initPageInfo(wrapper, pageNum, pageSize);
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> selectMapsPage(EsLambdaQueryWrapper<T> wrapper) {
+        return this.selectMapsPage(wrapper, EsConstants.PAGE_NUM, EsConstants.PAGE_SIZE);
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> selectMapsPage(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
+        PageInfo<T> pageInfo = initPageInfo(wrapper, pageNum, pageSize);
+        List<T> list = pageInfo.getList();
+        String jsonString = JSONObject.toJSONString(list);
+        List<Map<String, Object>> maps = JSON.parseObject(jsonString, new TypeReference<List<Map<String, Object>>>() {
+        });
+        PageInfo<Map<String, Object>> result = new PageInfo<>();
+        BeanUtils.copyProperties(pageInfo, result);
+        result.setList(maps);
+        return result;
     }
 
     public Settings.Builder buildSettings() {
@@ -517,7 +671,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             Object value = keyField.get(entity);
             return Optional.ofNullable(value)
                     .map(Object::toString)
-                    .orElseThrow(() -> ExceptionUtils.epe("the entity id must not be null"));
+                    .orElseThrow(() -> ExceptionUtils.epe("the entity id can not be null"));
         } catch (IllegalAccessException e) {
             throw ExceptionUtils.epe("get id value exception", e);
         }
@@ -618,8 +772,11 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     private void setId(T entity, String id) {
         String setMethodName = FieldUtils.generateSetFunctionName(getRealIdFieldName());
         Method invokeMethod = BaseCache.getEsEntityInvokeMethod(entityClass, setMethodName);
+        // 将es返回的String类型id还原为字段实际的id类型,比如Long,否则反射会报错
+        Class<?> idClass = DocumentInfoUtils.getDocumentInfo(entityClass).getIdClass();
+        Object val = ReflectionUtils.getVal(id, idClass);
         try {
-            invokeMethod.invoke(entity, id);
+            invokeMethod.invoke(entity, val);
         } catch (Exception e) {
             throw ExceptionUtils.epe("setId Exception", e);
         }
@@ -791,11 +948,204 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         return Arrays.stream(searchHits)
                 .map(hit -> {
                     T entity = JSON.parseObject(hit.getSourceAsString(), entityClass);
+                    if (!CollectionUtils.isEmpty(wrapper.getHighLightParamList())) {
+                        Map<String, String> highlightFieldMap = getHighlightFieldMap();
+                        Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+                        highlightFields.forEach((key, value) -> {
+                            String highLightValue = Arrays.stream(value.getFragments()).findFirst().map(Text::string).orElse(EMPTY_STR);
+                            setHighlightValue(entity, highlightFieldMap.get(key), highLightValue);
+                        });
+                    }
                     boolean includeId = EsWrapperProcessor.includeId(getRealIdFieldName(), wrapper);
                     if (includeId) {
                         setId(entity, hit.getId());
                     }
                     return entity;
                 }).collect(Collectors.toList());
+    }
+
+    /**
+     * 获取高亮字段
+     *
+     * @return
+     */
+    private Map<String, String> getHighlightFieldMap() {
+        return DocumentInfoUtils.getDocumentInfo(entityClass).getHighlightFieldMap();
+    }
+
+    /**
+     * 设置高亮字段的值
+     *
+     * @param entity         实体类
+     * @param highlightField 高亮返回字段
+     * @param value          高亮结果值
+     */
+    private void setHighlightValue(T entity, String highlightField, String value) {
+        String setMethodName = FieldUtils.generateSetFunctionName(highlightField);
+        Method invokeMethod = BaseCache.getEsEntityInvokeMethod(entityClass, setMethodName);
+        try {
+            invokeMethod.invoke(entity, value);
+        } catch (Exception e) {
+            throw ExceptionUtils.epe("setHighlightValue exception: {}", e, e.getMessage());
+        }
+    }
+
+    /**
+     * 获取查询结果数组
+     *
+     * @param wrapper  条件
+     * @param pageNum  当前页
+     * @param pageSize 每页条数
+     * @return es返回结果体
+     * @throws IOException IO异常
+     */
+    private SearchHit[] getSearchHitArray(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) throws IOException {
+        wrapper.from((pageNum - 1) * pageSize);
+        wrapper.size(pageSize);
+        SearchResponse response = search(wrapper);
+        return Optional.ofNullable(response)
+                .map(SearchResponse::getHits)
+                .map(SearchHits::getHits)
+                .orElseThrow(() -> ExceptionUtils.epe("get searchHits exception,the response from es is null"));
+    }
+
+    /**
+     * 从es获取到的数据中解析出对应的对象 id根据查询/不查询条件决定是否设置
+     *
+     * @param searchResponse es返回的响应体
+     * @param wrapper        条件
+     * @return 指定的返回类型数据
+     */
+    private T parseResult(SearchResponse searchResponse, EsLambdaQueryWrapper<T> wrapper) {
+        SearchHit[] searchHits = parseSearchHit(searchResponse);
+        if (CollectionUtils.isEmpty(searchHits)) {
+            return null;
+        }
+        T entity = JSON.parseObject(searchHits[0].getSourceAsString(), entityClass);
+        boolean includeId = EsWrapperProcessor.includeId(getRealIdFieldName(), wrapper);
+        if (includeId) {
+            setId(entity, searchHits[0].getId());
+        }
+        return entity;
+    }
+
+    /**
+     * 从es获取到的数据中解析出对应的对象 默认设置id
+     *
+     * @param searchResponse es返回的响应体
+     * @return 指定的返回类型数据
+     */
+    private T parseResult(SearchResponse searchResponse) {
+        SearchHit[] searchHits = parseSearchHit(searchResponse);
+        if (CollectionUtils.isEmpty(searchHits)) {
+            return null;
+        }
+        T entity = JSON.parseObject(searchHits[0].getSourceAsString(), entityClass);
+        setId(entity, searchHits[0].getId());
+        return entity;
+    }
+
+    /**
+     * 获取id字段名称(注解中的)
+     *
+     * @return id字段名称
+     */
+    private String getIdFieldName() {
+        return DocumentInfoUtils.getDocumentInfo(entityClass).getKeyColumn();
+    }
+
+    /**
+     * 初始化分页数据
+     *
+     * @param wrapper  条件
+     * @param pageNum  当前页
+     * @param pageSize 每页条数
+     * @return 分页数据
+     */
+    private PageInfo<T> initPageInfo(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
+        PageInfo<T> pageInfo = new PageInfo<>();
+        long total = this.selectCount(wrapper);
+        if (total <= EsConstants.ZERO) {
+            return pageInfo;
+        }
+
+        SearchHit[] searchHits;
+        try {
+            searchHits = getSearchHitArray(wrapper, pageNum, pageSize);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("page select exception:%s", e);
+        }
+
+        List<T> list = hitsToArray(searchHits, wrapper);
+        pageInfo.setList(list);
+        pageInfo.setSize(list.size());
+        pageInfo.setTotal(total);
+        pageInfo.setPageNum(pageNum);
+        pageInfo.setPageSize(pageSize);
+        return pageInfo;
+    }
+
+    /**
+     * 记录查询DSL
+     *
+     * @param wrapper 查询参数包装类
+     */
+    private void logQueryDSL(EsLambdaQueryWrapper<T> wrapper) {
+        if (GlobalConfigCache.getGlobalConfig().isLogEnable()) {
+            SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper);
+            logPrettyQueryDSL(searchSourceBuilder);
+        }
+    }
+
+    /**
+     * 记录查询DSL
+     *
+     * @param searchSourceBuilder es查询请求参数
+     */
+    private void logQueryDSL(SearchSourceBuilder searchSourceBuilder) {
+        if (GlobalConfigCache.getGlobalConfig().isLogEnable()) {
+            logPrettyQueryDSL(searchSourceBuilder);
+        }
+    }
+
+    /**
+     * 根据全局配置决定是否控制台打印CountDSL语句
+     *
+     * @param wrapper 查询参数包装类
+     */
+    private void logQueryCountDSL(EsLambdaQueryWrapper<T> wrapper) {
+        if (GlobalConfigCache.getGlobalConfig().isLogEnable()) {
+            CountRequest countRequest = new CountRequest(getIndexName());
+            BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList());
+            countRequest.query(boolQueryBuilder);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().query(countRequest.query());
+            logPrettyQueryDSL(searchSourceBuilder);
+        }
+    }
+
+    /**
+     * 格式化DSL语句
+     *
+     * @param searchSourceBuilder
+     */
+    private void logPrettyQueryDSL(SearchSourceBuilder searchSourceBuilder) {
+        JSONObject object = JSONObject.parseObject(String.valueOf(searchSourceBuilder));
+        String pretty = JSON.toJSONString(object, SerializerFeature.PrettyFormat);
+        log.info("Elasticsearch Query DSL:\n{}", pretty);
+    }
+
+    /**
+     * 根据配置获取完整的indexName
+     *
+     * @param indexName
+     * @return tablePrefix + indexName
+     */
+    private String getFullIndexName(String indexName) {
+        if (StringUtils.isEmpty(indexName)) {
+            throw ExceptionUtils.epe("indexName can not be empty");
+        }
+        GlobalConfig.DocumentConfig documentConfig = GlobalConfigCache.getGlobalConfig().getDocumentConfig();
+        String tablePrefix = Optional.ofNullable(documentConfig.getIndexPrefix()).orElse(EMPTY_STR);
+        return tablePrefix + indexName;
     }
 }

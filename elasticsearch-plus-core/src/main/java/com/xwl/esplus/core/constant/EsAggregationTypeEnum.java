@@ -24,7 +24,15 @@ public enum EsAggregationTypeEnum {
      */
     SUM,
     /**
-     * 按字段分组,相当于mysql group by
+     * 同时求count、min、max、avg、sum
      */
-    TERMS;
+    STATS,
+    /**
+     * 按字段分组，相当于mysql group by
+     */
+    TERMS,
+    /**
+     * 按照日期阶梯分组，例如一周为一组，或者一月为一组等
+     */
+    DATE_HISTOGRAM;
 }

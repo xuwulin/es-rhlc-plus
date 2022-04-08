@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
+ * 索引查询、创建、修改、删除测试
+ *
  * @author xwl
  * @since 2022/3/11 18:22
  */
@@ -66,6 +68,7 @@ public class IndexTest {
                 .mapping(UserDocument::getCompanyAddress, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
                 .mapping(UserDocument::getCompanyLocation, EsFieldTypeEnum.GEO_POINT)
                 .mapping(UserDocument::getRemark, EsFieldTypeEnum.TEXT, UserDocument::getAll, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
+                // "format": "yyyy-MM-dd HH:mm:ss || yyyy-MM-dd HH:mm:ss.SSS ||yyyy-MM-dd || epoch_millis || strict_date_optional_time || yyyy-MM-dd'T'HH:mm:ss'+'08:00"
                 .mapping(UserDocument::getCreatedTime, "yyyy-MM-dd HH:mm:ss")
                 .mapping(UserDocument::getAll, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD);
 
@@ -83,7 +86,7 @@ public class IndexTest {
         String indexName = "user_document";
         EsLambdaIndexWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaIndex()
                 .indexName(indexName)
-                .mapping(UserDocument::getNickname, EsFieldTypeEnum.KEYWORD);
+                .mapping(UserDocument::getGeoLocation, EsFieldTypeEnum.GEO_SHAPE);
         boolean isOk = userDocumentMapper.updateIndex(wrapper);
         Assert.assertTrue(isOk);
     }

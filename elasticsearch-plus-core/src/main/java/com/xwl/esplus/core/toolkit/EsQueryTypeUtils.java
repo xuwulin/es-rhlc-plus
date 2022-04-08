@@ -10,14 +10,14 @@ import static com.xwl.esplus.core.enums.EsAttachTypeEnum.*;
 import static com.xwl.esplus.core.enums.EsQueryTypeEnum.*;
 
 /**
- * 核心 查询参数封装工具类
+ * 查询参数封装工具类
  *
  * @author xwl
  * @since 2022/3/12 17:09
  **/
 public class EsQueryTypeUtils {
     /**
-     * 添加查询类型 精确匹配/模糊匹配/范围匹配等
+     * 添加查询类型：精确匹配/模糊匹配/范围匹配等
      *
      * @param boolQueryBuilder   参数连接器
      * @param queryType          查询类型
@@ -27,7 +27,13 @@ public class EsQueryTypeUtils {
      * @param value              值
      * @param boost              权重
      */
-    public static void addQueryByType(BoolQueryBuilder boolQueryBuilder, Integer queryType, Integer attachType, Integer originalAttachType, String field, Object value, Float boost) {
+    public static void addQueryByType(BoolQueryBuilder boolQueryBuilder,
+                                      Integer queryType,
+                                      Integer attachType,
+                                      Integer originalAttachType,
+                                      String field,
+                                      Object value,
+                                      Float boost) {
         if (Objects.equals(queryType, TERM_QUERY.getType())) {
             // 封装精确查询参数
             TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery(field, value).boost(boost);
@@ -77,7 +83,12 @@ public class EsQueryTypeUtils {
      * @param values           值
      * @param boost            权重
      */
-    public static void addQueryByType(BoolQueryBuilder boolQueryBuilder, Integer queryType, Integer attachType, String field, Collection<?> values, Float boost) {
+    public static void addQueryByType(BoolQueryBuilder boolQueryBuilder,
+                                      Integer queryType,
+                                      Integer attachType,
+                                      String field,
+                                      Collection<?> values,
+                                      Float boost) {
         if (Objects.equals(queryType, TERMS_QUERY.getType())) {
             TermsQueryBuilder termsQueryBuilder = QueryBuilders.termsQuery(field, values).boost(boost);
             setQueryBuilder(boolQueryBuilder, attachType, termsQueryBuilder);
@@ -95,7 +106,13 @@ public class EsQueryTypeUtils {
      * @param rightValue       右值
      * @param boost            权重
      */
-    public static void addQueryByType(BoolQueryBuilder boolQueryBuilder, Integer queryType, Integer attachType, String field, Object leftValue, Object rightValue, Float boost) {
+    public static void addQueryByType(BoolQueryBuilder boolQueryBuilder,
+                                      Integer queryType,
+                                      Integer attachType,
+                                      String field,
+                                      Object leftValue,
+                                      Object rightValue,
+                                      Float boost) {
         if (Objects.equals(queryType, INTERVAL_QUERY.getType())) {
             RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery(field).boost(boost);
             rangeQueryBuilder.gte(leftValue).lte(rightValue);
@@ -105,27 +122,38 @@ public class EsQueryTypeUtils {
 
 
     /**
-     * 设置连接类型 must,filter,should,must not 对应mysql中的and,and,or,!= 丶 not like...
+     * 设置连接类型：
+     * must（必须匹配每个子查询，参与算分，类似“与”）,
+     * filter（必须匹配，不参与算分）,
+     * should（选择性匹配子查询，参与算分，类似“或”）,
+     * must not（必须不匹配，不参与算分，类似“非”）
      *
      * @param boolQueryBuilder  参数连接器
      * @param attachType        连接类型
      * @param matchQueryBuilder 匹配参数
      */
-    private static void setQueryBuilder(BoolQueryBuilder boolQueryBuilder, Integer attachType, QueryBuilder matchQueryBuilder) {
-        boolean must = Objects.equals(attachType, MUST.getType()) || Objects.equals(attachType, GT.getType())
-                || Objects.equals(attachType, LT.getType()) || Objects.equals(attachType, GE.getType())
-                || Objects.equals(attachType, LE.getType()) || Objects.equals(attachType, IN.getType())
-                || Objects.equals(attachType, BETWEEN.getType()) || Objects.equals(attachType, EXISTS.getType())
-                || Objects.equals(attachType, LIKE_LEFT.getType()) || Objects.equals(attachType, LIKE_RIGHT.getType());
-        boolean mustNot = Objects.equals(attachType, MUST_NOT.getType()) || Objects.equals(attachType, NOT_IN.getType())
-                || Objects.equals(attachType, NOT_EXISTS.getType()) || Objects.equals(attachType, NOT_BETWEEN.getType());
+    private static void setQueryBuilder(BoolQueryBuilder boolQueryBuilder,
+                                        Integer attachType,
+                                        QueryBuilder matchQueryBuilder) {
+        boolean must = Objects.equals(attachType, MUST.getType()) || Objects.equals(attachType, EXISTS.getType())
+                || Objects.equals(attachType, LT.getType()) || Objects.equals(attachType, GT.getType())
+                || Objects.equals(attachType, LE.getType()) || Objects.equals(attachType, GE.getType())
+                || Objects.equals(attachType, IN.getType()) || Objects.equals(attachType, NOT_IN.getType())
+                || Objects.equals(attachType, LIKE_LEFT.getType()) || Objects.equals(attachType, LIKE_RIGHT.getType())
+                || Objects.equals(attachType, BETWEEN.getType()) || Objects.equals(attachType, NOT_BETWEEN.getType());
+
+        boolean mustNot = Objects.equals(attachType, MUST_NOT.getType()) || Objects.equals(attachType, NOT_EXISTS.getType());
         if (must) {
+            // must
             boolQueryBuilder.must(matchQueryBuilder);
         } else if (Objects.equals(attachType, FILTER.getType())) {
+            // filter
             boolQueryBuilder.filter(matchQueryBuilder);
         } else if (Objects.equals(attachType, SHOULD.getType())) {
+            // should
             boolQueryBuilder.should(matchQueryBuilder);
         } else if (mustNot) {
+            // must not
             boolQueryBuilder.mustNot(matchQueryBuilder);
         }
     }

@@ -1,17 +1,19 @@
 package com.xwl.esplus.core.mapper;
 
+import com.xwl.esplus.core.page.PageInfo;
 import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import com.xwl.esplus.core.wrapper.update.EsLambdaUpdateWrapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 核心，继承该接口后，即可获得常用的CRUD功能
@@ -97,7 +99,7 @@ public interface EsBaseMapper<T> {
      * 根据 entity 条件，删除记录
      *
      * @param wrapper 条件
-     * @return 总成功条数
+     * @return 成功条数
      */
     Integer delete(EsLambdaQueryWrapper<T> wrapper);
 
@@ -113,21 +115,29 @@ public interface EsBaseMapper<T> {
      * 删除（根据ID 批量删除）
      *
      * @param idList 主键列表
-     * @return 总成功条数
+     * @return 成功条数
      */
     Integer deleteBatchByIds(Collection<? extends Serializable> idList);
 
     /**
-     * 标准查询
+     * RestHighLevelClient原生查询
      *
      * @param wrapper 条件
-     * @return es标准结果
-     * @throws IOException IO异常
+     * @return SearchResponse
      */
     SearchResponse search(EsLambdaQueryWrapper<T> wrapper);
 
     /**
-     * 获取SearchSourceBuilder,可用于本框架生成基础查询条件,不支持的高阶语法用户可通过SearchSourceBuilder 进一步封装
+     * RestHighLevelClient原生查询
+     *
+     * @param searchRequest  查询请求参数
+     * @param requestOptions 请求选项
+     * @return SearchResponse
+     */
+    SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions);
+
+    /**
+     * 获取SearchSourceBuilder
      *
      * @param wrapper 条件
      * @return 查询参数
@@ -135,60 +145,12 @@ public interface EsBaseMapper<T> {
     SearchSourceBuilder getSearchSourceBuilder(EsLambdaQueryWrapper<T> wrapper);
 
     /**
-     * es原生查询
-     *
-     * @param searchRequest  查询请求参数
-     * @param requestOptions 类型
-     * @return es原生返回结果
-     * @throws IOException IO异常
-     */
-    SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions) throws IOException;
-
-    /**
-     * 获取通过本框架生成的查询参数,可用于检验本框架生成的查询参数是否正确
+     * 获取查询DSL
      *
      * @param wrapper 条件
-     * @return 查询JSON格式参数
+     * @return 查询DSL（JSON格式）
      */
     String getSource(EsLambdaQueryWrapper<T> wrapper);
-
-    /**
-     * 未指定返回类型,未指定分页参数
-     *
-     * @param wrapper 条件
-     * @return 原生分页返回
-     * @throws IOException IO异常
-     */
-//    PageInfo<SearchHit> pageQueryOriginal(EsLambdaQueryWrapper<T> wrapper) throws IOException;
-
-    /**
-     * 未指定返回类型,指定分页参数
-     *
-     * @param wrapper  条件
-     * @param pageNum  当前页
-     * @param pageSize 每页显示条数
-     * @return 原生分页返回
-     * @throws IOException IO异常
-     */
-//    PageInfo<SearchHit> pageQueryOriginal(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) throws IOException;
-
-    /**
-     * 指定返回类型,但未指定分页参数
-     *
-     * @param wrapper 条件
-     * @return 指定的返回类型
-     */
-//    PageInfo<T> pageQuery(EsLambdaQueryWrapper<T> wrapper);
-
-    /**
-     * 指定返回类型及分页参数
-     *
-     * @param wrapper  条件
-     * @param pageNum  当前页
-     * @param pageSize 每页条数
-     * @return 指定的返回类型
-     */
-//    PageInfo<T> pageQuery(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
 
     /**
      * 获取总数
@@ -196,37 +158,99 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 总数
      */
-//    Long selectCount(EsLambdaQueryWrapper<T> wrapper);
+    Long selectCount(EsLambdaQueryWrapper<T> wrapper);
 
     /**
-     * 根据 ID 查询
+     * 查询一条记录
+     *
+     * @param wrapper 条件
+     * @return 指定的返回对象
+     */
+    T selectOne(EsLambdaQueryWrapper<T> wrapper);
+
+    /**
+     * 根据ID查询
      *
      * @param id 主键
      * @return 指定的返回对象
      */
-//    T selectById(Serializable id);
+    T selectById(Serializable id);
 
     /**
-     * 查询（根据ID 批量查询）
+     * 查询（根据ID集合批量查询）
      *
      * @param idList 主键列表
      * @return 指定的返回对象列表
      */
-//    List<T> selectBatchIds(Collection<? extends Serializable> idList);
+    List<T> selectBatchIds(Collection<? extends Serializable> idList);
 
     /**
-     * 根据 entity 条件，查询一条记录
+     * 条件查询
      *
      * @param wrapper 条件
-     * @return 指定的返回对象
-     */
-//    T selectOne(EsLambdaQueryWrapper<T> wrapper);
-
-    /**
-     * 根据条件查询
-     *
-     * @param wrapper 条件
-     * @return 对象列表
+     * @return 指定的返回对象列表
      */
     List<T> selectList(EsLambdaQueryWrapper<T> wrapper);
+
+    /**
+     * 条件查询，返回map集合
+     *
+     * @param wrapper 条件
+     * @return map集合
+     */
+    List<Map<String, Object>> selectMaps(EsLambdaQueryWrapper<T> wrapper);
+
+    /**
+     * 分页查询：不指定返回类型及分页参数
+     *
+     * @param wrapper 条件
+     * @return 分页对象（SearchHit）
+     */
+    PageInfo<SearchHit> pageOriginal(EsLambdaQueryWrapper<T> wrapper);
+
+    /**
+     * 分页查询：不指定返回类型，指定分页参数
+     *
+     * @param wrapper  条件
+     * @param pageNum  当前页
+     * @param pageSize 每页条数
+     * @return 分页对象（SearchHit）
+     */
+    PageInfo<SearchHit> pageOriginal(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
+
+    /**
+     * 分页查询：指定返回类型，不指定分页参数
+     *
+     * @param wrapper 条件
+     * @return 分页对象（指定的返回对象）
+     */
+    PageInfo<T> selectPage(EsLambdaQueryWrapper<T> wrapper);
+
+    /**
+     * 分页查询：指定返回类型及分页参数
+     *
+     * @param wrapper  条件
+     * @param pageNum  当前页
+     * @param pageSize 每页条数
+     * @return 分页对象（指定的返回对象）
+     */
+    PageInfo<T> selectPage(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
+
+    /**
+     * 分页查询：指定返回类型，不指定分页参数
+     *
+     * @param wrapper 条件
+     * @return 分页对象（Map<String, Object>）
+     */
+    PageInfo<Map<String, Object>> selectMapsPage(EsLambdaQueryWrapper<T> wrapper);
+
+    /**
+     * 分页查询：指定返回类型及分页参数
+     *
+     * @param wrapper  条件
+     * @param pageNum  当前页
+     * @param pageSize 每页条数
+     * @return 分页对象（Map<String, Object>）
+     */
+    PageInfo<Map<String, Object>> selectMapsPage(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
 }

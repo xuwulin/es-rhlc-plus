@@ -1,13 +1,14 @@
 package com.xwl.esplus.core.toolkit;
 
+import com.xwl.esplus.core.annotation.EsDocument;
 import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.annotation.EsDocumentId;
-import com.xwl.esplus.core.annotation.EsDocument;
+import com.xwl.esplus.core.annotation.EsHighLightField;
 import com.xwl.esplus.core.cache.GlobalConfigCache;
-import com.xwl.esplus.core.metadata.DocumentFieldInfo;
-import com.xwl.esplus.core.metadata.DocumentInfo;
 import com.xwl.esplus.core.config.GlobalConfig;
 import com.xwl.esplus.core.enums.EsIdTypeEnum;
+import com.xwl.esplus.core.metadata.DocumentFieldInfo;
+import com.xwl.esplus.core.metadata.DocumentInfo;
 import org.springframework.util.ClassUtils;
 
 import java.lang.reflect.Field;
@@ -37,10 +38,10 @@ public class DocumentInfoUtils {
     private static final String DEFAULT_ES_ID_NAME = "_id";
 
     /**
-     * 获取实体映射文档信息
+     * 获取文档信息
      *
      * @param clazz 类
-     * @return 文档字段信息
+     * @return 文档信息
      */
     public static DocumentInfo getDocumentInfo(Class<?> clazz) {
         if (clazz == null) {
@@ -61,7 +62,6 @@ public class DocumentInfoUtils {
         if (documentInfo != null) {
             DOCUMENT_INFO_CACHE.put(ClassUtils.getUserClass(clazz), documentInfo);
         }
-
         // 缓存中未获取到,则初始化
         GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
         return initDocumentInfo(globalConfig, clazz);
@@ -107,7 +107,7 @@ public class DocumentInfoUtils {
      *
      * @param clazz        类
      * @param globalConfig 全局配置
-     * @param documentInfo   实体信息
+     * @param documentInfo 实体信息
      */
     public static void initDocumentFields(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo documentInfo) {
         // 文档全局配置
@@ -133,12 +133,12 @@ public class DocumentInfoUtils {
                 }
             }
 
-            // 有 @DocumentField 注解的字段初始化
-            if (initDocumentFieldWithAnnotation(documentConfig, fieldList, field)) {
+            // 有自定义注解的字段初始化
+            if (initDocumentFieldWithAnnotation(documentConfig, fieldList, field, documentInfo)) {
                 continue;
             }
 
-            // 无 @DocumentField 注解的字段初始化
+            // 无自定义注解的字段初始化
             fieldList.add(new DocumentFieldInfo(documentConfig, field));
         }
 
@@ -155,17 +155,22 @@ public class DocumentInfoUtils {
      * @return
      */
     private static boolean initDocumentFieldWithAnnotation(GlobalConfig.DocumentConfig documentConfig,
-                                                           List<DocumentFieldInfo> fieldList, Field field) {
-        // 获取注解属性，自定义字段
+                                                           List<DocumentFieldInfo> fieldList,
+                                                           Field field,
+                                                           DocumentInfo documentInfo) {
+        boolean hasAnnotation = false;
+        // 获取自定义注解
         EsDocumentField esDocumentField = field.getAnnotation(EsDocumentField.class);
-        if (null == esDocumentField) {
-            return false;
-        }
-
-        if (esDocumentField.exist()) {
+        EsHighLightField esFieldHighLight = field.getAnnotation(EsHighLightField.class);
+        if (Objects.nonNull(esDocumentField) && esDocumentField.exist()) {
             fieldList.add(new DocumentFieldInfo(documentConfig, field, field.getName(), esDocumentField));
+            hasAnnotation = true;
         }
-        return true;
+        if (Objects.nonNull(esFieldHighLight) && StringUtils.isNotBlank(esFieldHighLight.value())) {
+            documentInfo.getHighlightFieldMap().putIfAbsent(esFieldHighLight.value(), field.getName());
+            hasAnnotation = true;
+        }
+        return hasAnnotation;
     }
 
     /**
@@ -198,6 +203,7 @@ public class DocumentInfoUtils {
                 documentInfo.setClazz(field.getDeclaringClass());
                 documentInfo.setKeyColumn(column);
                 documentInfo.setKeyField(field);
+                documentInfo.setIdClass(field.getType());
                 documentInfo.setKeyProperty(field.getName());
                 return true;
             } else {
@@ -228,6 +234,7 @@ public class DocumentInfoUtils {
                 documentInfo.setKeyColumn(DEFAULT_ES_ID_NAME);
                 documentInfo.setKeyProperty(field.getName());
                 documentInfo.setKeyField(field);
+                documentInfo.setIdClass(field.getType());
                 documentInfo.setClazz(field.getDeclaringClass());
                 return true;
             } else {
@@ -282,7 +289,7 @@ public class DocumentInfoUtils {
      *
      * @param clazz        类
      * @param globalConfig 全局配置
-     * @param documentInfo   实体信息
+     * @param documentInfo 实体信息
      */
     private static void initIndexName(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo documentInfo) {
         // 数据库全局配置

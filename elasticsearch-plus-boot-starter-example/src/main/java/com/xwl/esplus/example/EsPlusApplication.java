@@ -3,6 +3,9 @@ package com.xwl.esplus.example;
 import com.xwl.esplus.core.annotation.EsMapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+
+import java.io.IOException;
 
 /**
  * @author xwl
@@ -17,7 +20,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 //@EsMapperScan(basePackages = {"com.xwl.esplus.example.mapper"})
 @EsMapperScan(basePackages = {"com.xwl.esplus.example.mapper"})
 public class EsPlusApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(EsPlusApplication.class, args);
+    public static void main(String[] args) throws IOException {
+        ConfigurableApplicationContext applicationContext = SpringApplication.run(EsPlusApplication.class, args);
+
+        // 注意：classpath:META-INF/spring.factories 只是到当前类路径下查找，在jar包中是找不到的
+        // classpath*:META-INF/spring.factories这样就能查找jar包中的
+        /*Resource[] resources = applicationContext.getResources("classpath*:META-INF/spring.factories");
+        for (Resource resource : resources) {
+            System.out.println(resource);
+        }*/
     }
 }

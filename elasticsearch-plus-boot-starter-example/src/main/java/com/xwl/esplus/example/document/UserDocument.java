@@ -36,6 +36,12 @@ public class UserDocument {
      * 公司地址纬经度（30.643077,104.023769）
      */
     private String companyLocation;
+
+    /**
+     * 图形
+     */
+    private String geoLocation;
+
     @EsDocumentField(exist = false)
     private String remark;
 

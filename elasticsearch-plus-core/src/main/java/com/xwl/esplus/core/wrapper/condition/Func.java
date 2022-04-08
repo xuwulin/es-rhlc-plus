@@ -1,12 +1,16 @@
 package com.xwl.esplus.core.wrapper.condition;
 
 import com.xwl.esplus.core.constant.EsConstants;
+import com.xwl.esplus.core.param.EsOrderByParam;
 import com.xwl.esplus.core.toolkit.FieldUtils;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Optional;
+import java.time.ZoneId;
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -95,6 +99,26 @@ public interface Func<Children, R> extends Serializable {
      */
     Children orderBy(boolean condition, boolean isAsc, R... columns);
 
+    /**
+     * 排序 适用于排序字段和规则从前端通过字符串传入的场景
+     *
+     * @param condition     条件
+     * @param orderByParams 排序字段及规则参数列表
+     * @return 泛型
+     */
+    Children orderBy(boolean condition, List<EsOrderByParam> orderByParams);
+
+    default Children orderBy(EsOrderByParam orderByParam) {
+        return orderBy(true, orderByParam);
+    }
+
+    default Children orderBy(List<EsOrderByParam> orderByParams) {
+        return orderBy(true, orderByParams);
+    }
+
+    default Children orderBy(boolean condition, EsOrderByParam orderByParam) {
+        return orderBy(condition, Collections.singletonList(orderByParam));
+    }
 
     default Children in(R column, Collection<?> coll) {
         return in(true, column, coll);
@@ -188,35 +212,68 @@ public interface Func<Children, R> extends Serializable {
     Children isNotNull(boolean condition, R column, Float boost);
 
     default Children groupBy(R... columns) {
-        return groupBy(true, columns);
+        return groupBy(true, null, columns);
+    }
+
+    default Children groupBy(Integer size, R... columns) {
+        return groupBy(true, size, columns);
+    }
+
+    default Children groupBy(boolean condition, R... columns) {
+        return groupBy(condition, null, columns);
     }
 
     /**
-     * 分组：GROUP BY 字段, ...
+     * 分组（Bucket聚合）：参加聚合的字段必须是keyword、日期、数值、布尔类型
      *
      * @param condition 条件
+     * @param size      聚合返回的数量，默认10
      * @param columns   列,支持多列
-     * @return 泛型
+     * @return
      */
-    Children groupBy(boolean condition, R... columns);
+    Children groupBy(boolean condition, Integer size, R... columns);
 
     default Children termsAggregation(R column) {
-        return termsAggregation(true, FieldUtils.getFieldName(column), column);
+        return termsAggregation(true, FieldUtils.getFieldName(column), null, column);
     }
 
     default Children termsAggregation(String returnName, R column) {
-        return termsAggregation(true, returnName, column);
+        return termsAggregation(true, returnName, null, column);
     }
 
     /**
-     * 可指定返回名称分组,相当于mysql group by
+     * Bucket聚合：参加聚合的字段必须是keyword、日期、数值、布尔类型
      *
      * @param condition  条件
      * @param returnName 返回的聚合字段名称
+     * @param size       聚合返回的数量，默认10
      * @param column     列
      * @return 泛型
      */
-    Children termsAggregation(boolean condition, String returnName, R column);
+    Children termsAggregation(boolean condition, String returnName, Integer size, R column);
+
+    default Children dateHistogram(DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
+        return dateHistogram(true, FieldUtils.getFieldName(column), interval, format, minDocCount, extendedBounds, timeZone, column);
+    }
+
+    default Children dateHistogram(String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
+        return dateHistogram(true, returnName, interval, format, minDocCount, extendedBounds, timeZone, column);
+    }
+
+    /**
+     * dateHistogram聚合：按照日期阶梯分组，例如一周为一组，或者一月为一组
+     *
+     * @param condition      条件
+     * @param returnName     返回的聚合字段名称
+     * @param interval       按什么时间段聚合
+     * @param format         日期格式
+     * @param minDocCount    为空的话则填充值
+     * @param extendedBounds 强制返回的日期区间；如果不加这个就只返回有数据的区间
+     * @param timeZone       设置时区
+     * @param column         列
+     * @return
+     */
+    Children dateHistogram(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column);
 
     default Children avg(R column) {
         return avg(true, FieldUtils.getFieldName(column), column);
@@ -289,4 +346,63 @@ public interface Func<Children, R> extends Serializable {
      * @return 泛型
      */
     Children sum(boolean condition, String returnName, R column);
+
+    default Children stats(R column) {
+        return stats(true, FieldUtils.getFieldName(column), column);
+    }
+
+    default Children stats(String returnName, R column) {
+        return stats(true, returnName, column);
+    }
+
+    /**
+     * 同时求count、min、max、avg、sum
+     *
+     * @param condition  条件
+     * @param returnName 返回的聚合字段名称
+     * @param column     列
+     * @return
+     */
+    Children stats(boolean condition, String returnName, R column);
+
+    /**
+     * 用户自定义排序
+     *
+     * @param condition    条件
+     * @param sortBuilders 排序规则
+     * @return 泛型
+     */
+    Children sort(boolean condition, List<SortBuilder<?>> sortBuilders);
+
+    default Children sort(SortBuilder<?> sortBuilder) {
+        return sort(true, Collections.singletonList(sortBuilder));
+    }
+
+    /**
+     * 根据得分_score排序 默认为降序 得分高得在前
+     *
+     * @return 泛型
+     */
+    default Children sortByScore() {
+        return sortByScore(true, SortOrder.DESC);
+    }
+
+    /**
+     * 根据得分_score排序 默认为降序 得分高得在前
+     *
+     * @param condition 条件
+     * @return 泛型
+     */
+    default Children sortByScore(boolean condition) {
+        return sortByScore(condition, SortOrder.DESC);
+    }
+
+    /**
+     * 根据得分_score排序
+     *
+     * @param condition 条件
+     * @param sortOrder 升序/降序
+     * @return 泛型
+     */
+    Children sortByScore(boolean condition, SortOrder sortOrder);
 }

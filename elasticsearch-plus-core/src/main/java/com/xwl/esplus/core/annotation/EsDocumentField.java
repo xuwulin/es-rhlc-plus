@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * @since 2022/3/11 18:59
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 public @interface EsDocumentField {
     /**
      * 是否为文档字段 默认 true 存在，false 不存在

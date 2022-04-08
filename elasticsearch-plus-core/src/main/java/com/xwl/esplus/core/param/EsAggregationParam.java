@@ -1,6 +1,10 @@
 package com.xwl.esplus.core.param;
 
 import com.xwl.esplus.core.constant.EsAggregationTypeEnum;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
+
+import java.time.ZoneId;
 
 /**
  * 聚合参数
@@ -17,17 +21,46 @@ public class EsAggregationParam {
      */
     private String field;
     /**
+     * 聚合返回条数，默认10
+     */
+    private Integer size;
+    /**
+     * 按什么时间段聚合：
+     * year（1y）年
+     * quarter（1q）季度
+     * month（1M）月份
+     * week（1w）星期
+     * day（1d）天
+     * hour（1h）小时
+     * minute（1m）分钟
+     * second（1s）秒
+     */
+    private DateHistogramInterval interval;
+    /**
+     * 日期格式
+     */
+    private String format;
+    /**
+     * 为空的话则填充值，默认0
+     */
+    private long minDocCount;
+    /**
+     * extended_bounds：强制返回的日期区间；如果不加这个就只返回有数据的区间
+     */
+    private ExtendedBounds extendedBounds;
+    /**
+     * 设置时区
+     * "time_zone": "Asia/Shanghai"
+     * "time_zone": "UTC"
+     * "time_zone":"+08:00" 东八区
+     */
+    private ZoneId timeZone;
+    /**
      * 聚合类型
      */
     private EsAggregationTypeEnum aggregationType;
 
     public EsAggregationParam() {
-    }
-
-    public EsAggregationParam(String name, String field, EsAggregationTypeEnum aggregationType) {
-        this.name = name;
-        this.field = field;
-        this.aggregationType = aggregationType;
     }
 
     public String getName() {
@@ -44,6 +77,54 @@ public class EsAggregationParam {
 
     public void setField(String field) {
         this.field = field;
+    }
+
+    public Integer getSize() {
+        return size;
+    }
+
+    public void setSize(Integer size) {
+        this.size = size;
+    }
+
+    public DateHistogramInterval getInterval() {
+        return interval;
+    }
+
+    public void setInterval(DateHistogramInterval interval) {
+        this.interval = interval;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    public long getMinDocCount() {
+        return minDocCount;
+    }
+
+    public void setMinDocCount(long minDocCount) {
+        this.minDocCount = minDocCount;
+    }
+
+    public ExtendedBounds getExtendedBounds() {
+        return extendedBounds;
+    }
+
+    public void setExtendedBounds(ExtendedBounds extendedBounds) {
+        this.extendedBounds = extendedBounds;
+    }
+
+    public ZoneId getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(ZoneId timeZone) {
+        this.timeZone = timeZone;
     }
 
     public EsAggregationTypeEnum getAggregationType() {

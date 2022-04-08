@@ -62,7 +62,6 @@ public class EsMapperProxy<T> implements InvocationHandler, Serializable {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         // 从缓存中获取
         EsBaseMapperImpl<?> baseEsMapperInstance = BaseCache.getBaseEsMapperInstance(mapperInterface);
-        // 这里如果后续需要像MP那样 从xml生成代理的其它方法,则可增强method,此处并不需要
         return method.invoke(baseEsMapperInstance, args);
     }
 }

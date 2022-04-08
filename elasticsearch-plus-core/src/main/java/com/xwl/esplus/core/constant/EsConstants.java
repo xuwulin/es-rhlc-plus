@@ -16,6 +16,10 @@ public class EsConstants {
      */
     public static final Integer ONE = 1;
     /**
+     * 数字10
+     */
+    public static final Integer TEN = 10;
+    /**
      * 高亮默认前缀标签
      */
     public static final String HIGH_LIGHT_PRE_TAG = "<em>";
@@ -128,4 +132,8 @@ public class EsConstants {
      * 默认返回数
      */
     public static final Integer DEFAULT_SIZE = 10000;
+    /**
+     * es默认得分字段
+     */
+    public static final String SCORE_FIELD = "_score";
 }
