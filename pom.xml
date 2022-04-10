@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.xwl</groupId>
-    <artifactId>elasticsearch-plus</artifactId>
+    <artifactId>es-rhlc-plus</artifactId>
     <version>0.0.1</version>
     <modules>
         <module>elasticsearch-plus-core</module>
