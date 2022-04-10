@@ -24,8 +24,8 @@ import java.util.Set;
  * @author xwl
  * @since 2022/3/11 20:30
  */
-public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
-    private MapperFactoryBean<?> mapperFactoryBean = new MapperFactoryBean<>();
+public class ClassPathEsMapperScanner extends ClassPathBeanDefinitionScanner {
+    private EsMapperFactoryBean<?> esMapperFactoryBean = new EsMapperFactoryBean<>();
 
     private Class<? extends Annotation> annotationClass;
 
@@ -33,8 +33,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
     private static final String KEY = "mapperBeanDefinition";
 
-    public void setMapperFactoryBean(MapperFactoryBean<?> mapperFactoryBean) {
-        this.mapperFactoryBean = mapperFactoryBean != null ? mapperFactoryBean : new MapperFactoryBean<>();
+    public void setMapperFactoryBean(EsMapperFactoryBean<?> esMapperFactoryBean) {
+        this.esMapperFactoryBean = esMapperFactoryBean != null ? esMapperFactoryBean : new EsMapperFactoryBean<>();
     }
 
     public void setAnnotationClass(Class<? extends Annotation> annotationClass) {
@@ -50,7 +50,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
      *
      * @param registry 需要传入 BeanDefinitionRegistry，该对象默认实现为 DefaultListableBeanFactory
      */
-    public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
+    public ClassPathEsMapperScanner(BeanDefinitionRegistry registry) {
         // false表示不使用ClassPathBeanDefinitionScanner默认的TypeFilter
         super(registry, false);
     }
@@ -134,14 +134,14 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
             definition = (GenericBeanDefinition) holder.getBeanDefinition();
             // bean的全类名
             String beanClassName = definition.getBeanClassName();
-            logger.debug("Creating MapperFactoryBean with name '" + holder.getBeanName()
+            logger.debug("Creating EsMapperFactoryBean with name '" + holder.getBeanName()
                     + "' and '" + beanClassName + "' mapperInterface");
 
             // the mapper interface is the original class of the bean
-            // but, the actual class of the bean is MapperFactoryBean
+            // but, the actual class of the bean is EsMapperFactoryBean
             /**
              * 所有的Mapper接口被扫描到，封装成BeanDefinition，还经历了一次改造，
-             * 最主要的就是将mapper接口BeanDefination的beanClass改成了com.xwl.esplus.core.register.MapperFactoryBean.class
+             * 最主要的就是将mapper接口BeanDefination的beanClass改成了com.xwl.esplus.core.register.EsMapperFactoryBean.class
              * 并且将mapper接口BeanDefination的名称作为构造函数的入参传入进去
              *
              * beanClass被改成MapperFactoryBean这意味着什么?
@@ -149,21 +149,22 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
              * 然后再根据每一个BeanDefination的各项属性来实例化bean的。
              * 最主要的一个属性肯定是beanClass,有了beanClass,就可以反射调用构造方法来实例化bean
              *
-             * 现在所有的Mapper接口bean的Class都被设置为MapperFactoryBean,
-             * 这就表示,之后所有Mapper接口的bean都会经由MapperFactoryBean类来创建,
+             * 现在所有的Mapper接口bean的Class都被设置为EsMapperFactoryBean,
+             * 这就表示,之后所有Mapper接口的bean都会经由EsMapperFactoryBean类来创建,
              * 而不是简简单单的直接实例化Mapper接口,当然那也没有任何意义，因为Mapper接口只定义了抽象方法。
              */
             definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
             /**
-             * 将bean的真实类型改变为MapperFactoryBean
-             * 以TestDocumentMapper为例，意味着当前的mapper接口在Spring容器中，
-             * beanName是testDocumentMapper，beanClass是MapperFactoryBean.class。
-             * 那么在IOC初始化的时候，实例化的对象就是MapperFactoryBean对象。
+             * 将bean的真实类型改变为EsMapperFactoryBean
+             * 以UserDocumentMapper为例，意味着当前的mapper接口在Spring容器中，
+             * beanName是userDocumentMapper，beanClass是EsMapperFactoryBean.class。
+             * 那么在IOC初始化的时候，实例化的对象就是EsMapperFactoryBean对象。
              */
-            definition.setBeanClass(this.mapperFactoryBean.getClass());
+            definition.setBeanClass(this.esMapperFactoryBean.getClass());
 
-            logger.debug("Enabling autowire by type for MapperFactoryBean with name '" + holder.getBeanName() + "'.");
+            logger.debug("Enabling autowire by type for EsMapperFactoryBean with name '" + holder.getBeanName() + "'.");
             /**
+             * 设置自动装配：按照类型装配，（对于 “构造方法” 和 “工厂方法” 来说选择AUTOWIRE_CONSTRUCTOR）
              * 将BeanDefinition的autowireMode属性改成 AUTOWIRE_BY_TYPE，
              * 后面实例化该bean的时候会调用属性的描述器,用write的方式注入属性值，
              */
@@ -194,7 +195,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
         if (super.checkCandidate(beanName, beanDefinition)) {
             return true;
         } else {
-            logger.warn("Skipping MapperFactoryBean with name '" + beanName
+            logger.warn("Skipping EsMapperFactoryBean with name '" + beanName
                     + "' and '" + beanDefinition.getBeanClassName() + "' mapperInterface"
                     + ". Bean already defined with the same name!");
             return false;

@@ -14,6 +14,10 @@ import java.lang.reflect.Proxy;
  * 所有被@EsMapperScan注解扫描到的Mapper接口的bean都会经由MapperFactoryBean类来创建,
  * 而不是简简单单的直接实例化Mapper接口,当然那也没有任何意义，因为Mapper接口只定义了抽象方法。
  * <p>
+ * mapper接口如何被spring管理？
+ * 其实spring并不能直接管理接口，最终管理的是对象，接口是如何变成对象从而被spring管理的呢？
+ * 如mybatis，就有一个MapperFactoryBean接口，通过这个接口生产出mapper对象，我们使用的就是这个工厂生产的mapper对象，而不是mapper接口
+ * <p>
  * 注意：
  * BeanFactory是一个Bean工厂。
  * FactoryBean 则是一个特殊的bean，可以额外的创建出另一个bean，并替代原生的bean,原生bean的名称为 &+名称（实现getObject() 和getObjectType()）
@@ -21,7 +25,7 @@ import java.lang.reflect.Proxy;
  * @author xwl
  * @since 2022/3/11 20:30
  */
-public class MapperFactoryBean<T> implements FactoryBean<T> {
+public class EsMapperFactoryBean<T> implements FactoryBean<T> {
     /**
      * 被代理的接口
      */
@@ -30,21 +34,21 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
     @Autowired
     private RestHighLevelClient client;
 
-    public MapperFactoryBean() {
+    public EsMapperFactoryBean() {
     }
 
     /**
      * 构造函数
      *
-     * @param mapperInterface 被代理的接口类型，该参数，由注解解析器自动赋值，即使用@Autowired或其他方式注入的Mapper（继承BaseEsMapper）对象
+     * @param mapperInterface 被代理的接口类型，该参数，由注解解析器自动赋值（自动装配），即使用@Autowired或其他方式注入的Mapper（继承BaseEsMapper）对象
      */
-    public MapperFactoryBean(Class<T> mapperInterface) {
+    public EsMapperFactoryBean(Class<T> mapperInterface) {
         this.mapperInterface = mapperInterface;
     }
 
     /**
      * 当 ioc 容器提取对象时，调用此方法获取一个代理对象
-     * Mapper代理对象的创建就是在MapperFactoryBean的getObject方法中返回的
+     * Mapper代理对象的创建就是在EsMapperFactoryBean的getObject方法中返回的
      *
      * @return
      * @throws Exception
@@ -55,7 +59,7 @@ public class MapperFactoryBean<T> implements FactoryBean<T> {
         EsMapperProxy<T> esMapperProxy = new EsMapperProxy<>(mapperInterface);
         // 缓存至本地
         BaseCache.initCache(mapperInterface, client);
-        // 获取代理对象：com.xwl.esplus.core.condition.BaseEsMapperImpl@78e68401
+        // 获取代理对象（com.xwl.esplus.core.condition.BaseEsMapperImpl@78e68401）
         return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[]{mapperInterface}, esMapperProxy);
     }
 

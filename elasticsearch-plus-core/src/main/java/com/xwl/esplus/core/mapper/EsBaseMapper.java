@@ -70,6 +70,8 @@ public interface EsBaseMapper<T> {
      */
     Integer insertBatch(Collection<T> entityList);
 
+    // TODO 新增、更新、删除后立马刷新
+
     /**
      * 根据 updateWrapper 条件，更新记录
      *

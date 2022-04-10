@@ -12,8 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
 import java.time.ZoneId;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * 聚合查询测试
@@ -26,51 +24,6 @@ public class AggregationTest {
 
     @Resource
     private UserDocumentMapper userDocumentMapper;
-
-    @Test
-    public void testSelect() {
-        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
-                // 只查询nickname,age字段
-                .select(UserDocument::getNickname, UserDocument::getAge)
-                .eq(UserDocument::getAge, 18);
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
-        System.out.println(userDocuments);
-    }
-
-    @Test
-    public void testNotSelect() {
-        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
-                // 不查询nickname,age字段
-                .notSelect(UserDocument::getNickname, UserDocument::getAge)
-                .eq(UserDocument::getAge, 18);
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
-        System.out.println(userDocuments);
-    }
-
-    @Test
-    public void testNotSelect2() {
-        // 等价写法
-        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        wrapper.select(UserDocument.class, ud -> !Objects.equals(ud.getColumn(), "nickname"));
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
-        System.out.println(userDocuments);
-    }
-
-    @Test
-    public void testOrderBy() {
-        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
-                .orderByDesc(UserDocument::getAge);
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
-        System.out.println(userDocuments);
-    }
-
-    @Test
-    public void testGroupBy() {
-        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
-                .groupBy(UserDocument::getAge).size(0);
-        SearchResponse response = userDocumentMapper.search(wrapper);
-        System.out.println(response);
-    }
 
     @Test
     public void testMax() {
@@ -109,6 +62,22 @@ public class AggregationTest {
     public void testStats() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .stats(UserDocument::getAge).size(0);
+        SearchResponse response = userDocumentMapper.search(wrapper);
+        System.out.println(response);
+    }
+
+    @Test
+    public void testGroupBy() {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
+                .groupBy(UserDocument::getAge).size(0);
+        SearchResponse response = userDocumentMapper.search(wrapper);
+        System.out.println(response);
+    }
+
+    @Test
+    public void testTermsAggregation() {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
+                .termsAggregation(UserDocument::getNickname).size(0);
         SearchResponse response = userDocumentMapper.search(wrapper);
         System.out.println(response);
     }

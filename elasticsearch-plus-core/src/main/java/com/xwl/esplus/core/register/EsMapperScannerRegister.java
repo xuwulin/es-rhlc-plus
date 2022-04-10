@@ -23,12 +23,13 @@ import org.springframework.util.StringUtils;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
- * 注册bean，参照mybatis-spring
- * ImportBeanDefinitionRegistrar注入FactoryBean到SpringIOC中，
- * 而在FactoryBean中定义了类型T的动态代理，通过对InvocationHandler接口的实现来添加自定义行为，这里使用jdk默认的代理，只支持接口类型。
- *
+ * 注册bean，参照mybatis-plus
+ * ImportBeanDefinitionRegistrar注入EsMapperFactoryBean到SpringIOC中，
+ * 而在EsMapperFactoryBean中定义了类型T的动态代理，通过对InvocationHandler接口的实现来添加自定义行为，这里使用jdk默认的代理，只支持接口类型。
+ * <p>
  * ImportBeanDefinitionRegistrar，在Spring中，加载它的实现类，只有一个方法就是配合@Impor使用，是主要负责Bean 的动态注入的。
  *
  * @author xwl
@@ -48,11 +49,13 @@ public class EsMapperScannerRegister implements ImportBeanDefinitionRegistrar, R
      */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+        // 对注解（自定义注解EsMapperScan）进行扫描
+        Map<String, Object> annotationAttributes = importingClassMetadata.getAnnotationAttributes(EsMapperScan.class.getName());
         // 获取自定义注解@EsMapperScan中的属性值（value/basePackages，字符串数组或字符串）
-        AnnotationAttributes annAttrs = AnnotationAttributes
-                .fromMap(importingClassMetadata.getAnnotationAttributes(EsMapperScan.class.getName()));
+        AnnotationAttributes annAttrs = AnnotationAttributes.fromMap(annotationAttributes);
 
-        ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
+        // 对类进行扫描
+        ClassPathEsMapperScanner scanner = new ClassPathEsMapperScanner(registry);
         // this check is needed in Spring 3.1
         // java8写法
 //        Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);
@@ -113,12 +116,19 @@ public class EsMapperScannerRegister implements ImportBeanDefinitionRegistrar, R
         scanner.doScan(StringUtils.toStringArray(basePackages));
     }
 
+    /**
+     * 设置运行此对象的资源加载器
+     *
+     * @param resourceLoader 资源加载器
+     */
     @Override
     public void setResourceLoader(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
     /**
+     * 自定义过滤器
+     *
      * @param filterAttributes
      * @return
      */

@@ -8,7 +8,6 @@ import com.xwl.esplus.core.param.EsGeoParam;
 import com.xwl.esplus.core.toolkit.CollectionUtils;
 import com.xwl.esplus.core.toolkit.EsQueryTypeUtils;
 import com.xwl.esplus.core.toolkit.ExceptionUtils;
-import com.xwl.esplus.core.toolkit.OptionalUtils;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -109,9 +108,14 @@ public class EsWrapperProcessor {
             searchSourceBuilder.fetchSource(wrapper.getInclude(), wrapper.getExclude());
         }
 
-        // from & size
+        // from & size（默认10000条）
         Optional.ofNullable(wrapper.getFrom()).ifPresent(searchSourceBuilder::from);
-        OptionalUtils.ofNullable(wrapper.getSize()).ifPresent(searchSourceBuilder::size, DEFAULT_SIZE);
+        Optional.ofNullable(wrapper.getSize()).ifPresent(searchSourceBuilder::size);
+//        if (Objects.isNull(wrapper.getSize())) {
+//            searchSourceBuilder.size(DEFAULT_SIZE);
+//        } else {
+//            searchSourceBuilder.size(wrapper.getSize());
+//        }
 
         // 高亮
         if (CollectionUtils.isNotEmpty(wrapper.getHighLightParamList())) {

@@ -17,7 +17,6 @@ import java.io.IOException;
 //}, includeFilters = {
 //        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {TestDocumentMapper.class})
 //})
-//@EsMapperScan(basePackages = {"com.xwl.esplus.example.mapper"})
 @EsMapperScan(basePackages = {"com.xwl.esplus.example.mapper"})
 public class EsPlusApplication {
     public static void main(String[] args) throws IOException {

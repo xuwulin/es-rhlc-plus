@@ -21,6 +21,8 @@ import java.util.List;
  * ImportBeanDefinitionRegistrar注入FactoryBean到SpringIOC中，
  * 而在FactoryBean中定义了类型T的动态代理，通过对InvocationHandler接口的实现来添加自定义行为，这里使用jdk默认的代理，只支持接口类型。
  *
+ * ImportBeanDefinitionRegistrar，在Spring中，加载它的实现类，只有一个方法就是配合@Impor使用，是主要负责Bean 的动态注入的。
+ *
  * @author xwl
  * @since 2022/3/11 20:29
  */
@@ -40,7 +42,7 @@ public class EsMapperRegister implements BeanFactoryAware, ImportBeanDefinitionR
      */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        ClassPathMapperScanner scanner = new ClassPathMapperScanner(registry);
+        ClassPathEsMapperScanner scanner = new ClassPathEsMapperScanner(registry);
         // this check is needed in Spring 3.1
         // java8写法
 //        Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);

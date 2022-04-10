@@ -397,6 +397,10 @@ public interface Func<Children, R> extends Serializable {
         return sortByScore(condition, SortOrder.DESC);
     }
 
+    default Children sortByScore(SortOrder sortOrder) {
+        return sortByScore(true, sortOrder);
+    }
+
     /**
      * 根据得分_score排序
      *
