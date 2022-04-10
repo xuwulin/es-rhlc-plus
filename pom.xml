@@ -8,14 +8,14 @@
     <artifactId>es-rhlc-plus</artifactId>
     <version>0.0.1</version>
     <modules>
-        <module>elasticsearch-plus-core</module>
-        <module>elasticsearch-plus-boot-starter</module>
-        <module>elasticsearch-plus-boot-autoconfigure</module>
-        <module>elasticsearch-plus-boot-starter-example</module>
+        <module>es-rhlc-plus-boot-core</module>
+        <module>es-rhlc-plus-boot-autoconfigure</module>
+        <module>es-rhlc-plus-boot-starter</module>
+        <module>es-rhlc-plus-boot-starter-test</module>
     </modules>
     <!-- 表明这是一个父工程 -->
     <packaging>pom</packaging>
-    <description>Elasticsearch 增强工具包，简化CRUD操作</description>
+    <description>Elasticsearch RestHighLevelClient增强工具包，简化CRUD操作</description>
 
     <!-- 开发者 -->
     <developers>
@@ -57,19 +57,19 @@
         <dependencies>
             <dependency>
                 <groupId>com.xwl</groupId>
-                <artifactId>elasticsearch-plus-core</artifactId>
+                <artifactId>es-rhlc-plus-boot-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.xwl</groupId>
-                <artifactId>elasticsearch-plus-boot-starter</artifactId>
+                <artifactId>es-rhlc-plus-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.xwl</groupId>
-                <artifactId>elasticsearch-plus-boot-autoconfigure</artifactId>
+                <artifactId>es-rhlc-plus-boot-autoconfigure</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
