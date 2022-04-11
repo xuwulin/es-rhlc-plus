@@ -55,16 +55,17 @@ public class EsMapperProxy<T> implements InvocationHandler, Serializable {
      * 就会直接使用EsMapperProxy.invoke方法的返回值，而不会去走真实的UserDocumentMapper.createIndex()方法；
      * 当然也不能直接调用UserDocumentMapper中的方法，因为UserDocumentMapper并没有被实例化
      *
-     * @param proxy  被代理的对象，如：com.xwl.esplus.core.condition.BaseEsMapperImpl@78e68401
-     * @param method 被代理的方法，如：public abstract java.lang.Boolean com.xwl.esplus.core.mapper.BaseEsMapper.createIndex()
-     * @param args   被代理的方法参数
+     * @param proxy  代理的对象本身，如：com.xwl.esplus.core.condition.BaseEsMapperImpl@78e68401
+     * @param method 正在执行的方法，如：public abstract java.lang.Boolean com.xwl.esplus.core.mapper.BaseEsMapper.createIndex()
+     * @param args   正在执行的方法的实际参数
      * @return
      * @throws Throwable
      */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // 从缓存中获取
+        // 从缓存中获取目标对象
         EsBaseMapperImpl<?> baseEsMapperInstance = BaseCache.getBaseEsMapperInstance(mapperInterface);
+        // 方法反射调用：方法.invoke(目标对象, 参数);
         return method.invoke(baseEsMapperInstance, args);
     }
 }

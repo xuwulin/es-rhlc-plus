@@ -42,7 +42,7 @@ public class EsMapperRegister implements BeanFactoryAware, ImportBeanDefinitionR
      */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        ClassPathEsMapperScanner scanner = new ClassPathEsMapperScanner(registry);
+        EsMapperScanner scanner = new EsMapperScanner(registry);
         // this check is needed in Spring 3.1
         // java8写法
 //        Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);

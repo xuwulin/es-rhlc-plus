@@ -38,7 +38,11 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
     }
 
     /**
-     * 构造函数
+     * 构造函数，给mapperInterface赋值
+     * Spring是如何知道Class<T> mapperInterface;具体的类型呢，不可能每个class都去扫描一遍吧？
+     * 其实是在ClassPathEsMapperScanner#processBeanDefinitions()方法中，
+     * 由definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);决定的
+     * beanClassName的类型其实是：EsMapperFactoryBean.class
      *
      * @param mapperInterface 被代理的接口类型，该参数，由注解解析器自动赋值（自动装配），即使用@Autowired或其他方式注入的Mapper（继承BaseEsMapper）对象
      */
@@ -50,7 +54,7 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
      * 当 ioc 容器提取对象时，调用此方法获取一个代理对象
      * Mapper代理对象的创建就是在EsMapperFactoryBean的getObject方法中返回的
      *
-     * @return
+     * @return 返回的对象最终会成为ioc容器中的一个bean
      * @throws Exception
      */
     @Override

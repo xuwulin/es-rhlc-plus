@@ -24,7 +24,7 @@ import java.util.Set;
  * @author xwl
  * @since 2022/3/11 20:30
  */
-public class ClassPathEsMapperScanner extends ClassPathBeanDefinitionScanner {
+public class EsMapperScanner extends ClassPathBeanDefinitionScanner {
     private EsMapperFactoryBean<?> esMapperFactoryBean = new EsMapperFactoryBean<>();
 
     private Class<? extends Annotation> annotationClass;
@@ -50,7 +50,7 @@ public class ClassPathEsMapperScanner extends ClassPathBeanDefinitionScanner {
      *
      * @param registry 需要传入 BeanDefinitionRegistry，该对象默认实现为 DefaultListableBeanFactory
      */
-    public ClassPathEsMapperScanner(BeanDefinitionRegistry registry) {
+    public EsMapperScanner(BeanDefinitionRegistry registry) {
         // false表示不使用ClassPathBeanDefinitionScanner默认的TypeFilter
         super(registry, false);
     }
@@ -110,12 +110,13 @@ public class ClassPathEsMapperScanner extends ClassPathBeanDefinitionScanner {
     @Override
     public Set<BeanDefinitionHolder> doScan(String... basePackages) {
         // 扫描包，返回BeanDefinition对象集合
+        // 但是这里拿到的beanDefinitions是不能直接使用的（beanClass属性不对），因为扫描的都是接口，不能被实例化，需要进一步处理
         Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
         if (beanDefinitions.isEmpty()) {
             logger.warn("No es-plus mapper was found in '" + Arrays.toString(basePackages) + "' package. Please check your configuration.");
         } else {
             // 修改BeanDefinition
-            // 对扫描结果进行处理，如果不处理的话，这个接口就当作了一个普通的Bean注入IOC了，在引入调用，就会出现错误了。
+            // 对扫描结果进行处理，如果不处理的话，这个接口就当作了一个普通的Bean注入IOC了，在引入调用，就会出现错误了，因为接口不能被实例化。
             processBeanDefinitions(beanDefinitions);
         }
         return beanDefinitions;
@@ -139,6 +140,7 @@ public class ClassPathEsMapperScanner extends ClassPathBeanDefinitionScanner {
 
             // the mapper interface is the original class of the bean
             // but, the actual class of the bean is EsMapperFactoryBean
+            // 以下两行代码是关键！！！
             /**
              * 所有的Mapper接口被扫描到，封装成BeanDefinition，还经历了一次改造，
              * 最主要的就是将mapper接口BeanDefination的beanClass改成了com.xwl.esplus.core.register.EsMapperFactoryBean.class
@@ -150,7 +152,7 @@ public class ClassPathEsMapperScanner extends ClassPathBeanDefinitionScanner {
              * 最主要的一个属性肯定是beanClass,有了beanClass,就可以反射调用构造方法来实例化bean
              *
              * 现在所有的Mapper接口bean的Class都被设置为EsMapperFactoryBean,
-             * 这就表示,之后所有Mapper接口的bean都会经由EsMapperFactoryBean类来创建,
+             * 这就表示,之后所有Mapper接口的bean都会经由EsMapperFactoryBean类来创建（构造方法）,
              * 而不是简简单单的直接实例化Mapper接口,当然那也没有任何意义，因为Mapper接口只定义了抽象方法。
              */
             definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
@@ -173,7 +175,8 @@ public class ClassPathEsMapperScanner extends ClassPathBeanDefinitionScanner {
     }
 
     /**
-     * 修改判断实现逻辑，仅判断该类型是否是接口类型，排除掉非接口的类
+     * 判断beanDefinition是否是一个候选的bean，spring的默认逻辑是过滤掉接口，不符合当前框架要求
+     * 因此需要修改判断实现逻辑，仅判断该类型是否是接口类型，排除掉非接口的类
      *
      * @param beanDefinition 要检查的bean定义信息
      * @return true 是候选组件

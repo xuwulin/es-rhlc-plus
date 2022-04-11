@@ -55,7 +55,7 @@ public class EsMapperScannerRegister implements ImportBeanDefinitionRegistrar, R
         AnnotationAttributes annAttrs = AnnotationAttributes.fromMap(annotationAttributes);
 
         // 对类进行扫描
-        ClassPathEsMapperScanner scanner = new ClassPathEsMapperScanner(registry);
+        EsMapperScanner scanner = new EsMapperScanner(registry);
         // this check is needed in Spring 3.1
         // java8写法
 //        Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);
