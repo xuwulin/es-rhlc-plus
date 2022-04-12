@@ -68,30 +68,30 @@ public class AdvancedQueryTest {
     }
 
     @Test
-    public void testSortByScore(){
+    public void testSortByScore() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        wrapper.match(UserDocument::getCompanyName,"科技");
+        wrapper.match(UserDocument::getCompanyName, "科技");
         wrapper.sortByScore(SortOrder.ASC);
         List<UserDocument> documents = userDocumentMapper.selectList(wrapper);
         System.out.println(documents);
     }
 
     @Test
-    public void testOrderByParams(){
+    public void testOrderByParams() {
         String jsonParam = "[{\"order\":\"createdTime\",\"sort\":\"DESC\"},{\"order\":\"nickname\",\"sort\":\"ASC\"}]";
         List<EsOrderByParam> orderByParams = JSON.parseArray(jsonParam, EsOrderByParam.class);
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        wrapper.match(UserDocument::getCompanyName,"科技")
+        wrapper.match(UserDocument::getCompanyName, "科技")
                 .orderBy(orderByParams);
         List<UserDocument> documents = userDocumentMapper.selectList(wrapper);
         System.out.println(documents);
     }
 
     @Test
-    public void testSort(){
+    public void testSort() {
         // 随机获取数据
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        wrapper.match(UserDocument::getCompanyName,"科技");
+        wrapper.match(UserDocument::getCompanyName, "科技");
         Script script = new Script("Math.random()");
         ScriptSortBuilder scriptSortBuilder = new ScriptSortBuilder(script, ScriptSortBuilder.ScriptSortType.NUMBER);
         wrapper.sort(scriptSortBuilder);
@@ -126,6 +126,14 @@ public class AdvancedQueryTest {
         String keyword = "张乌鸡";
         wrapper.match(UserDocument::getNickname, keyword);
         wrapper.highLight(UserDocument::getNickname);
+        SearchResponse response = userDocumentMapper.search(wrapper);
+        System.out.println(response);
+    }
+
+    @Test
+    public void testBetween() throws IOException {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
+        wrapper.between(UserDocument::getCreatedTime, "2022-03-01 00:00:00", "2022-04-11 00:00:00");
         SearchResponse response = userDocumentMapper.search(wrapper);
         System.out.println(response);
     }
