@@ -21,7 +21,7 @@ public interface Index<Children, R> extends Serializable {
      * 设置索引名称
      *
      * @param indexName 索引名称
-     * @return 
+     * @return
      */
     Children indexName(String indexName);
 
@@ -29,7 +29,7 @@ public interface Index<Children, R> extends Serializable {
      * 设置创建别名信息
      *
      * @param alias 别名
-     * @return 
+     * @return
      */
     Children alias(String alias);
 
@@ -75,7 +75,7 @@ public interface Index<Children, R> extends Serializable {
      *
      * @param column    列
      * @param fieldType es中的类型
-     * @return 
+     * @return
      */
     default Children mapping(R column, EsFieldTypeEnum fieldType) {
         return mapping(column, fieldType, null);
@@ -87,7 +87,7 @@ public interface Index<Children, R> extends Serializable {
      * @param column    列
      * @param fieldType es中的类型
      * @param analyzer  创建索引时的分词器类型
-     * @return 
+     * @return
      */
     default Children mapping(R column, EsFieldTypeEnum fieldType, EsAnalyzerEnum analyzer) {
         return mapping(column, fieldType, analyzer, null);
@@ -98,7 +98,7 @@ public interface Index<Children, R> extends Serializable {
      *
      * @param column     列
      * @param dateFormat 日期格式化
-     * @return 
+     * @return
      */
     Children mapping(R column, String dateFormat);
 
@@ -109,7 +109,7 @@ public interface Index<Children, R> extends Serializable {
      * @param fieldType      es中的类型
      * @param analyzer       创建索引时的分词器类型
      * @param searchAnalyzer 查询时的分词器类型
-     * @return 
+     * @return
      */
     Children mapping(R column,
                      EsFieldTypeEnum fieldType,
@@ -206,6 +206,38 @@ public interface Index<Children, R> extends Serializable {
                      List<EsIndexParam> fields);
 
     /**
+     * 设置mapping信息，子对象
+     *
+     * @param column     列
+     * @param properties 子对象信息列表
+     * @return
+     */
+    Children mapping(R column, List<EsIndexParam> properties);
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column    列名
+     * @param fieldType es中的类型
+     * @return 泛型
+     */
+    default Children mapping(String column, EsFieldTypeEnum fieldType) {
+        return mapping(column, fieldType, true, null, null, null, null, null);
+    }
+
+    /**
+     * 设置mapping信息
+     *
+     * @param column    列名
+     * @param fieldType es中的类型
+     * @param analyzer  分词器类型
+     * @return 泛型
+     */
+    default Children mapping(String column, EsFieldTypeEnum fieldType, String analyzer) {
+        return mapping(column, fieldType, true, null, null, analyzer, null, null);
+    }
+
+    /**
      * 设置mapping信息
      *
      * @param column         列
@@ -221,7 +253,7 @@ public interface Index<Children, R> extends Serializable {
      */
     Children mapping(String column,
                      EsFieldTypeEnum fieldType,
-                     boolean index,
+                     Boolean index,
                      Integer ignoreAbove,
                      String copyTo,
                      String analyzer,
@@ -229,19 +261,10 @@ public interface Index<Children, R> extends Serializable {
                      List<EsIndexParam> fields);
 
     /**
-     * 设置mapping信息，子对象
-     *
-     * @param column     列
-     * @param properties 子对象信息列表
-     * @return
-     */
-    Children mapping(R column, List<EsIndexParam> properties);
-
-    /**
      * 用户自行指定mapping
      *
      * @param mapping mapping信息
-     * @return 
+     * @return
      */
     Children mapping(Map<String, Object> mapping);
 }

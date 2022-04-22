@@ -1,6 +1,5 @@
 package com.xwl.esplus.core.toolkit;
 
-import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.page.PageInfo;
 
 import java.util.List;
@@ -22,8 +21,6 @@ public class PageUtils {
      */
     public static <T> PageInfo<T> getPageInfo(List<T> list, Long total, Integer pageNum, Integer pageSize) {
         PageInfo<T> pageInfo = new PageInfo<>();
-        pageNum = pageNum == null || pageNum <= 0 ? EsConstants.PAGE_NUM : pageNum;
-        pageSize = pageSize == null || pageSize <= 0 ? EsConstants.PAGE_SIZE : pageSize;
         int pages = (int) (total / pageSize + ((total % pageSize == 0) ? 0 : 1));
         pageInfo.setList(list);
         pageInfo.setSize(list.size());

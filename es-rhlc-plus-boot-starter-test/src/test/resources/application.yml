@@ -17,8 +17,9 @@ es-plus:
 #  password: Yhsl@123
   global-config:
     # 输出日志
-    log-enable: true
+    enable-dsl: true
     document-config:
       id-type: customize
       index-prefix: test_
 #      data-format: yyyy-MM-dd HH:mm:ss
+#      map-underscore-to-camel-case: true

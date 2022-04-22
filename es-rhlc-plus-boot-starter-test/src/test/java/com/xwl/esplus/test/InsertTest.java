@@ -28,7 +28,6 @@ public class InsertTest {
     @Test
     public void testInsert() throws ParseException {
         UserDocument userDocument = new UserDocument();
-//        userDocument.setId("1");
         userDocument.setNickname("张三疯");
         userDocument.setFullName(new FullName().setFirstName("张").setLastName("三疯"));
         userDocument.setIdNumber("1001");
@@ -39,17 +38,20 @@ public class InsertTest {
         userDocument.setCompanyName("四川云恒数联科技有限公司");
         userDocument.setCompanyAddress("成都市武侯区天府二街151号");
         userDocument.setCompanyLocation("30.584736,104.074091");
+        Point point = new Point(10, 12);
+        userDocument.setGeoLocation(point.toString());
         userDocument.setRemark("软件开发");
         userDocument.setCreatedTime(LocalDateTime.now());
+        userDocument.setDeleted(false);
         userDocumentMapper.insert(userDocument);
     }
 
     @Test
     public void testInsertBatch() throws ParseException {
         List<UserDocument> list = new ArrayList<>();
-        for (int i = 100; i < 200; i++) {
+        for (int i = 1; i < 100; i++) {
             UserDocument userDocument = new UserDocument();
-            userDocument.setNickname("张三疯");
+            userDocument.setNickname("张三疯" + i);
             userDocument.setFullName(new FullName().setFirstName("张").setLastName("三疯"));
             userDocument.setIdNumber(String.valueOf(i));
             userDocument.setAge(i);
@@ -59,10 +61,11 @@ public class InsertTest {
             userDocument.setCompanyName("四川云恒数联科技有限公司");
             userDocument.setCompanyAddress("成都市武侯区天府二街151号");
             userDocument.setCompanyLocation("30.584736,104.074091");
-            userDocument.setRemark("软件开发");
-            userDocument.setCreatedTime(LocalDateTime.now());
             Point point = new Point(10, 12);
             userDocument.setGeoLocation(point.toString());
+            userDocument.setRemark("软件开发");
+            userDocument.setCreatedTime(LocalDateTime.now());
+            userDocument.setDeleted(false);
             list.add(userDocument);
         }
         userDocumentMapper.insertBatch(list);

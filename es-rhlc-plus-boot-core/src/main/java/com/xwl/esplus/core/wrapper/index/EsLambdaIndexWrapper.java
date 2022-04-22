@@ -290,9 +290,19 @@ public class EsLambdaIndexWrapper<T>
     }
 
     @Override
+    public EsLambdaIndexWrapper<T> mapping(SFunction<T, ?> column, List<EsIndexParam> properties) {
+        String fieldName = FieldUtils.getFieldName(column);
+        EsIndexParam esIndexParam = new EsIndexParam();
+        esIndexParam.setFieldName(fieldName);
+        esIndexParam.setProperties(properties);
+        esIndexParamList.add(esIndexParam);
+        return typedThis;
+    }
+
+    @Override
     public EsLambdaIndexWrapper<T> mapping(String column,
                                            EsFieldTypeEnum fieldType,
-                                           boolean index,
+                                           Boolean index,
                                            Integer ignoreAbove,
                                            String copyTo,
                                            String analyzer,
@@ -313,18 +323,8 @@ public class EsLambdaIndexWrapper<T>
     }
 
     @Override
-    public EsLambdaIndexWrapper<T> mapping(SFunction<T, ?> column, List<EsIndexParam> properties) {
-        String fieldName = FieldUtils.getFieldName(column);
-        EsIndexParam esIndexParam = new EsIndexParam();
-        esIndexParam.setFieldName(fieldName);
-        esIndexParam.setProperties(properties);
-        esIndexParamList.add(esIndexParam);
-        return typedThis;
-    }
-
-    @Override
     public EsLambdaIndexWrapper<T> mapping(Map<String, Object> mapping) {
         this.mapping = mapping;
-        return null;
+        return typedThis;
     }
 }

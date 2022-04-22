@@ -28,13 +28,12 @@ public class FieldUtils {
         if (!(func instanceof SFunction)) {
             throw new RuntimeException("not support this type of column");
         }
-
         try {
             // 通过获取对象方法，判断是否存在该方法
             Method method = func.getClass().getDeclaredMethod("writeReplace");
             method.setAccessible(Boolean.TRUE);
             // 利用jdk的SerializedLambda 解析方法引用
-            java.lang.invoke.SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
+            SerializedLambda serializedLambda = (SerializedLambda) method.invoke(func);
             String getter = serializedLambda.getImplMethodName();
             return resolveFieldName(getter);
         } catch (ReflectiveOperationException e) {
@@ -84,7 +83,7 @@ public class FieldUtils {
      * @param param 参数
      * @return 首字母小写后的结果
      */
-    private static String firstToLowerCase(String param) {
+    public static String firstToLowerCase(String param) {
         if (Objects.isNull(param) || "".equals(param)) {
             return "";
         }
@@ -97,7 +96,7 @@ public class FieldUtils {
      * @param param 参数
      * @return 首字母大写后的结果
      */
-    private static String firstToUpperCase(String param) {
+    public static String firstToUpperCase(String param) {
         if (Objects.isNull(param) || "".equals(param)) {
             return "";
         }

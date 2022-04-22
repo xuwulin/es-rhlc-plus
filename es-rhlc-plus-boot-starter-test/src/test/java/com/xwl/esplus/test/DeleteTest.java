@@ -43,4 +43,13 @@ public class DeleteTest {
         Integer delete = userDocumentMapper.deleteBatchByIds(ids);
         Assert.assertTrue(delete > 0);
     }
+
+    @Test
+    public void testDeleteBatchByIds2() {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
+        wrapper.isNotNull(UserDocument::getNickname)
+                .and(w -> w.match(UserDocument::getCompanyName, "乌拉").or().eq(UserDocument::getCompanyName, "魔鬼"));
+        int successCount = userDocumentMapper.delete(wrapper);
+        System.out.println(successCount);
+    }
 }

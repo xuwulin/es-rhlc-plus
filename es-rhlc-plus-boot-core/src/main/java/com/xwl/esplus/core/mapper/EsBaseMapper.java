@@ -55,79 +55,71 @@ public interface EsBaseMapper<T> {
     Boolean deleteIndex(String indexName);
 
     /**
-     * 插入一条记录
+     * 插入文档
      *
-     * @param entity 插入的数据对象
+     * @param entity es对应的实体类
      * @return 成功条数
      */
     Integer insert(T entity);
 
     /**
-     * 批量插入
+     * 批量插入文档
      *
-     * @param entityList 插入的数据对象列表
+     * @param entityList es对应的实体类列表
      * @return 成功条数
      */
     Integer insertBatch(Collection<T> entityList);
 
-    // TODO 新增、更新、删除后立马刷新、查询时参数可以是一段脚本代码
-
     /**
-     * 根据 updateWrapper 条件，更新记录
+     * 根据条件更新文档
      *
-     * @param entity        更新对象
-     * @param updateWrapper 更新条件
+     * @param entity  es对应的实体类
+     * @param wrapper 更新条件
      * @return 成功条数
      */
-    Integer update(T entity, EsLambdaUpdateWrapper<T> updateWrapper);
+    Integer update(T entity, EsLambdaUpdateWrapper<T> wrapper);
 
     /**
-     * 根据 ID 更新
+     * 根据id更新文档
      *
-     * @param entity 更新对象
+     * @param entity es对应的实体类
      * @return 成功条数
      */
     Integer updateById(T entity);
 
     /**
-     * 根据ID 批量更新
+     * 根据id批量更新文档
      *
-     * @param entityList 更新对象列表
+     * @param entityList es对应的实体类列表
      * @return 成功条数
      */
     Integer updateBatchById(Collection<T> entityList);
 
     /**
-     * 根据 entity 条件，删除记录
+     * 根据条件删除文档
      *
-     * @param wrapper 条件
+     * @param wrapper 删除查询条件
      * @return 成功条数
      */
     Integer delete(EsLambdaQueryWrapper<T> wrapper);
 
     /**
-     * 根据 ID 删除
+     * 根据id删除文档
      *
-     * @param id 主键
+     * @param id 文档主键
      * @return 成功条数
      */
     Integer deleteById(Serializable id);
 
     /**
-     * 删除（根据ID 批量删除）
+     * 根据id批量删除文档
      *
-     * @param idList 主键列表
+     * @param idList 文档主键列表
      * @return 成功条数
      */
     Integer deleteBatchByIds(Collection<? extends Serializable> idList);
 
-    /**
-     * RestHighLevelClient原生查询
-     *
-     * @param wrapper 条件
-     * @return SearchResponse
-     */
-    SearchResponse search(EsLambdaQueryWrapper<T> wrapper);
+    // TODO 新增、更新、删除后立马刷新、查询时参数可以是一段脚本代码
 
     /**
      * RestHighLevelClient原生查询
@@ -137,6 +129,14 @@ public interface EsBaseMapper<T> {
      * @return SearchResponse
      */
     SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions);
+
+    /**
+     * 条件查询返回SearchResponse
+     *
+     * @param wrapper 条件
+     * @return SearchResponse
+     */
+    SearchResponse search(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 获取SearchSourceBuilder

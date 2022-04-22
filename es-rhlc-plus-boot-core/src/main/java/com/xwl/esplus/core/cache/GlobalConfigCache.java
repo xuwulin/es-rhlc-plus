@@ -12,13 +12,26 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 2022/3/11 20:32
  */
 public class GlobalConfigCache {
-    private static final Map<Class<?>, GlobalConfig> globalConfigMap = new ConcurrentHashMap<>(1);
+    /**
+     * globalConfig缓存
+     */
+    private static final Map<Class<?>, GlobalConfig> GLOBAL_CONFIG = new ConcurrentHashMap<>(1);
 
+    /**
+     * 从缓存中获取全局配置
+     *
+     * @return
+     */
     public static GlobalConfig getGlobalConfig() {
-        return globalConfigMap.get(GlobalConfig.class);
+        return GLOBAL_CONFIG.get(GlobalConfig.class);
     }
 
+    /**
+     * 将全局配置放入缓存中
+     *
+     * @param globalConfig 全局配置
+     */
     public static void setGlobalConfig(GlobalConfig globalConfig) {
-        globalConfigMap.putIfAbsent(GlobalConfig.class, globalConfig);
+        GLOBAL_CONFIG.putIfAbsent(GlobalConfig.class, globalConfig);
     }
 }

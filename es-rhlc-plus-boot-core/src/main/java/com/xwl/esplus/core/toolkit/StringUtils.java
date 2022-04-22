@@ -124,7 +124,7 @@ public class StringUtils {
      * 字符串下划线转驼峰格式
      *
      * @param param 需要转换的字符串
-     * @return 转换好的字符串
+     * @return
      */
     public static String underlineToCamel(String param) {
         if (isBlank(param)) {
@@ -150,7 +150,7 @@ public class StringUtils {
      * 首字母转换小写
      *
      * @param param 需要转换的字符串
-     * @return 转换好的字符串
+     * @return
      */
     public static String firstToLowerCase(String param) {
         if (isBlank(param)) {

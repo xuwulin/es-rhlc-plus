@@ -32,7 +32,7 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
     private Class<T> mapperInterface;
 
     @Autowired
-    private RestHighLevelClient client;
+    private RestHighLevelClient restHighLevelClient;
 
     public EsMapperFactoryBean() {
     }
@@ -51,7 +51,7 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
     }
 
     /**
-     * 当 ioc 容器提取对象时，调用此方法获取一个代理对象
+     * 当 ioc 容器提取对象时(比如使用@Autowired/@Resource注解注入时)，调用此方法获取一个代理对象
      * Mapper代理对象的创建就是在EsMapperFactoryBean的getObject方法中返回的
      *
      * @return 返回的对象最终会成为ioc容器中的一个bean
@@ -61,8 +61,8 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
     public T getObject() throws Exception {
         // 代理对象
         EsMapperProxy<T> esMapperProxy = new EsMapperProxy<>(mapperInterface);
-        // 缓存至本地
-        BaseCache.initCache(mapperInterface, client);
+        // 初始化缓存
+        BaseCache.initCache(mapperInterface, restHighLevelClient);
         // 获取代理对象（com.xwl.esplus.core.condition.BaseEsMapperImpl@78e68401）
         return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[]{mapperInterface}, esMapperProxy);
     }

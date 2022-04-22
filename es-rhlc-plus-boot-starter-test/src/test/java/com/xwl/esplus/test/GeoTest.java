@@ -31,37 +31,6 @@ public class GeoTest {
     @Resource
     private WorkOrderDocumentMapper workOrderDocumentMapper;
 
-    /**
-     * {
-     *     "size": 10000,
-     *     "query": {
-     *         "bool": {
-     *             "filter": [
-     *                 {
-     *                     "geo_bounding_box": {
-     *                         "location": {
-     *                             "top_left": [
-     *                                 103.855492,
-     *                                 30.682788
-     *                             ],
-     *                             "bottom_right": [
-     *                                 104.023769,
-     *                                 30.643077
-     *                             ]
-     *                         },
-     *                         "boost": 1,
-     *                         "validation_method": "STRICT",
-     *                         "type": "MEMORY",
-     *                         "ignore_unmapped": false
-     *                     }
-     *                 }
-     *             ],
-     *             "adjust_pure_negative": true,
-     *             "boost": 1
-     *         }
-     *     }
-     * }
-     */
     @Test
     public void testGeoBoundingBox() {
         // 由左上角和右下角确定一个矩形区域
@@ -76,37 +45,6 @@ public class GeoTest {
         System.out.println(list);
     }
 
-    /**
-     * {
-     *     "size": 10000,
-     *     "query": {
-     *         "bool": {
-     *             "adjust_pure_negative": true,
-     *             "must_not": [
-     *                 {
-     *                     "geo_bounding_box": {
-     *                         "location": {
-     *                             "top_left": [
-     *                                 103.855492,
-     *                                 30.682788
-     *                             ],
-     *                             "bottom_right": [
-     *                                 104.023769,
-     *                                 30.643077
-     *                             ]
-     *                         },
-     *                         "boost": 1,
-     *                         "validation_method": "STRICT",
-     *                         "type": "MEMORY",
-     *                         "ignore_unmapped": false
-     *                     }
-     *                 }
-     *             ],
-     *             "boost": 1
-     *         }
-     *     }
-     * }
-     */
     @Test
     public void testNotInGeoBoundingBox() {
         // 由左上角和右下角确定一个矩形区域
@@ -121,32 +59,6 @@ public class GeoTest {
         System.out.println(list);
     }
 
-    /**
-     * {
-     *     "size": 10000,
-     *     "query": {
-     *         "bool": {
-     *             "filter": [
-     *                 {
-     *                     "geo_distance": {
-     *                         "distance": 20000,
-     *                         "distance_type": "arc",
-     *                         "location": [
-     *                             103.855492,
-     *                             30.682788
-     *                         ],
-     *                         "boost": 1,
-     *                         "validation_method": "STRICT",
-     *                         "ignore_unmapped": false
-     *                     }
-     *                 }
-     *             ],
-     *             "adjust_pure_negative": true,
-     *             "boost": 1
-     *         }
-     *     }
-     * }
-     */
     @Test
     public void testGeoDistance() {
         EsLambdaQueryWrapper<WorkOrderDocument> wrapper = Wrappers.<WorkOrderDocument>lambdaQuery();
@@ -160,46 +72,6 @@ public class GeoTest {
         System.out.println(list);
     }
 
-    /**
-     * {
-     * 	"size":10000,
-     * 	"query":{
-     * 		"bool":{
-     * 			"filter":[
-     *                                {
-     * 					"geo_polygon":{
-     * 						"location":{
-     * 							"points":[
-     * 								[
-     * 									103.855492,
-     * 									30.682788
-     * 								],
-     * 								[
-     * 									104.023769,
-     * 									30.643077
-     * 								],
-     * 								[
-     * 									103.97124,
-     * 									30.670211
-     * 								],
-     * 								[
-     * 									103.855492,
-     * 									30.682788
-     * 								]
-     * 							]
-     *                        },
-     * 						"boost":1.0,
-     * 						"validation_method":"STRICT",
-     * 						"ignore_unmapped":false
-     *                    }
-     *                }
-     * 			],
-     * 			"adjust_pure_negative":true,
-     * 			"boost":1.0
-     * 		}
-     * 	}
-     * }
-     */
     @Test
     public void testGeoPolygon() {
         // 查询以给定点列表构成的不规则图形内的所有点，点数至少为3个
@@ -216,38 +88,6 @@ public class GeoTest {
         System.out.println(documents);
     }
 
-    /**
-     * 图形查询,所有支持的图形:
-     * (Point,MultiPoint,Line,MultiLine,Circle,LineaRing,Polygon,MultiPolygon,Rectangle)
-     *
-     * {
-     * 	"size":10000,
-     * 	"query":{
-     * 		"bool":{
-     * 			"filter":[
-     *                                {
-     * 					"geo_shape":{
-     * 						"geoLocation":{
-     * 							"shape":{
-     * 								"coordinates":[
-     * 									10.0,
-     * 									12.0
-     * 								],
-     * 								"type":"Point"
-     *                            },
-     * 							"relation":"intersects"
-     *                        },
-     * 						"boost":1.0,
-     * 						"ignore_unmapped":false
-     *                    }
-     *                }
-     * 			],
-     * 			"adjust_pure_negative":true,
-     * 			"boost":1.0
-     * 		}
-     * 	}
-     * }
-     */
     @Test
     public void testGeoShape() {
         // 查询图形,图形的字段索引类型必须为geo_shape

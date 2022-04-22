@@ -15,5 +15,5 @@ es-plus:
   # 如果无账号密码则可不配置此项
 #  password: Yhsl@123
   global-config:
-    # 输出日志
-    log-enable: true
+    # 输出DSL日志
+    enable-dsl: true

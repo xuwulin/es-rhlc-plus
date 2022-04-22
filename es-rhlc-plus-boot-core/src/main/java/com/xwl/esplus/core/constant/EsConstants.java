@@ -70,7 +70,7 @@ public class EsConstants {
     /**
      * 基本数据类型的get方法前缀
      */
-    public static final String IS_METHOD_PREFIX = "Is";
+    public static final String IS_METHOD_PREFIX = "is";
     /**
      * 分片数量字段
      */

@@ -1,13 +1,14 @@
 package com.xwl.esplus.core.wrapper.processor;
 
+import com.xwl.esplus.core.cache.GlobalConfigCache;
+import com.xwl.esplus.core.config.GlobalConfig;
 import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.enums.EsAttachTypeEnum;
+import com.xwl.esplus.core.metadata.DocumentInfo;
 import com.xwl.esplus.core.param.EsAggregationParam;
 import com.xwl.esplus.core.param.EsBaseParam;
 import com.xwl.esplus.core.param.EsGeoParam;
-import com.xwl.esplus.core.toolkit.CollectionUtils;
-import com.xwl.esplus.core.toolkit.EsQueryTypeUtils;
-import com.xwl.esplus.core.toolkit.ExceptionUtils;
+import com.xwl.esplus.core.toolkit.*;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -20,10 +21,8 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.xwl.esplus.core.constant.EsConstants.DEFAULT_SIZE;
 import static com.xwl.esplus.core.enums.EsBaseParamTypeEnum.*;
@@ -44,13 +43,12 @@ public class EsWrapperProcessor {
      * @param wrapper 条件
      * @return SearchSourceBuilder
      */
-    public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) {
-        SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper);
+    public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper, Class<?> entityClass) {
+        SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper, entityClass);
         // 构建BoolQueryBuilder
-        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList());
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList(), entityClass);
         // 初始化geo相关: BoundingBox,geoDistance,geoPolygon,geoShape
-        Optional.ofNullable(wrapper.getGeoParam())
-                .ifPresent(esGeoParam -> setGeoQuery(esGeoParam, boolQueryBuilder));
+        Optional.ofNullable(wrapper.getGeoParam()).ifPresent(esGeoParam -> setGeoQuery(esGeoParam, boolQueryBuilder, entityClass));
         // 设置参数
         searchSourceBuilder.query(boolQueryBuilder);
         return searchSourceBuilder;
@@ -62,7 +60,15 @@ public class EsWrapperProcessor {
      * @param geoParam         geo参数
      * @param boolQueryBuilder boolQuery参数建造者
      */
-    private static void setGeoQuery(EsGeoParam geoParam, BoolQueryBuilder boolQueryBuilder) {
+    private static void setGeoQuery(EsGeoParam geoParam, BoolQueryBuilder boolQueryBuilder, Class<?> entityClass) {
+        // 获取配置信息
+        Map<String, String> columnMappingMap = DocumentInfoUtils.getDocumentInfo(entityClass).getColumnMappingMap();
+        GlobalConfig.DocumentConfig documentConfig = getGlobalConfig().getDocumentConfig();
+
+        // 使用实际字段名称覆盖实体类字段名称
+        String realField = getRealField(geoParam.getField(), columnMappingMap, documentConfig);
+        geoParam.setField(realField);
+
         GeoBoundingBoxQueryBuilder geoBoundingBox = buildGeoBoundingBoxQueryBuilder(geoParam);
         doGeoSet(geoParam.isIn(), geoBoundingBox, boolQueryBuilder);
 
@@ -100,41 +106,26 @@ public class EsWrapperProcessor {
      * @param wrapper 查询条件
      * @return SearchSourceBuilder
      */
-    private static SearchSourceBuilder initSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper) {
+    private static SearchSourceBuilder initSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper, Class<?> entityClass) {
+        // 获取自定义字段map
+        Map<String, String> columnMappingMap = DocumentInfoUtils.getDocumentInfo(entityClass).getMappingColumnMap();
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         // 查询字段或排除字段
-        if (CollectionUtils.isNotEmpty(wrapper.getInclude()) || CollectionUtils.isNotEmpty(wrapper.getExclude())) {
-            searchSourceBuilder.fetchSource(wrapper.getInclude(), wrapper.getExclude());
-        }
+        setFetchSource(wrapper, columnMappingMap, searchSourceBuilder);
 
         // from & size（默认10000条）
         Optional.ofNullable(wrapper.getFrom()).ifPresent(searchSourceBuilder::from);
         Optional.ofNullable(wrapper.getSize()).ifPresent(searchSourceBuilder::size);
-//        if (Objects.isNull(wrapper.getSize())) {
-//            searchSourceBuilder.size(DEFAULT_SIZE);
-//        } else {
-//            searchSourceBuilder.size(wrapper.getSize());
-//        }
 
         // 高亮
-        if (CollectionUtils.isNotEmpty(wrapper.getHighLightParamList())) {
-            wrapper.getHighLightParamList().forEach(highLightParam -> {
-                HighlightBuilder highlightBuilder = new HighlightBuilder();
-                highLightParam.getFields().forEach(highlightBuilder::field);
-                highlightBuilder.preTags(highLightParam.getPreTag());
-                highlightBuilder.postTags(highLightParam.getPostTag());
-                searchSourceBuilder.highlighter(highlightBuilder);
-            });
-        }
+        setHighLight(wrapper, columnMappingMap, searchSourceBuilder);
 
         // 设置用户指定的各种排序规则
-        setSort(wrapper, searchSourceBuilder);
+        setSort(wrapper, columnMappingMap, searchSourceBuilder);
 
         // 聚合
-        if (CollectionUtils.isNotEmpty(wrapper.getAggregationParamList())) {
-            buildAggregations(wrapper.getAggregationParamList(), searchSourceBuilder);
-        }
+        setAggregations(wrapper, columnMappingMap, searchSourceBuilder);
 
         // 大于一万条, trackTotalHists自动开启
         if (searchSourceBuilder.size() > DEFAULT_SIZE) {
@@ -145,12 +136,122 @@ public class EsWrapperProcessor {
     }
 
     /**
+     * 设置查询/不查询字段列表
+     *
+     * @param wrapper             参数包装类
+     * @param columnMappingMap    字段映射map
+     * @param searchSourceBuilder 查询参数建造者
+     */
+    private static void setFetchSource(EsLambdaQueryWrapper<?> wrapper,
+                                       Map<String, String> columnMappingMap,
+                                       SearchSourceBuilder searchSourceBuilder) {
+        if (CollectionUtils.isEmpty(wrapper.getInclude()) && CollectionUtils.isEmpty(wrapper.getExclude())) {
+            return;
+        }
+        // 获取配置
+        GlobalConfig.DocumentConfig documentConfig = getGlobalConfig().getDocumentConfig();
+        String[] includes = getRealFields(wrapper.getInclude(), columnMappingMap, documentConfig);
+        String[] excludes = getRealFields(wrapper.getExclude(), columnMappingMap, documentConfig);
+        searchSourceBuilder.fetchSource(includes, excludes);
+    }
+
+    /**
+     * 获取实际字段名数组
+     *
+     * @param fields           原字段名数组
+     * @param columnMappingMap 字段映射关系map
+     * @param documentConfig   配置
+     * @return 实际字段数组
+     */
+    private static String[] getRealFields(String[] fields,
+                                          Map<String, String> columnMappingMap,
+                                          GlobalConfig.DocumentConfig documentConfig) {
+        return Arrays.stream(fields)
+                .map(field -> getRealField(field, columnMappingMap, documentConfig))
+                .collect(Collectors.toList())
+                .toArray(new String[]{});
+    }
+
+    /**
+     * 获取实际字段名
+     *
+     * @param field            原字段名
+     * @param columnMappingMap 字段映射关系map
+     * @param documentConfig   配置
+     * @return 实际字段名
+     */
+    private static String getRealField(String field,
+                                       Map<String, String> columnMappingMap,
+                                       GlobalConfig.DocumentConfig documentConfig) {
+        String customField = columnMappingMap.get(field);
+        if (Objects.nonNull(customField)) {
+            return customField;
+        } else {
+            if (documentConfig.isMapUnderscoreToCamelCase()) {
+                return StringUtils.camelToUnderline(field);
+            } else {
+                return field;
+            }
+        }
+    }
+
+    /**
+     * 获取全局配置
+     *
+     * @return 全局配置
+     */
+    private static GlobalConfig getGlobalConfig() {
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setDocumentConfig(new GlobalConfig.DocumentConfig());
+        return Optional.ofNullable(GlobalConfigCache.getGlobalConfig())
+                .orElse(globalConfig);
+    }
+
+    /**
+     * 设置高亮参数
+     *
+     * @param wrapper             参数包装类
+     * @param columnMappingMap    字段映射map
+     * @param searchSourceBuilder 查询参数建造者
+     */
+    private static void setHighLight(EsLambdaQueryWrapper<?> wrapper,
+                                     Map<String, String> columnMappingMap,
+                                     SearchSourceBuilder searchSourceBuilder) {
+        // 获取配置
+        GlobalConfig.DocumentConfig dbConfig = getGlobalConfig().getDocumentConfig();
+
+        // 设置高亮字段
+        if (CollectionUtils.isNotEmpty(wrapper.getHighLightParamList())) {
+            wrapper.getHighLightParamList().forEach(highLightParam -> {
+                HighlightBuilder highlightBuilder = new HighlightBuilder();
+                highLightParam.getFields().forEach(field -> {
+                    String customField = columnMappingMap.get(field);
+                    if (Objects.nonNull(customField)) {
+                        highlightBuilder.field(customField);
+                    } else {
+                        if (dbConfig.isMapUnderscoreToCamelCase()) {
+                            highlightBuilder.field(StringUtils.camelToUnderline(field));
+                        } else {
+                            highlightBuilder.field(field);
+                        }
+                    }
+                });
+                highlightBuilder.preTags(highLightParam.getPreTag());
+                highlightBuilder.postTags(highLightParam.getPostTag());
+                searchSourceBuilder.highlighter(highlightBuilder);
+            });
+        }
+    }
+
+    /**
      * 构建BoolQueryBuilder
      *
      * @param baseParamList 基础参数列表
+     * @param entityClass   实体类
      * @return BoolQueryBuilder
      */
-    public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList) {
+    public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList, Class<?> entityClass) {
+        DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         // 用于连接and，or条件内的多个查询条件，包装成boolQuery
         BoolQueryBuilder inner = null;
@@ -192,9 +293,9 @@ public class EsWrapperProcessor {
 
             // 添加字段名称,值,查询类型等
             if (Objects.isNull(inner)) {
-                addQuery(baseEsParam, boolQueryBuilder);
+                addQuery(baseEsParam, boolQueryBuilder, documentInfo);
             } else {
-                addQuery(baseEsParam, inner);
+                addQuery(baseEsParam, inner, documentInfo);
             }
         }
         return boolQueryBuilder;
@@ -203,53 +304,66 @@ public class EsWrapperProcessor {
     /**
      * 设置聚合参数
      *
-     * @param aggregationParamList 聚合参数列表
-     * @param searchSourceBuilder  es searchSourceBuilder
+     * @param wrapper             参数包装类
+     * @param columnMappingMap    字段映射map
+     * @param searchSourceBuilder 查询参数建造者
      */
-    private static void buildAggregations(List<EsAggregationParam> aggregationParamList, SearchSourceBuilder searchSourceBuilder) {
+    private static void setAggregations(EsLambdaQueryWrapper<?> wrapper,
+                                        Map<String, String> columnMappingMap,
+                                        SearchSourceBuilder searchSourceBuilder) {
+        List<EsAggregationParam> aggregationParamList = wrapper.getAggregationParamList();
+        if (CollectionUtils.isEmpty(aggregationParamList)) {
+            return;
+        }
+
+        // 获取配置
+        GlobalConfig.DocumentConfig documentConfig = getGlobalConfig().getDocumentConfig();
+
+        // 封装聚合参数
         aggregationParamList.forEach(aggregationParam -> {
+            String realField = getRealField(aggregationParam.getField(), columnMappingMap, documentConfig);
             switch (aggregationParam.getAggregationType()) {
                 case AVG:
                     AvgAggregationBuilder avg = AggregationBuilders
                             .avg(aggregationParam.getName())
-                            .field(aggregationParam.getField());
+                            .field(realField);
                     searchSourceBuilder.aggregation(avg);
                     break;
                 case MIN:
                     MinAggregationBuilder min = AggregationBuilders
                             .min(aggregationParam.getName())
-                            .field(aggregationParam.getField());
+                            .field(realField);
                     searchSourceBuilder.aggregation(min);
                     break;
                 case MAX:
                     MaxAggregationBuilder max = AggregationBuilders
                             .max(aggregationParam.getName())
-                            .field(aggregationParam.getField());
+                            .field(realField);
                     searchSourceBuilder.aggregation(max);
                     break;
                 case SUM:
                     SumAggregationBuilder sum = AggregationBuilders
                             .sum(aggregationParam.getName())
-                            .field(aggregationParam.getField());
+                            .field(realField);
                     searchSourceBuilder.aggregation(sum);
                     break;
                 case STATS:
                     StatsAggregationBuilder stats = AggregationBuilders
                             .stats(aggregationParam.getName())
-                            .field(aggregationParam.getField());
+                            .field(realField);
                     searchSourceBuilder.aggregation(stats);
                     break;
                 case TERMS:
                     TermsAggregationBuilder terms = AggregationBuilders
                             .terms(aggregationParam.getName())
-                            .field(aggregationParam.getField())
+                            .field(realField)
                             .size(aggregationParam.getSize() == null ? EsConstants.TEN : aggregationParam.getSize());
                     searchSourceBuilder.aggregation(terms);
                     break;
                 case DATE_HISTOGRAM:
                     DateHistogramAggregationBuilder dateHistogram = AggregationBuilders
                             .dateHistogram(aggregationParam.getName())
-                            .field(aggregationParam.getField())
+                            .field(realField)
                             .calendarInterval(aggregationParam.getInterval())
                             .format(aggregationParam.getFormat())
                             .minDocCount(aggregationParam.getMinDocCount())
@@ -347,40 +461,150 @@ public class EsWrapperProcessor {
      *
      * @param baseEsParam      基础参数
      * @param boolQueryBuilder es boolQueryBuilder
+     * @param documentInfo     文档信息
      */
-    private static void addQuery(EsBaseParam baseEsParam, BoolQueryBuilder boolQueryBuilder) {
+    private static void addQuery(EsBaseParam baseEsParam, BoolQueryBuilder boolQueryBuilder, DocumentInfo documentInfo) {
         baseEsParam.getMustList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.MUST.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.MUST.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getFilterList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.FILTER.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.FILTER.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getShouldList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.SHOULD.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.SHOULD.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getMustNotList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.MUST_NOT.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.MUST_NOT.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getGtList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.GT.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.GT.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getLtList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.LT.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.LT.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getGeList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.GE.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.GE.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getLeList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.LE.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.LE.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getBetweenList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.BETWEEN.getType(), fieldValueModel.getField(), fieldValueModel.getLeftValue(), fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.BETWEEN.getType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getLeftValue(),
+                        fieldValueModel.getRightValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getNotBetweenList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.NOT_BETWEEN.getType(), fieldValueModel.getField(), fieldValueModel.getLeftValue(), fieldValueModel.getRightValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.NOT_BETWEEN.getType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getLeftValue(),
+                        fieldValueModel.getRightValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getInList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.IN.getType(), fieldValueModel.getField(), fieldValueModel.getValues(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.IN.getType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValues(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getNotInList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.NOT_IN.getType(), fieldValueModel.getField(), fieldValueModel.getValues(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.NOT_IN.getType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValues(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getIsNullList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.NOT_EXISTS.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), Optional.empty(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.NOT_EXISTS.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        Optional.empty(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getNotNullList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.EXISTS.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), Optional.empty(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.EXISTS.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        Optional.empty(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getLikeLeftList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.LIKE_LEFT.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.LIKE_LEFT.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
+
         baseEsParam.getLikeRightList().forEach(fieldValueModel ->
-                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), EsAttachTypeEnum.LIKE_RIGHT.getType(), fieldValueModel.getOriginalAttachType(), fieldValueModel.getField(), fieldValueModel.getValue(), fieldValueModel.getBoost()));
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                        fieldValueModel.getEsQueryType(),
+                        EsAttachTypeEnum.LIKE_RIGHT.getType(),
+                        fieldValueModel.getOriginalAttachType(),
+                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        fieldValueModel.getValue(),
+                        fieldValueModel.getBoost()));
     }
 
     /**
@@ -401,13 +625,34 @@ public class EsWrapperProcessor {
         }
     }
 
-    private static void setSort(EsLambdaQueryWrapper<?> wrapper, SearchSourceBuilder searchSourceBuilder) {
+    /**
+     * 设置排序参数
+     *
+     * @param wrapper             参数包装类
+     * @param columnMappingMap    字段映射map
+     * @param searchSourceBuilder 查询参数建造者
+     */
+    private static void setSort(EsLambdaQueryWrapper<?> wrapper,
+                                Map<String, String> columnMappingMap,
+                                SearchSourceBuilder searchSourceBuilder) {
+        // 获取配置
+        GlobalConfig.DocumentConfig documentConfig = getGlobalConfig().getDocumentConfig();
         // 设置排序字段
         if (CollectionUtils.isNotEmpty(wrapper.getSortParamList())) {
             wrapper.getSortParamList().forEach(sortParam -> {
                 SortOrder sortOrder = sortParam.getAsc() ? SortOrder.ASC : SortOrder.DESC;
                 sortParam.getFields().forEach(field -> {
-                    FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
+                    FieldSortBuilder fieldSortBuilder;
+                    String customField = columnMappingMap.get(field);
+                    if (Objects.nonNull(customField)) {
+                        fieldSortBuilder = new FieldSortBuilder(customField).order(sortOrder);
+                    } else {
+                        if (documentConfig.isMapUnderscoreToCamelCase()) {
+                            fieldSortBuilder = new FieldSortBuilder(StringUtils.camelToUnderline(field)).order(sortOrder);
+                        } else {
+                            fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
+                        }
+                    }
                     searchSourceBuilder.sort(fieldSortBuilder);
                 });
             });
@@ -416,7 +661,20 @@ public class EsWrapperProcessor {
         // 设置以String形式指定的排序字段及规则
         if (CollectionUtils.isNotEmpty(wrapper.getOrderByParams())) {
             wrapper.getOrderByParams().forEach(orderByParam -> {
-                FieldSortBuilder fieldSortBuilder = new FieldSortBuilder(orderByParam.getOrder());
+                // 设置排序字段
+                FieldSortBuilder fieldSortBuilder;
+                String customField = columnMappingMap.get(orderByParam.getOrder());
+                if (Objects.nonNull(customField)) {
+                    fieldSortBuilder = new FieldSortBuilder(customField);
+                } else {
+                    if (documentConfig.isMapUnderscoreToCamelCase()) {
+                        fieldSortBuilder = new FieldSortBuilder(StringUtils.camelToUnderline(orderByParam.getOrder()));
+                    } else {
+                        fieldSortBuilder = new FieldSortBuilder(orderByParam.getOrder());
+                    }
+                }
+
+                // 设置排序规则
                 if (SortOrder.ASC.toString().equalsIgnoreCase(orderByParam.getSort())) {
                     fieldSortBuilder.order(SortOrder.ASC);
                 }

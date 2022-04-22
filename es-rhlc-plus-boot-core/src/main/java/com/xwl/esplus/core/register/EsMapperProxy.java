@@ -64,8 +64,8 @@ public class EsMapperProxy<T> implements InvocationHandler, Serializable {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         // 从缓存中获取目标对象
-        EsBaseMapperImpl<?> baseEsMapperInstance = BaseCache.getBaseEsMapperInstance(mapperInterface);
+        EsBaseMapperImpl<?> esBaseMapperInstance = BaseCache.getEsBaseMapperInstance(mapperInterface);
         // 方法反射调用：方法.invoke(目标对象, 参数);
-        return method.invoke(baseEsMapperInstance, args);
+        return method.invoke(esBaseMapperInstance, args);
     }
 }

@@ -80,7 +80,7 @@ public class ReflectionUtils {
         return StringUtils.concatCapitalize(boolean.class.equals(fieldType) ? "is" : "get", str);
     }
 
-    public static <T> T getVal(String val, Class<T> type) {
+    public static <T> T getValue(Class<T> type, String val) {
         // 把val转换成type类型返回
         T value = null;
         try {
@@ -88,7 +88,7 @@ public class ReflectionUtils {
             constructor.setAccessible(true);
             value = constructor.newInstance(val);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw ExceptionUtils.epe(e);
         }
         return value;
     }

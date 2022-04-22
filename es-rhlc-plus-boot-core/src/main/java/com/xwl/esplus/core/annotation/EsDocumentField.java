@@ -17,6 +17,12 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 public @interface EsDocumentField {
     /**
+     * 指定es字段名称，如果不指定则和实体字段保持一致
+     * @return
+     */
+    String value() default "";
+
+    /**
      * 是否为文档字段 默认 true 存在，false 不存在
      *
      * @return 存在

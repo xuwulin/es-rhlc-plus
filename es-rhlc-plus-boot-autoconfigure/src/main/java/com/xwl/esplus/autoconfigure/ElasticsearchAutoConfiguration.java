@@ -26,7 +26,6 @@ import org.springframework.core.env.Environment;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -50,19 +49,22 @@ public class ElasticsearchAutoConfiguration implements InitializingBean, Environ
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        // 全局配置
         GlobalConfig globalConfig = new GlobalConfig();
-        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.LOG_ENABLE))
-                .ifPresent(i -> globalConfig.setLogEnable(Boolean.valueOf(i)));
-
+        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.ENABLE_DSL))
+                .ifPresent(e -> globalConfig.setEnableDsl(Boolean.valueOf(e)));
+        // 文档相关配置
         GlobalConfig.DocumentConfig documentConfig = new GlobalConfig.DocumentConfig();
         Optional.ofNullable(environment.getProperty(EsPropertiesConstants.INDEX_PREFIX))
                 .ifPresent(documentConfig::setIndexPrefix);
         Optional.ofNullable(environment.getProperty(EsPropertiesConstants.ID_TYPE))
-                .ifPresent(i -> documentConfig.setIdType(Enum.valueOf(EsIdTypeEnum.class, i.toUpperCase(Locale.ROOT))));
+                .ifPresent(e -> documentConfig.setIdType(Enum.valueOf(EsIdTypeEnum.class, e.toUpperCase())));
         Optional.ofNullable(environment.getProperty(EsPropertiesConstants.FIELD_STRATEGY))
-                .ifPresent(f -> documentConfig.setFieldStrategy(Enum.valueOf(EsFieldStrategyEnum.class, f.toUpperCase(Locale.ROOT))));
+                .ifPresent(e -> documentConfig.setFieldStrategy(Enum.valueOf(EsFieldStrategyEnum.class, e.toUpperCase())));
         Optional.ofNullable(environment.getProperty(EsPropertiesConstants.DATA_FORMAT))
                 .ifPresent(documentConfig::setDateFormat);
+        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.MAP_UNDERSCORE_TO_CAMEL_CASE))
+                .ifPresent(e -> documentConfig.setMapUnderscoreToCamelCase(Boolean.parseBoolean(e)));
         globalConfig.setDocumentConfig(documentConfig);
         // 缓存至本地
         GlobalConfigCache.setGlobalConfig(globalConfig);

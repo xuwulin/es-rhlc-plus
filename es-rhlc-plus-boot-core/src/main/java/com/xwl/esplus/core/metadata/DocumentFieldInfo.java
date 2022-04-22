@@ -1,5 +1,6 @@
 package com.xwl.esplus.core.metadata;
 
+import com.alibaba.fastjson.serializer.NameFilter;
 import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.config.GlobalConfig;
 import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
@@ -19,23 +20,31 @@ public class DocumentFieldInfo {
      */
     private String ignoreColumn;
     /**
-     * 字段名
+     * 实体字段名
      */
     private String column;
     /**
-     * 表名称
+     * es中的字段名
      */
-    private String tableName;
+    private String mappingColumn;
     /**
-     * 表映射结果集
+     * 字段名过滤器
+     */
+    private NameFilter nameFilter;
+    /**
+     * 索引名称
+     */
+    private String indexName;
+    /**
+     * 文档映射结果集
      */
     private String resultMap;
     /**
-     * 表主键ID 属性名
+     * 文档主键ID 属性名
      */
     private String keyProperty;
     /**
-     * 表主键ID 字段名
+     * 文档主键ID 字段名
      */
     private String keyColumn;
     /**
@@ -43,38 +52,35 @@ public class DocumentFieldInfo {
      */
     private final EsFieldStrategyEnum fieldStrategy;
     /**
-     * 表字段信息列表
+     * 文档字段信息列表
      */
     private List<DocumentFieldInfo> fieldList;
     /**
      * 标记该字段属于哪个类
      */
     private Class<?> clazz;
-
     /**
      * 缓存包含主键及字段的 sql select
      */
-    private String allSqlSelect;
-
+//    private String allSqlSelect;
     /**
      * 缓存主键字段的 sql select
      */
-    private String sqlSelect;
+//    private String sqlSelect;
 
     /**
      * 存在 EsDocumentField 注解时, 使用的构造函数
      *
-     * @param dbConfig      索引配置
-     * @param field         字段
-     * @param column        字段名
+     * @param documentConfig        索引配置
+     * @param field           字段
      * @param esDocumentField 文档字段注解
      */
-    public DocumentFieldInfo(GlobalConfig.DocumentConfig dbConfig, Field field, String column, EsDocumentField esDocumentField) {
+    public DocumentFieldInfo(GlobalConfig.DocumentConfig documentConfig, Field field, EsDocumentField esDocumentField) {
         this.clazz = field.getDeclaringClass();
-        this.column = column;
+        this.column = field.getName();
         // 优先使用单个字段注解，否则使用全局配置
         if (esDocumentField.strategy() == EsFieldStrategyEnum.DEFAULT) {
-            this.fieldStrategy = dbConfig.getFieldStrategy();
+            this.fieldStrategy = documentConfig.getFieldStrategy();
         } else {
             this.fieldStrategy = esDocumentField.strategy();
         }
@@ -108,12 +114,28 @@ public class DocumentFieldInfo {
         this.column = column;
     }
 
-    public String getTableName() {
-        return tableName;
+    public String getMappingColumn() {
+        return mappingColumn;
     }
 
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
+    public void setMappingColumn(String mappingColumn) {
+        this.mappingColumn = mappingColumn;
+    }
+
+    public NameFilter getNameFilter() {
+        return nameFilter;
+    }
+
+    public void setNameFilter(NameFilter nameFilter) {
+        this.nameFilter = nameFilter;
+    }
+
+    public String getIndexName() {
+        return indexName;
+    }
+
+    public void setIndexName(String indexName) {
+        this.indexName = indexName;
     }
 
     public String getResultMap() {
@@ -160,19 +182,19 @@ public class DocumentFieldInfo {
         this.clazz = clazz;
     }
 
-    public String getAllSqlSelect() {
-        return allSqlSelect;
-    }
-
-    public void setAllSqlSelect(String allSqlSelect) {
-        this.allSqlSelect = allSqlSelect;
-    }
-
-    public String getSqlSelect() {
-        return sqlSelect;
-    }
-
-    public void setSqlSelect(String sqlSelect) {
-        this.sqlSelect = sqlSelect;
-    }
+//    public String getAllSqlSelect() {
+//        return allSqlSelect;
+//    }
+//
+//    public void setAllSqlSelect(String allSqlSelect) {
+//        this.allSqlSelect = allSqlSelect;
+//    }
+//
+//    public String getSqlSelect() {
+//        return sqlSelect;
+//    }
+//
+//    public void setSqlSelect(String sqlSelect) {
+//        this.sqlSelect = sqlSelect;
+//    }
 }

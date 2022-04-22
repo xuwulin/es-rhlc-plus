@@ -16,10 +16,13 @@ public class GlobalConfig {
     private DocumentConfig documentConfig;
 
     /**
-     * elasticsearch json日志输出
+     * elasticsearch DSL日志输出
      */
-    private boolean logEnable = false;
+    private boolean enableDsl = false;
 
+    /**
+     * 全局文档配置
+     */
     public static class DocumentConfig {
         /**
          * 主键类型（默认 AUTO）
@@ -34,18 +37,23 @@ public class GlobalConfig {
          */
         private EsFieldStrategyEnum fieldStrategy = EsFieldStrategyEnum.NOT_NULL;
         /**
-         * 存储的日期格式
+         * 统一设置存储的日期格式
          */
         private String dateFormat;
+        /**
+         * 是否开启下划线转驼峰
+         */
+        private boolean mapUnderscoreToCamelCase = false;
 
         public DocumentConfig() {
         }
 
-        public DocumentConfig(EsIdTypeEnum idType, String indexPrefix, EsFieldStrategyEnum fieldStrategy, String dateFormat) {
+        public DocumentConfig(EsIdTypeEnum idType, String indexPrefix, EsFieldStrategyEnum fieldStrategy, String dateFormat, boolean mapUnderscoreToCamelCase) {
             this.idType = idType;
             this.indexPrefix = indexPrefix;
             this.fieldStrategy = fieldStrategy;
             this.dateFormat = dateFormat;
+            this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
         }
 
         public EsIdTypeEnum getIdType() {
@@ -79,6 +87,14 @@ public class GlobalConfig {
         public void setDateFormat(String dateFormat) {
             this.dateFormat = dateFormat;
         }
+
+        public boolean isMapUnderscoreToCamelCase() {
+            return mapUnderscoreToCamelCase;
+        }
+
+        public void setMapUnderscoreToCamelCase(boolean mapUnderscoreToCamelCase) {
+            this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
+        }
     }
 
     public DocumentConfig getDocumentConfig() {
@@ -89,11 +105,11 @@ public class GlobalConfig {
         this.documentConfig = documentConfig;
     }
 
-    public boolean isLogEnable() {
-        return logEnable;
+    public boolean isEnableDsl() {
+        return enableDsl;
     }
 
-    public void setLogEnable(boolean logEnable) {
-        this.logEnable = logEnable;
+    public void setEnableDsl(boolean enableDsl) {
+        this.enableDsl = enableDsl;
     }
 }

@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.function.Function;
 
 /**
+ * 集合工具类
+ *
  * @author xwl
  * @since 2022/3/12 17:09
  */
@@ -135,10 +137,9 @@ public class CollectionUtils {
             // can make.  0.75 is the default load factor.
             return (int) ((float) expectedSize / 0.75F + 1.0F);
         }
-        return Integer.MAX_VALUE; // any large value
+        // any large value
+        return Integer.MAX_VALUE;
     }
-
-    // 提供处理Map多key取值工具方法
 
     /**
      * 批量取出Map中的值
