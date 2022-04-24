@@ -92,7 +92,7 @@ public class BaseCache {
     /**
      * 从缓存中根据方法名获取entity对于的getter方法
      *
-     * @param entityClass 实体
+     * @param entityClass es对应的实体类
      * @param methodName  方法名
      * @return 执行方法
      */

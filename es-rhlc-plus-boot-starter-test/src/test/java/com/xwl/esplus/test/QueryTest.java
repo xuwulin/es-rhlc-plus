@@ -113,7 +113,8 @@ public class QueryTest {
     @Test
     public void testSelectOne() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
-                .eq(UserDocument::getAge, 18)
+                .highLight(UserDocument::getNickname)
+                .like(UserDocument::getNickname, "张三疯")
                 .limit(1);
         UserDocument userDocument = userDocumentMapper.selectOne(wrapper);
         System.out.println(userDocument);

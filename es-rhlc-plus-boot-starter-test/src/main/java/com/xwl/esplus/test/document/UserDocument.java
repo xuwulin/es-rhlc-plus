@@ -4,6 +4,7 @@ import com.alibaba.fastjson.annotation.JSONField;
 import com.xwl.esplus.core.annotation.EsDocument;
 import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.annotation.EsDocumentId;
+import com.xwl.esplus.core.annotation.EsHighLightField;
 import com.xwl.esplus.core.enums.EsIdTypeEnum;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -23,6 +24,7 @@ public class UserDocument {
     /**
      * 昵称
      */
+    @EsHighLightField(value = "nickname")
     private String nickname;
     /**
      * fullName，子对象字段

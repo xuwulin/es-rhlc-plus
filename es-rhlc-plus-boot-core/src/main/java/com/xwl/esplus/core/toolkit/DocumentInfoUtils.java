@@ -328,7 +328,7 @@ public class DocumentInfoUtils {
             hasAnnotation = true;
         }
 
-        // 获取自定义注解@EsHighLightField（字段高亮）
+        // 获取自定义注解@EsHighLightField（字段高亮），TODO 如果注解中的value为空，则默认是字段名
         EsHighLightField esFieldHighLight = field.getAnnotation(EsHighLightField.class);
         if (Objects.nonNull(esFieldHighLight) && StringUtils.isNotBlank(esFieldHighLight.value())) {
             String customField = documentInfo.getMappingColumnMap().get(esFieldHighLight.value());
