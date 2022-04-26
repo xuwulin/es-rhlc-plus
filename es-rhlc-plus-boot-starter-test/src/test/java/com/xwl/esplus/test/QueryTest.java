@@ -82,8 +82,14 @@ public class QueryTest {
 
     @Test
     public void testSelectCount() {
+        Long count = userDocumentMapper.count();
+        System.out.println(count);
+    }
+
+    @Test
+    public void testSelectCountByWrapper() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        Long count = userDocumentMapper.selectCount(wrapper);
+        Long count = userDocumentMapper.count(wrapper);
         System.out.println(count);
     }
 
@@ -91,7 +97,7 @@ public class QueryTest {
     public void testSelectList() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .eq(UserDocument::getAge, 100);
-        List<UserDocument> list = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> list = userDocumentMapper.list(wrapper);
         System.out.println(list);
     }
 
@@ -100,13 +106,13 @@ public class QueryTest {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .select(UserDocument::getNickname, UserDocument::getCompanyName)
                 .eq(UserDocument::getAge, 100);
-        List<Map<String, Object>> maps = userDocumentMapper.selectMaps(wrapper);
+        List<Map<String, Object>> maps = userDocumentMapper.listMaps(wrapper);
         System.out.println(maps);
     }
 
     @Test
     public void testSelectById() {
-        UserDocument userDocument = userDocumentMapper.selectById("KGfY038Brppw3wlAosUB");
+        UserDocument userDocument = userDocumentMapper.getById("KGfY038Brppw3wlAosUB");
         System.out.println(userDocument);
     }
 
@@ -116,13 +122,13 @@ public class QueryTest {
                 .highLight(UserDocument::getNickname)
                 .like(UserDocument::getNickname, "张三疯")
                 .limit(1);
-        UserDocument userDocument = userDocumentMapper.selectOne(wrapper);
+        UserDocument userDocument = userDocumentMapper.getOne(wrapper);
         System.out.println(userDocument);
     }
 
     @Test
     public void testSelectBatchIds() {
-        List<UserDocument> list = userDocumentMapper.selectBatchIds(Arrays.asList("KWfY038Brppw3wlAosUB", "PGcJA4ABrppw3wlAGcXh"));
+        List<UserDocument> list = userDocumentMapper.listByIds(Arrays.asList("KWfY038Brppw3wlAosUB", "PGcJA4ABrppw3wlAGcXh"));
         System.out.println(list);
     }
 
@@ -143,14 +149,14 @@ public class QueryTest {
     @Test
     public void testSelectPage() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        PageInfo<UserDocument> pageInfo = userDocumentMapper.selectPage(wrapper);
+        PageInfo<UserDocument> pageInfo = userDocumentMapper.page(wrapper);
         System.out.println(pageInfo);
     }
 
     @Test
     public void testSelectPageWith() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        PageInfo<UserDocument> pageInfo = userDocumentMapper.selectPage(wrapper, 10, 10);
+        PageInfo<UserDocument> pageInfo = userDocumentMapper.page(wrapper, 10, 10);
         System.out.println(pageInfo);
     }
 
@@ -158,7 +164,7 @@ public class QueryTest {
     public void testSelectMapsPage() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .select(UserDocument::getNickname, UserDocument::getAge);
-        PageInfo<Map<String, Object>> mapPageInfo = userDocumentMapper.selectMapsPage(wrapper);
+        PageInfo<Map<String, Object>> mapPageInfo = userDocumentMapper.pageMaps(wrapper);
         System.out.println(mapPageInfo);
     }
 
@@ -166,7 +172,7 @@ public class QueryTest {
     public void testSelectMapsPageWith() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .select(UserDocument::getNickname, UserDocument::getAge);
-        PageInfo<Map<String, Object>> mapPageInfo = userDocumentMapper.selectMapsPage(wrapper,  1, 5);
+        PageInfo<Map<String, Object>> mapPageInfo = userDocumentMapper.pageMaps(wrapper,  1, 5);
         System.out.println(mapPageInfo);
     }
 }

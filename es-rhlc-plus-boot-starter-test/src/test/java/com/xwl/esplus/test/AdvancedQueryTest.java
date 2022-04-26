@@ -36,7 +36,7 @@ public class AdvancedQueryTest {
                 // 只查询nickname,age字段
                 .select(UserDocument::getNickname, UserDocument::getAge)
                 .eq(UserDocument::getAge, 18);
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
         System.out.println(userDocuments);
     }
 
@@ -46,7 +46,7 @@ public class AdvancedQueryTest {
                 // 不查询nickname,age字段
                 .notSelect(UserDocument::getNickname, UserDocument::getAge)
                 .eq(UserDocument::getAge, 18);
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
         System.out.println(userDocuments);
     }
 
@@ -55,7 +55,7 @@ public class AdvancedQueryTest {
         // 等价写法
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
         wrapper.select(UserDocument.class, ud -> !Objects.equals(ud.getColumn(), "nickname"));
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
         System.out.println(userDocuments);
     }
 
@@ -63,7 +63,7 @@ public class AdvancedQueryTest {
     public void testOrderBy() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .orderByDesc(UserDocument::getAge);
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
         System.out.println(userDocuments);
     }
 
@@ -72,7 +72,7 @@ public class AdvancedQueryTest {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
         wrapper.match(UserDocument::getCompanyName, "科技");
         wrapper.sortByScore(SortOrder.ASC);
-        List<UserDocument> documents = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> documents = userDocumentMapper.list(wrapper);
         System.out.println(documents);
     }
 
@@ -83,7 +83,7 @@ public class AdvancedQueryTest {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
         wrapper.match(UserDocument::getCompanyName, "科技")
                 .orderBy(orderByParams);
-        List<UserDocument> documents = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> documents = userDocumentMapper.list(wrapper);
         System.out.println(documents);
     }
 
@@ -95,7 +95,7 @@ public class AdvancedQueryTest {
         Script script = new Script("Math.random()");
         ScriptSortBuilder scriptSortBuilder = new ScriptSortBuilder(script, ScriptSortBuilder.ScriptSortType.NUMBER);
         wrapper.sort(scriptSortBuilder);
-        List<UserDocument> documents = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> documents = userDocumentMapper.list(wrapper);
         System.out.println(documents);
     }
 
@@ -103,7 +103,7 @@ public class AdvancedQueryTest {
     public void testMatch() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .match(UserDocument::getCompanyName, "科技");
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
         System.out.println(userDocuments);
     }
 
@@ -123,11 +123,21 @@ public class AdvancedQueryTest {
     @Test
     public void testHighlight() throws IOException {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        String keyword = "张乌鸡";
-        wrapper.match(UserDocument::getNickname, keyword);
-        wrapper.highLight(UserDocument::getNickname);
+        String keyword = "科技";
+        wrapper.match(UserDocument::getCompanyName, keyword);
+        wrapper.highLight(UserDocument::getCompanyName);
         SearchResponse response = userDocumentMapper.search(wrapper);
         System.out.println(response);
+    }
+
+    @Test
+    public void testHighlight2() throws IOException {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
+        String keyword = "科技";
+        wrapper.match(UserDocument::getCompanyName, keyword);
+        wrapper.highLight(UserDocument::getCompanyName);
+        List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
+        System.out.println(userDocuments);
     }
 
     @Test

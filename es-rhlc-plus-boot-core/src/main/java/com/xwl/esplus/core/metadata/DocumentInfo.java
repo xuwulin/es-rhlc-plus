@@ -21,6 +21,14 @@ import java.util.stream.Collectors;
  */
 public class DocumentInfo {
     /**
+     * 索引名称
+     */
+    private String indexName;
+    /**
+     * es对应的实体类
+     */
+    private Class<?> clazz;
+    /**
      * 文档主键ID类型
      */
     private EsIdTypeEnum idType = EsIdTypeEnum.NONE;
@@ -28,14 +36,6 @@ public class DocumentInfo {
      * id数据类型，如Long.class String.class
      */
     private Class<?> idClass;
-    /**
-     * 索引名称
-     */
-    private String indexName;
-    /**
-     * 文档映射结果集
-     */
-//    private String resultMap;
     /**
      * 主键字段
      */
@@ -52,10 +52,6 @@ public class DocumentInfo {
      * 文档字段信息列表（不包含主键）
      */
     private List<DocumentFieldInfo> fieldList;
-    /**
-     * es对应的实体类
-     */
-    private Class<?> clazz;
     /**
      * 是否有@EsDocumentId注解
      */
@@ -120,6 +116,22 @@ public class DocumentInfo {
     public DocumentInfo() {
     }
 
+    public Class<?> getClazz() {
+        return clazz;
+    }
+
+    public void setClazz(Class<?> clazz) {
+        this.clazz = clazz;
+    }
+
+    public String getIndexName() {
+        return indexName;
+    }
+
+    public void setIndexName(String indexName) {
+        this.indexName = indexName;
+    }
+
     public EsIdTypeEnum getIdType() {
         return idType;
     }
@@ -135,22 +147,6 @@ public class DocumentInfo {
     public void setIdClass(Class<?> idClass) {
         this.idClass = idClass;
     }
-
-    public String getIndexName() {
-        return indexName;
-    }
-
-    public void setIndexName(String indexName) {
-        this.indexName = indexName;
-    }
-
-//    public String getResultMap() {
-//        return resultMap;
-//    }
-//
-//    public void setResultMap(String resultMap) {
-//        this.resultMap = resultMap;
-//    }
 
     public Field getKeyField() {
         return keyField;
@@ -182,14 +178,6 @@ public class DocumentInfo {
 
     public void setFieldList(List<DocumentFieldInfo> fieldList) {
         this.fieldList = fieldList;
-    }
-
-    public Class<?> getClazz() {
-        return clazz;
-    }
-
-    public void setClazz(Class<?> clazz) {
-        this.clazz = clazz;
     }
 
     public Boolean getHasIdAnnotation() {

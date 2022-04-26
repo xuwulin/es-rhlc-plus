@@ -59,14 +59,6 @@ public class DocumentFieldInfo {
      * 标记该字段属于哪个类
      */
     private Class<?> clazz;
-    /**
-     * 缓存包含主键及字段的 sql select
-     */
-//    private String allSqlSelect;
-    /**
-     * 缓存主键字段的 sql select
-     */
-//    private String sqlSelect;
 
     /**
      * 存在 EsDocumentField 注解时, 使用的构造函数
@@ -181,20 +173,4 @@ public class DocumentFieldInfo {
     public void setClazz(Class<?> clazz) {
         this.clazz = clazz;
     }
-
-//    public String getAllSqlSelect() {
-//        return allSqlSelect;
-//    }
-//
-//    public void setAllSqlSelect(String allSqlSelect) {
-//        this.allSqlSelect = allSqlSelect;
-//    }
-//
-//    public String getSqlSelect() {
-//        return sqlSelect;
-//    }
-//
-//    public void setSqlSelect(String sqlSelect) {
-//        this.sqlSelect = sqlSelect;
-//    }
 }

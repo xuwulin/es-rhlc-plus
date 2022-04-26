@@ -41,7 +41,7 @@ public class GeoTest {
         EsLambdaQueryWrapper<WorkOrderDocument> wrapper = Wrappers.<WorkOrderDocument>lambdaQuery()
                 // 查询在此区域内的数据
                 .geoBoundingBox(WorkOrderDocument::getLocation, leftTop, bottomRight);
-        List<WorkOrderDocument> list = workOrderDocumentMapper.selectList(wrapper);
+        List<WorkOrderDocument> list = workOrderDocumentMapper.list(wrapper);
         System.out.println(list);
     }
 
@@ -55,7 +55,7 @@ public class GeoTest {
         EsLambdaQueryWrapper<WorkOrderDocument> wrapper = Wrappers.<WorkOrderDocument>lambdaQuery()
                 // 查询不在此区域内的数据
                 .notInGeoBoundingBox(WorkOrderDocument::getLocation, leftTop, bottomRight);
-        List<WorkOrderDocument> list = workOrderDocumentMapper.selectList(wrapper);
+        List<WorkOrderDocument> list = workOrderDocumentMapper.list(wrapper);
         System.out.println(list);
     }
 
@@ -68,7 +68,7 @@ public class GeoTest {
 //        wrapper.geoDistance(WorkOrderDocument::getLocation, 20.0, DistanceUnit.KILOMETERS, "30.682788, 103.855492");
 //        wrapper.geoDistance(WorkOrderDocument::getLocation, "20.0km", "30.682788, 103.855492");
 
-        List<WorkOrderDocument> list = workOrderDocumentMapper.selectList(wrapper);
+        List<WorkOrderDocument> list = workOrderDocumentMapper.list(wrapper);
         System.out.println(list);
     }
 
@@ -84,7 +84,7 @@ public class GeoTest {
         geoPoints.add(geoPoint1);
         geoPoints.add(geoPoint2);
         wrapper.geoPolygon(WorkOrderDocument::getLocation, geoPoints);
-        List<WorkOrderDocument> documents = workOrderDocumentMapper.selectList(wrapper);
+        List<WorkOrderDocument> documents = workOrderDocumentMapper.list(wrapper);
         System.out.println(documents);
     }
 
@@ -98,7 +98,7 @@ public class GeoTest {
         Point point = new Point(10, 12);
         // shapeRelation支持多种,如果不传则默认为within
         wrapper.geoShape(UserDocument::getGeoLocation, point, ShapeRelation.INTERSECTS);
-        List<UserDocument> documents = userDocumentMapper.selectList(wrapper);
+        List<UserDocument> documents = userDocumentMapper.list(wrapper);
         System.out.println(documents);
     }
 }

@@ -60,7 +60,7 @@ public interface EsBaseMapper<T> {
      * @param entity es对应的实体类
      * @return 成功条数
      */
-    Integer insert(T entity);
+    Integer save(T entity);
 
     /**
      * 批量插入文档
@@ -68,7 +68,7 @@ public interface EsBaseMapper<T> {
      * @param entityList es对应的实体类列表
      * @return 成功条数
      */
-    Integer insertBatch(Collection<T> entityList);
+    Integer saveBatch(Collection<T> entityList);
 
     /**
      * 根据条件更新文档
@@ -101,7 +101,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 删除查询条件
      * @return 成功条数
      */
-    Integer delete(EsLambdaQueryWrapper<T> wrapper);
+    Integer remove(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 根据id删除文档
@@ -109,7 +109,7 @@ public interface EsBaseMapper<T> {
      * @param id 文档主键
      * @return 成功条数
      */
-    Integer deleteById(Serializable id);
+    Integer removeById(Serializable id);
 
     /**
      * 根据id批量删除文档
@@ -117,7 +117,7 @@ public interface EsBaseMapper<T> {
      * @param idList 文档主键列表
      * @return 成功条数
      */
-    Integer deleteBatchByIds(Collection<? extends Serializable> idList);
+    Integer removeByIds(Collection<? extends Serializable> idList);
 
     // TODO 新增、更新、删除后立马刷新、查询时参数可以是一段脚本代码
 
@@ -157,10 +157,17 @@ public interface EsBaseMapper<T> {
     /**
      * 获取总数
      *
+     * @return 总数
+     */
+    Long count();
+
+    /**
+     * 获取总数
+     *
      * @param wrapper 条件
      * @return 总数
      */
-    Long selectCount(EsLambdaQueryWrapper<T> wrapper);
+    Long count(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 查询一条记录
@@ -168,7 +175,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 指定的返回对象
      */
-    T selectOne(EsLambdaQueryWrapper<T> wrapper);
+    T getOne(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 根据ID查询
@@ -176,7 +183,7 @@ public interface EsBaseMapper<T> {
      * @param id 主键
      * @return 指定的返回对象
      */
-    T selectById(Serializable id);
+    T getById(Serializable id);
 
     /**
      * 查询（根据ID集合批量查询）
@@ -184,7 +191,7 @@ public interface EsBaseMapper<T> {
      * @param idList 主键列表
      * @return 指定的返回对象列表
      */
-    List<T> selectBatchIds(Collection<? extends Serializable> idList);
+    List<T> listByIds(Collection<? extends Serializable> idList);
 
     /**
      * 条件查询
@@ -192,7 +199,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 指定的返回对象列表
      */
-    List<T> selectList(EsLambdaQueryWrapper<T> wrapper);
+    List<T> list(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 条件查询，返回map集合
@@ -200,7 +207,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return map集合
      */
-    List<Map<String, Object>> selectMaps(EsLambdaQueryWrapper<T> wrapper);
+    List<Map<String, Object>> listMaps(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 分页查询：不指定返回类型及分页参数
@@ -226,7 +233,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 分页对象（指定的返回对象）
      */
-    PageInfo<T> selectPage(EsLambdaQueryWrapper<T> wrapper);
+    PageInfo<T> page(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 分页查询：指定返回类型及分页参数
@@ -236,7 +243,7 @@ public interface EsBaseMapper<T> {
      * @param pageSize 每页条数
      * @return 分页对象（指定的返回对象）
      */
-    PageInfo<T> selectPage(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
+    PageInfo<T> page(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
 
     /**
      * 分页查询：指定返回类型，不指定分页参数
@@ -244,7 +251,7 @@ public interface EsBaseMapper<T> {
      * @param wrapper 条件
      * @return 分页对象（Map<String, Object>）
      */
-    PageInfo<Map<String, Object>> selectMapsPage(EsLambdaQueryWrapper<T> wrapper);
+    PageInfo<Map<String, Object>> pageMaps(EsLambdaQueryWrapper<T> wrapper);
 
     /**
      * 分页查询：指定返回类型及分页参数
@@ -254,5 +261,5 @@ public interface EsBaseMapper<T> {
      * @param pageSize 每页条数
      * @return 分页对象（Map<String, Object>）
      */
-    PageInfo<Map<String, Object>> selectMapsPage(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
+    PageInfo<Map<String, Object>> pageMaps(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize);
 }

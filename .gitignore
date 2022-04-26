@@ -21,6 +21,7 @@ gen
 .mtj.tmp/
 
 # Package Files #
+appLogs/
 target/
 *.jar
 *.war

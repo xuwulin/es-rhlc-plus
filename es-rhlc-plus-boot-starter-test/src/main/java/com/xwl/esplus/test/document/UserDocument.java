@@ -24,7 +24,6 @@ public class UserDocument {
     /**
      * 昵称
      */
-    @EsHighLightField(value = "nickname")
     private String nickname;
     /**
      * fullName，子对象字段
@@ -50,6 +49,8 @@ public class UserDocument {
     /**
      * 公司名称
      */
+    @EsHighLightField(value = "company_name")
+    @EsDocumentField(value = "company_name")
     private String companyName;
     /**
      * 公司地址
@@ -80,7 +81,7 @@ public class UserDocument {
      * 创建日期
      */
     @JSONField(format="yyyy-MM-dd HH:mm:ss")
-    @EsDocumentField(value = "created_time")
+//    @EsDocumentField(value = "created_time")
     private LocalDateTime createdTime;
     /**
      * 是否删除

@@ -222,7 +222,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public Integer insert(T entity) {
+    public Integer save(T entity) {
         IndexRequest indexRequest = buildIndexRequest(entity);
         try {
             IndexResponse indexResponse = restHighLevelClient.index(indexRequest, RequestOptions.DEFAULT);
@@ -242,7 +242,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public Integer insertBatch(Collection<T> entityList) {
+    public Integer saveBatch(Collection<T> entityList) {
         if (CollectionUtils.isEmpty(entityList)) {
             return EsConstants.ZERO;
         }
@@ -316,8 +316,8 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public Integer delete(EsLambdaQueryWrapper<T> wrapper) {
-        List<T> list = this.selectList(wrapper);
+    public Integer remove(EsLambdaQueryWrapper<T> wrapper) {
+        List<T> list = this.list(wrapper);
         if (CollectionUtils.isEmpty(list)) {
             return EsConstants.ZERO;
         }
@@ -340,7 +340,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public Integer deleteById(Serializable id) {
+    public Integer removeById(Serializable id) {
         if (Objects.isNull(id) || StringUtils.isBlank(id.toString())) {
             throw ExceptionUtils.epe("id can not be null or empty");
         }
@@ -359,7 +359,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public Integer deleteBatchByIds(Collection<? extends Serializable> idList) {
+    public Integer removeByIds(Collection<? extends Serializable> idList) {
         if (CollectionUtils.isEmpty(idList)) {
             throw ExceptionUtils.epe("idList can not be null or empty");
         }
@@ -417,7 +417,12 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public Long selectCount(EsLambdaQueryWrapper<T> wrapper) {
+    public Long count() {
+        return this.count(Wrappers.lambdaQuery());
+    }
+
+    @Override
+    public Long count(EsLambdaQueryWrapper<T> wrapper) {
         CountRequest countRequest = new CountRequest(getIndexName());
         BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList(), entityClass);
         countRequest.query(boolQueryBuilder);
@@ -435,8 +440,8 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public T selectOne(EsLambdaQueryWrapper<T> wrapper) {
-        long count = this.selectCount(wrapper);
+    public T getOne(EsLambdaQueryWrapper<T> wrapper) {
+        long count = this.count(wrapper);
         if (count > EsConstants.ONE && (wrapper.getSize() == null || wrapper.getSize() > EsConstants.ONE)) {
             throw ExceptionUtils.epe("Expected one result (or null) to be returned by selectOne(), but found: %d. please use limit function to limit 1", count);
         }
@@ -448,7 +453,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public T selectById(Serializable id) {
+    public T getById(Serializable id) {
         if (Objects.isNull(id) || StringUtils.isEmpty(id.toString())) {
             throw ExceptionUtils.epe("id must not be null or empty");
         }
@@ -467,7 +472,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public List<T> selectBatchIds(Collection<? extends Serializable> idList) {
+    public List<T> listByIds(Collection<? extends Serializable> idList) {
         if (CollectionUtils.isEmpty(idList)) {
             throw ExceptionUtils.epe("id collection must not be null or empty");
         }
@@ -489,7 +494,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public List<T> selectList(EsLambdaQueryWrapper<T> wrapper) {
+    public List<T> list(EsLambdaQueryWrapper<T> wrapper) {
         // 请求es获取数据
         SearchHit[] searchHits = getSearchHitArray(wrapper);
         if (CollectionUtils.isEmpty(searchHits)) {
@@ -503,8 +508,8 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public List<Map<String, Object>> selectMaps(EsLambdaQueryWrapper<T> wrapper) {
-        List<T> list = this.selectList(wrapper);
+    public List<Map<String, Object>> listMaps(EsLambdaQueryWrapper<T> wrapper) {
+        List<T> list = this.list(wrapper);
         String jsonString = JSONObject.toJSONString(list);
         List<Map<String, Object>> maps = JSON.parseObject(jsonString, new TypeReference<List<Map<String, Object>>>() {
         });
@@ -519,7 +524,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     @Override
     public PageInfo<SearchHit> pageOriginal(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
         PageInfo<SearchHit> pageInfo = new PageInfo<>();
-        long total = this.selectCount(wrapper);
+        long total = this.count(wrapper);
         if (total <= EsConstants.ZERO) {
             return pageInfo;
         }
@@ -541,22 +546,22 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
-    public PageInfo<T> selectPage(EsLambdaQueryWrapper<T> wrapper) {
+    public PageInfo<T> page(EsLambdaQueryWrapper<T> wrapper) {
         return initPageInfo(wrapper, EsConstants.PAGE_NUM, EsConstants.PAGE_SIZE);
     }
 
     @Override
-    public PageInfo<T> selectPage(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
+    public PageInfo<T> page(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
         return initPageInfo(wrapper, pageNum, pageSize);
     }
 
     @Override
-    public PageInfo<Map<String, Object>> selectMapsPage(EsLambdaQueryWrapper<T> wrapper) {
-        return this.selectMapsPage(wrapper, EsConstants.PAGE_NUM, EsConstants.PAGE_SIZE);
+    public PageInfo<Map<String, Object>> pageMaps(EsLambdaQueryWrapper<T> wrapper) {
+        return this.pageMaps(wrapper, EsConstants.PAGE_NUM, EsConstants.PAGE_SIZE);
     }
 
     @Override
-    public PageInfo<Map<String, Object>> selectMapsPage(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
+    public PageInfo<Map<String, Object>> pageMaps(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
         PageInfo<T> pageInfo = initPageInfo(wrapper, pageNum, pageSize);
         List<T> list = pageInfo.getList();
         String jsonString = JSONObject.toJSONString(list);
@@ -582,6 +587,8 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     private Map<String, Object> buildMapping(List<EsIndexParam> indexParamList) {
         Map<String, Object> mapping = new HashMap<>(1);
         Map<String, Object> properties = new HashMap<>(indexParamList.size());
+        DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
+        Map<String, String> mappingColumnMap = documentInfo.getMappingColumnMap();
         indexParamList.forEach(indexParam -> {
             Map<String, Object> fieldInfo = new HashMap<>();
             // 设置字段类型
@@ -620,20 +627,17 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
                     .ifPresent(field -> fieldInfo.put(EsConstants.FIELDS, buildMapping(field).get(EsConstants.PROPERTIES)));
 
             String fieldName = indexParam.getFieldName();
+            // 注解 > 配置
+            // 创建索引时，全局驼峰转下划线配置和使用注解指定es字段名，能同时生效，注解优先级高，加了注解的字段使用注解中的值，没加注解的使用驼峰转下划线
             // 根据全局配置确定es字段名是否要进行驼峰转下划线
             if (this.globalConfig.getDocumentConfig().isMapUnderscoreToCamelCase()) {
                 fieldName = StringUtils.camelToUnderline(fieldName);
             }
-            // 根据字段上的注解确定es的字段名，子对象字段解析时会报错 TODO 待解决
-            /*try {
-                Field declaredField = entityClass.getDeclaredField(indexParam.getFieldName());
-                EsDocumentField annotation = declaredField.getAnnotation(EsDocumentField.class);
-                if (annotation != null && StringUtils.isNotBlank(annotation.value().trim())) {
-                    fieldName = annotation.value().trim();
-                }
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            }*/
+            // 根据字段上的注解确定es的字段名（优先级高） TODO 待解决：子对象字段解析时会报错
+            String columnName = mappingColumnMap.get(indexParam.getFieldName());
+            if (StringUtils.isNotBlank(columnName)) {
+                fieldName = columnName;
+            }
 
             properties.put(fieldName, fieldInfo);
         });
@@ -709,7 +713,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         // 根据字段配置的策略 决定是否加入到实际es处理字段中
         DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
         List<DocumentFieldInfo> fieldList = documentInfo.getFieldList();
-        Set<String> goodColumn = new HashSet<>(fieldList.size());
+        Set<String> columnSet = new HashSet<>(fieldList.size());
 
         fieldList.forEach(field -> {
             String column = field.getColumn();
@@ -719,18 +723,18 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             try {
                 if (EsFieldStrategyEnum.IGNORED.equals(fieldStrategy) || EsFieldStrategyEnum.DEFAULT.equals(fieldStrategy)) {
                     // 忽略及无字段配置, 无全局配置 默认加入Json
-                    goodColumn.add(column);
+                    columnSet.add(column);
                 } else if (EsFieldStrategyEnum.NOT_NULL.equals(fieldStrategy)) {
                     invoke = invokeMethod.invoke(entity);
                     if (Objects.nonNull(invoke)) {
-                        goodColumn.add(column);
+                        columnSet.add(column);
                     }
                 } else if (EsFieldStrategyEnum.NOT_EMPTY.equals(fieldStrategy)) {
                     invoke = invokeMethod.invoke(entity);
                     if (Objects.nonNull(invoke) && invoke instanceof String) {
                         String value = (String) invoke;
                         if (StringUtils.isNotEmpty(value)) {
-                            goodColumn.add(column);
+                            columnSet.add(column);
                         }
                     }
                 }
@@ -740,7 +744,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         });
 
         String jsonString;
-        SimplePropertyPreFilter simplePropertyPreFilter = getSimplePropertyPreFilter(entity.getClass(), goodColumn);
+        SimplePropertyPreFilter simplePropertyPreFilter = getSimplePropertyPreFilter(entity.getClass(), columnSet);
 //        SerializeFilter[] filters = {simplePropertyPreFilter, documentInfo.getSerializeFilter()};
         String dateFormat = this.globalConfig.getDocumentConfig().getDateFormat();
         boolean globalDateFormatEffect = false;
@@ -749,6 +753,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             globalDateFormatEffect = true;
         }
         // 注解 > 配置
+        // 日期字段格式全局配置和使用注解指定日期格式能同时生效，注解优先级高，加了注解的字段使用注解中的值，没加注解的使用全局日期格式
         // 判断当前类中是否使用了@JSONField注解
         Field[] fields = entityClass.getDeclaredFields();
         for (Field field : fields) {
@@ -1091,7 +1096,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      */
     private PageInfo<T> initPageInfo(EsLambdaQueryWrapper<T> wrapper, Integer pageNum, Integer pageSize) {
         PageInfo<T> pageInfo = new PageInfo<>();
-        long total = this.selectCount(wrapper);
+        long total = this.count(wrapper);
         if (total <= EsConstants.ZERO) {
             return pageInfo;
         }

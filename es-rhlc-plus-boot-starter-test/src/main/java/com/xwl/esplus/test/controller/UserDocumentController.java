@@ -27,7 +27,7 @@ public class UserDocumentController {
 
     @GetMapping("/selectList")
     public Object selectList() {
-        List<UserDocument> userDocuments = userDocumentMapper.selectList(Wrappers.lambdaQuery());
+        List<UserDocument> userDocuments = userDocumentMapper.list(Wrappers.lambdaQuery());
         return userDocuments;
     }
 }

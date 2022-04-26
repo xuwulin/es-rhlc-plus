@@ -43,13 +43,13 @@ public class InsertTest {
         userDocument.setRemark("软件开发");
         userDocument.setCreatedTime(LocalDateTime.now());
         userDocument.setDeleted(false);
-        userDocumentMapper.insert(userDocument);
+        userDocumentMapper.save(userDocument);
     }
 
     @Test
     public void testInsertBatch() throws ParseException {
         List<UserDocument> list = new ArrayList<>();
-        for (int i = 1; i < 100; i++) {
+        for (int i = 5001; i <= 10009; i++) {
             UserDocument userDocument = new UserDocument();
             userDocument.setNickname("张三疯" + i);
             userDocument.setFullName(new FullName().setFirstName("张").setLastName("三疯"));
@@ -68,6 +68,6 @@ public class InsertTest {
             userDocument.setDeleted(false);
             list.add(userDocument);
         }
-        userDocumentMapper.insertBatch(list);
+        userDocumentMapper.saveBatch(list);
     }
 }

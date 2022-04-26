@@ -27,20 +27,20 @@ public class DeleteTest {
     public void testDelete() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .eq(UserDocument::getAge, 98);
-        Integer delete = userDocumentMapper.delete(wrapper);
+        Integer delete = userDocumentMapper.remove(wrapper);
         Assert.assertTrue(delete > 0);
     }
 
     @Test
     public void testDeleteById() {
-        Integer delete = userDocumentMapper.deleteById("I2f7wH8Brppw3wlArMVX");
+        Integer delete = userDocumentMapper.removeById("I2f7wH8Brppw3wlArMVX");
         Assert.assertTrue(delete > 0);
     }
 
     @Test
     public void testDeleteBatchByIds() {
         List<String> ids = Arrays.asList("JWdbwX8Brppw3wlACcXk", "JGdbwX8Brppw3wlACcXk");
-        Integer delete = userDocumentMapper.deleteBatchByIds(ids);
+        Integer delete = userDocumentMapper.removeByIds(ids);
         Assert.assertTrue(delete > 0);
     }
 
@@ -49,7 +49,7 @@ public class DeleteTest {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
         wrapper.isNotNull(UserDocument::getNickname)
                 .and(w -> w.match(UserDocument::getCompanyName, "乌拉").or().eq(UserDocument::getCompanyName, "魔鬼"));
-        int successCount = userDocumentMapper.delete(wrapper);
+        int successCount = userDocumentMapper.remove(wrapper);
         System.out.println(successCount);
     }
 }
