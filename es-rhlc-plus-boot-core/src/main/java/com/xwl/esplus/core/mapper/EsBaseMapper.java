@@ -57,7 +57,7 @@ public interface EsBaseMapper<T> {
     /**
      * 插入文档
      *
-     * @param entity es对应的实体类
+     * @param entity es索引对应的实体类
      * @return 成功条数
      */
     Integer save(T entity);
@@ -73,7 +73,7 @@ public interface EsBaseMapper<T> {
     /**
      * 根据条件更新文档
      *
-     * @param entity  es对应的实体类
+     * @param entity  es索引对应的实体类
      * @param wrapper 更新条件
      * @return 成功条数
      */
@@ -82,7 +82,7 @@ public interface EsBaseMapper<T> {
     /**
      * 根据id更新文档
      *
-     * @param entity es对应的实体类
+     * @param entity es索引对应的实体类
      * @return 成功条数
      */
     Integer updateById(T entity);

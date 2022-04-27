@@ -34,4 +34,14 @@ public class GlobalConfigCache {
     public static void setGlobalConfig(GlobalConfig globalConfig) {
         GLOBAL_CONFIG.putIfAbsent(GlobalConfig.class, globalConfig);
     }
+
+    /**
+     * 获取默认 GlobalConfig
+     */
+    public static GlobalConfig defaults() {
+        GlobalConfig.DocumentConfig documentConfig = new GlobalConfig.DocumentConfig();
+        GlobalConfig globalConfig = new GlobalConfig();
+        globalConfig.setDocumentConfig(documentConfig);
+        return globalConfig;
+    }
 }

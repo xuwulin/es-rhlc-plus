@@ -1,7 +1,7 @@
 package com.xwl.esplus.core.config;
 
 import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
-import com.xwl.esplus.core.enums.EsIdTypeEnum;
+import com.xwl.esplus.core.enums.EsKeyTypeEnum;
 
 /**
  * 全局配置
@@ -25,13 +25,13 @@ public class GlobalConfig {
      */
     public static class DocumentConfig {
         /**
-         * 主键类型（默认 AUTO）
-         */
-        private EsIdTypeEnum idType = EsIdTypeEnum.AUTO;
-        /**
          * 索引前缀
          */
         private String indexPrefix;
+        /**
+         * 主键类型（默认 AUTO）
+         */
+        private EsKeyTypeEnum keyType = EsKeyTypeEnum.AUTO;
         /**
          * 字段验证策略 (默认 NOT NULL)
          */
@@ -48,22 +48,6 @@ public class GlobalConfig {
         public DocumentConfig() {
         }
 
-        public DocumentConfig(EsIdTypeEnum idType, String indexPrefix, EsFieldStrategyEnum fieldStrategy, String dateFormat, boolean mapUnderscoreToCamelCase) {
-            this.idType = idType;
-            this.indexPrefix = indexPrefix;
-            this.fieldStrategy = fieldStrategy;
-            this.dateFormat = dateFormat;
-            this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
-        }
-
-        public EsIdTypeEnum getIdType() {
-            return idType;
-        }
-
-        public void setIdType(EsIdTypeEnum idType) {
-            this.idType = idType;
-        }
-
         public String getIndexPrefix() {
             return indexPrefix;
         }
@@ -72,11 +56,24 @@ public class GlobalConfig {
             this.indexPrefix = indexPrefix;
         }
 
+        public EsKeyTypeEnum getKeyType() {
+            return keyType;
+        }
+
+        public void setKeyType(EsKeyTypeEnum keyType) {
+            this.keyType = keyType;
+        }
+
         public EsFieldStrategyEnum getFieldStrategy() {
             return fieldStrategy;
         }
 
         public void setFieldStrategy(EsFieldStrategyEnum fieldStrategy) {
+            this.fieldStrategy = fieldStrategy;
+        }
+
+        public void setFieldStrategy(String strategy) {
+            EsFieldStrategyEnum fieldStrategy = Enum.valueOf(EsFieldStrategyEnum.class, strategy.toUpperCase());
             this.fieldStrategy = fieldStrategy;
         }
 
@@ -95,6 +92,9 @@ public class GlobalConfig {
         public void setMapUnderscoreToCamelCase(boolean mapUnderscoreToCamelCase) {
             this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
         }
+    }
+
+    public GlobalConfig() {
     }
 
     public DocumentConfig getDocumentConfig() {

@@ -1,12 +1,12 @@
 package com.xwl.esplus.core.enums;
 
 /**
- * 主键类型枚举
+ * 主键生成策略类型枚举
  *
  * @author xwl
  * @since 2022/3/11 18:58
  */
-public enum EsIdTypeEnum {
+public enum EsKeyTypeEnum {
     /**
      * es自动生成
      */

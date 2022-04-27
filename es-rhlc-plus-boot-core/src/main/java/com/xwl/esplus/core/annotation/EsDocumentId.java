@@ -1,6 +1,6 @@
 package com.xwl.esplus.core.annotation;
 
-import com.xwl.esplus.core.enums.EsIdTypeEnum;
+import com.xwl.esplus.core.enums.EsKeyTypeEnum;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,5 +27,5 @@ public @interface EsDocumentId {
      *
      * @return 默认为未设置
      */
-    EsIdTypeEnum type() default EsIdTypeEnum.NONE;
+    EsKeyTypeEnum type() default EsKeyTypeEnum.NONE;
 }

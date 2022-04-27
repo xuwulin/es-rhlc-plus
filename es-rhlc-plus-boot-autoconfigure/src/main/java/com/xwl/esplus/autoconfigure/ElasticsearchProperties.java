@@ -1,6 +1,9 @@
 package com.xwl.esplus.autoconfigure;
 
+import com.xwl.esplus.core.cache.GlobalConfigCache;
+import com.xwl.esplus.core.config.GlobalConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
  * @author xwl
@@ -53,6 +56,12 @@ public class ElasticsearchProperties {
      * 某一个服务每次能并行接收的请求数量
      */
     private int maxConnPerRoute = 100;
+
+    /**
+     * 全局配置
+     */
+    @NestedConfigurationProperty
+    private GlobalConfig globalConfig = GlobalConfigCache.defaults();
 
     public String getSchema() {
         return schema;
@@ -124,5 +133,13 @@ public class ElasticsearchProperties {
 
     public void setMaxConnPerRoute(int maxConnPerRoute) {
         this.maxConnPerRoute = maxConnPerRoute;
+    }
+
+    public GlobalConfig getGlobalConfig() {
+        return globalConfig;
+    }
+
+    public void setGlobalConfig(GlobalConfig globalConfig) {
+        this.globalConfig = globalConfig;
     }
 }

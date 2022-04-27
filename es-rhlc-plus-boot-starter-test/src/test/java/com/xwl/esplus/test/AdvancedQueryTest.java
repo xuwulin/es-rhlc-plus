@@ -1,7 +1,11 @@
 package com.xwl.esplus.test;
 
 import com.alibaba.fastjson.JSON;
+import com.xwl.esplus.core.cache.GlobalConfigCache;
+import com.xwl.esplus.core.config.GlobalConfig;
+import com.xwl.esplus.core.metadata.DocumentInfo;
 import com.xwl.esplus.core.param.EsOrderByParam;
+import com.xwl.esplus.core.toolkit.DocumentInfoUtils;
 import com.xwl.esplus.core.toolkit.Wrappers;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import com.xwl.esplus.test.document.UserDocument;
@@ -54,7 +58,7 @@ public class AdvancedQueryTest {
     public void testExcludes2() {
         // 等价写法
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
-        wrapper.select(UserDocument.class, ud -> !Objects.equals(ud.getColumn(), "nickname"));
+        wrapper.select(UserDocument.class, ud -> !Objects.equals(ud.getFieldName(), "nickname"));
         List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
         System.out.println(userDocuments);
     }
@@ -121,7 +125,7 @@ public class AdvancedQueryTest {
     }
 
     @Test
-    public void testHighlight() throws IOException {
+    public void testHighlight() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
         String keyword = "科技";
         wrapper.match(UserDocument::getCompanyName, keyword);
@@ -131,11 +135,13 @@ public class AdvancedQueryTest {
     }
 
     @Test
-    public void testHighlight2() throws IOException {
+    public void testHighlight2() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
         String keyword = "科技";
         wrapper.match(UserDocument::getCompanyName, keyword);
         wrapper.highLight(UserDocument::getCompanyName);
+        DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(UserDocument.class);
+        GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
         List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
         System.out.println(userDocuments);
     }

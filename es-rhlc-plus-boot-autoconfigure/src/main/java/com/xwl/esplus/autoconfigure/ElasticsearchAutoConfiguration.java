@@ -1,10 +1,6 @@
 package com.xwl.esplus.autoconfigure;
 
 import com.xwl.esplus.core.cache.GlobalConfigCache;
-import com.xwl.esplus.core.config.GlobalConfig;
-import com.xwl.esplus.core.constant.EsPropertiesConstants;
-import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
-import com.xwl.esplus.core.enums.EsIdTypeEnum;
 import com.xwl.esplus.core.toolkit.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -17,16 +13,12 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * elasticsearch自动配置
@@ -37,48 +29,30 @@ import java.util.Optional;
 @Configuration
 @EnableConfigurationProperties(ElasticsearchProperties.class)
 @ConditionalOnClass(RestHighLevelClient.class)
-@ConditionalOnProperty(prefix = "es-plus", name = {"enable"}, havingValue = "true", matchIfMissing = true)
-public class ElasticsearchAutoConfiguration implements InitializingBean, EnvironmentAware {
+public class ElasticsearchAutoConfiguration implements InitializingBean {
+    /**
+     * ElasticsearchProperties属性
+     */
+    private ElasticsearchProperties elasticsearchProperties;
 
-    private Environment environment;
-
-    @Override
-    public void setEnvironment(Environment environment) {
-        this.environment = environment;
+    public ElasticsearchAutoConfiguration(ElasticsearchProperties elasticsearchProperties) {
+        this.elasticsearchProperties = elasticsearchProperties;
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        // 全局配置
-        GlobalConfig globalConfig = new GlobalConfig();
-        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.ENABLE_DSL))
-                .ifPresent(e -> globalConfig.setEnableDsl(Boolean.valueOf(e)));
-        // 文档相关配置
-        GlobalConfig.DocumentConfig documentConfig = new GlobalConfig.DocumentConfig();
-        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.INDEX_PREFIX))
-                .ifPresent(documentConfig::setIndexPrefix);
-        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.ID_TYPE))
-                .ifPresent(e -> documentConfig.setIdType(Enum.valueOf(EsIdTypeEnum.class, e.toUpperCase())));
-        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.FIELD_STRATEGY))
-                .ifPresent(e -> documentConfig.setFieldStrategy(Enum.valueOf(EsFieldStrategyEnum.class, e.toUpperCase())));
-        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.DATA_FORMAT))
-                .ifPresent(documentConfig::setDateFormat);
-        Optional.ofNullable(environment.getProperty(EsPropertiesConstants.MAP_UNDERSCORE_TO_CAMEL_CASE))
-                .ifPresent(e -> documentConfig.setMapUnderscoreToCamelCase(Boolean.parseBoolean(e)));
-        globalConfig.setDocumentConfig(documentConfig);
-        // 缓存至本地
-        GlobalConfigCache.setGlobalConfig(globalConfig);
+        // 全局配置缓存至本地
+        GlobalConfigCache.setGlobalConfig(elasticsearchProperties.getGlobalConfig());
     }
 
     /**
      * ElasticsearchProperties RestHighLevelClient配置
      *
-     * @param elasticsearchProperties ElasticsearchProperties属性
      * @return org.elasticsearch.client.RestHighLevelClient
      */
     @Bean
     @ConditionalOnMissingBean(RestHighLevelClient.class)
-    public RestHighLevelClient restHighLevelClient(ElasticsearchProperties elasticsearchProperties) {
+    public RestHighLevelClient restHighLevelClient() {
         // 拆分地址
         List<HttpHost> hostLists = new ArrayList<>();
         String address = elasticsearchProperties.getAddress();

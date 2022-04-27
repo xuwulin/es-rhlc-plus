@@ -3,7 +3,7 @@ package com.xwl.esplus.core.metadata;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.SerializeFilter;
-import com.xwl.esplus.core.enums.EsIdTypeEnum;
+import com.xwl.esplus.core.enums.EsKeyTypeEnum;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -14,72 +14,94 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * 文档信息
+ * es文档信息
  *
  * @author xwl
  * @since 2022/3/11 18:57
  */
 public class DocumentInfo {
     /**
-     * 索引名称
+     * es索引名称
      */
     private String indexName;
     /**
-     * es对应的实体类
+     * es索引对应的实体类
      */
-    private Class<?> clazz;
+    private Class<?> entityClass;
     /**
-     * 文档主键ID类型
+     * 文档主键生成策略类型
      */
-    private EsIdTypeEnum idType = EsIdTypeEnum.NONE;
+    private EsKeyTypeEnum keyType = EsKeyTypeEnum.NONE;
     /**
-     * id数据类型，如Long.class String.class
+     * 文档主键数据类型，如String、Integer、Long等
      */
-    private Class<?> idClass;
+    private Class<?> keyClass;
     /**
-     * 主键字段
+     * 文档主键字段
      */
     private Field keyField;
     /**
-     * 文档主键属性名
+     * es索引对应的实体类主键字段名称
      */
-    private String keyProperty;
+    private String keyFieldName;
     /**
-     * 文档主键字段名（es实际字段名称）
+     * es索引主键字段名称
      */
-    private String keyColumn;
-    /**
-     * 文档字段信息列表（不包含主键）
-     */
-    private List<DocumentFieldInfo> fieldList;
+    private String keyColumnName;
     /**
      * 是否有@EsDocumentId注解
      */
     private Boolean hasIdAnnotation = false;
     /**
+     * 文档字段信息列表（不包含主键）
+     */
+    private List<DocumentFieldInfo> fieldList;
+    /**
      * fastjson字段名称过滤器
      */
     private SerializeFilter serializeFilter;
-    /**
-     * fastjson字段命名策略
-     */
-    private PropertyNamingStrategy propertyNamingStrategy;
     /**
      * fastjson实体中不存在的字段处理器
      */
     private ExtraProcessor extraProcessor;
     /**
-     * 高亮返回结果
+     * fastjson字段命名策略
+     */
+    private PropertyNamingStrategy propertyNamingStrategy;
+    /**
+     * 实体字段->es字段映射
+     * key: 实体字段名称 -> value: es字段名称
+     */
+    private final Map<String, String> fieldColumnMap = new HashMap<>();
+    /**
+     * es字段->实体字段映射（仅包含使用@EsDocumentField注解指定es字段名称的字段）
+     * key: es字段名称 -> value: 实体字段名称
+     */
+    private final Map<String, String> columnFieldMap = new HashMap<>();
+    /**
+     * 高亮字段名称->实体字段映射
+     * key: @EsHighLightField注解值/es实际字段名称 -> value: 实体字段名称
      */
     private Map<String, String> highlightFieldMap = new HashMap<>();
+
     /**
-     * key: 实体字段 -> value: es实际字段映射
+     * 获取id字段名
+     *
+     * @return id字段名
      */
-    private final Map<String, String> mappingColumnMap = new HashMap<>();
+    public String getId() {
+        return keyColumnName;
+    }
+
     /**
-     * key: es实际字段映射 -> value: 实体字段 (仅包含被重命名字段)
+     * 获取实体字段映射es中的字段名
+     *
+     * @param fieldName es索引对应的实体字段名称
+     * @return es字段名称
      */
-    private final Map<String, String> columnMappingMap = new HashMap<>();
+    public String getColumnName(String fieldName) {
+        return Optional.ofNullable(fieldColumnMap.get(fieldName)).orElse(fieldName);
+    }
 
     /**
      * 获取需要进行查询的字段列表
@@ -90,38 +112,11 @@ public class DocumentInfo {
     public List<String> chooseSelect(Predicate<DocumentFieldInfo> predicate) {
         return fieldList.stream()
                 .filter(predicate)
-                .map(DocumentFieldInfo::getColumn)
+                .map(DocumentFieldInfo::getFieldName)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 获取id字段名
-     *
-     * @return id字段名
-     */
-    public String getId() {
-        return keyColumn;
-    }
-
-    /**
-     * 获取实体字段映射es中的字段名
-     *
-     * @param column 字段名
-     * @return es中的字段名
-     */
-    public String getMappingColumn(String column) {
-        return Optional.ofNullable(mappingColumnMap.get(column)).orElse(column);
-    }
-
     public DocumentInfo() {
-    }
-
-    public Class<?> getClazz() {
-        return clazz;
-    }
-
-    public void setClazz(Class<?> clazz) {
-        this.clazz = clazz;
     }
 
     public String getIndexName() {
@@ -132,20 +127,28 @@ public class DocumentInfo {
         this.indexName = indexName;
     }
 
-    public EsIdTypeEnum getIdType() {
-        return idType;
+    public Class<?> getEntityClass() {
+        return entityClass;
     }
 
-    public void setIdType(EsIdTypeEnum idType) {
-        this.idType = idType;
+    public void setEntityClass(Class<?> entityClass) {
+        this.entityClass = entityClass;
     }
 
-    public Class<?> getIdClass() {
-        return idClass;
+    public EsKeyTypeEnum getKeyType() {
+        return keyType;
     }
 
-    public void setIdClass(Class<?> idClass) {
-        this.idClass = idClass;
+    public void setKeyType(EsKeyTypeEnum keyType) {
+        this.keyType = keyType;
+    }
+
+    public Class<?> getKeyClass() {
+        return keyClass;
+    }
+
+    public void setKeyClass(Class<?> keyClass) {
+        this.keyClass = keyClass;
     }
 
     public Field getKeyField() {
@@ -156,28 +159,20 @@ public class DocumentInfo {
         this.keyField = keyField;
     }
 
-    public String getKeyProperty() {
-        return keyProperty;
+    public String getKeyFieldName() {
+        return keyFieldName;
     }
 
-    public void setKeyProperty(String keyProperty) {
-        this.keyProperty = keyProperty;
+    public void setKeyFieldName(String keyFieldName) {
+        this.keyFieldName = keyFieldName;
     }
 
-    public String getKeyColumn() {
-        return keyColumn;
+    public String getKeyColumnName() {
+        return keyColumnName;
     }
 
-    public void setKeyColumn(String keyColumn) {
-        this.keyColumn = keyColumn;
-    }
-
-    public List<DocumentFieldInfo> getFieldList() {
-        return fieldList;
-    }
-
-    public void setFieldList(List<DocumentFieldInfo> fieldList) {
-        this.fieldList = fieldList;
+    public void setKeyColumnName(String keyColumnName) {
+        this.keyColumnName = keyColumnName;
     }
 
     public Boolean getHasIdAnnotation() {
@@ -188,20 +183,20 @@ public class DocumentInfo {
         this.hasIdAnnotation = hasIdAnnotation;
     }
 
+    public List<DocumentFieldInfo> getFieldList() {
+        return fieldList;
+    }
+
+    public void setFieldList(List<DocumentFieldInfo> fieldList) {
+        this.fieldList = fieldList;
+    }
+
     public SerializeFilter getSerializeFilter() {
         return serializeFilter;
     }
 
     public void setSerializeFilter(SerializeFilter serializeFilter) {
         this.serializeFilter = serializeFilter;
-    }
-
-    public PropertyNamingStrategy getPropertyNamingStrategy() {
-        return propertyNamingStrategy;
-    }
-
-    public void setPropertyNamingStrategy(PropertyNamingStrategy propertyNamingStrategy) {
-        this.propertyNamingStrategy = propertyNamingStrategy;
     }
 
     public ExtraProcessor getExtraProcessor() {
@@ -212,19 +207,27 @@ public class DocumentInfo {
         this.extraProcessor = extraProcessor;
     }
 
+    public PropertyNamingStrategy getPropertyNamingStrategy() {
+        return propertyNamingStrategy;
+    }
+
+    public void setPropertyNamingStrategy(PropertyNamingStrategy propertyNamingStrategy) {
+        this.propertyNamingStrategy = propertyNamingStrategy;
+    }
+
+    public Map<String, String> getFieldColumnMap() {
+        return fieldColumnMap;
+    }
+
+    public Map<String, String> getColumnFieldMap() {
+        return columnFieldMap;
+    }
+
     public Map<String, String> getHighlightFieldMap() {
         return highlightFieldMap;
     }
 
     public void setHighlightFieldMap(Map<String, String> highlightFieldMap) {
         this.highlightFieldMap = highlightFieldMap;
-    }
-
-    public Map<String, String> getMappingColumnMap() {
-        return mappingColumnMap;
-    }
-
-    public Map<String, String> getColumnMappingMap() {
-        return columnMappingMap;
     }
 }

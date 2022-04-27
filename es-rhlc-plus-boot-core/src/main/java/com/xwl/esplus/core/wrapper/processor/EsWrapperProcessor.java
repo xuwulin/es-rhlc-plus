@@ -41,7 +41,7 @@ public class EsWrapperProcessor {
      * 构建es查询参数
      *
      * @param wrapper     查询条件
-     * @param entityClass es对应的实体类
+     * @param entityClass es索引对应的实体类
      * @return SearchSourceBuilder
      */
     public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper, Class<?> entityClass) {
@@ -63,7 +63,7 @@ public class EsWrapperProcessor {
      */
     private static void setGeoQuery(EsGeoParam geoParam, BoolQueryBuilder boolQueryBuilder, Class<?> entityClass) {
         // 获取配置信息
-        Map<String, String> columnMappingMap = DocumentInfoUtils.getDocumentInfo(entityClass).getColumnMappingMap();
+        Map<String, String> columnMappingMap = DocumentInfoUtils.getDocumentInfo(entityClass).getColumnFieldMap();
         GlobalConfig.DocumentConfig documentConfig = getGlobalConfig().getDocumentConfig();
 
         // 使用实际字段名称覆盖实体类字段名称
@@ -109,7 +109,7 @@ public class EsWrapperProcessor {
      */
     private static SearchSourceBuilder initSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper, Class<?> entityClass) {
         // 获取自定义字段map
-        Map<String, String> columnMappingMap = DocumentInfoUtils.getDocumentInfo(entityClass).getMappingColumnMap();
+        Map<String, String> columnMappingMap = DocumentInfoUtils.getDocumentInfo(entityClass).getFieldColumnMap();
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
         // 查询字段或排除字段
@@ -248,7 +248,7 @@ public class EsWrapperProcessor {
      * 构建BoolQueryBuilder
      *
      * @param baseParamList 基础参数列表
-     * @param entityClass   es对应的实体类
+     * @param entityClass   es索引对应的实体类
      * @return BoolQueryBuilder
      */
     public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList, Class<?> entityClass) {
@@ -470,7 +470,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.MUST.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -479,7 +479,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.FILTER.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -488,7 +488,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.SHOULD.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -497,7 +497,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.MUST_NOT.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -506,7 +506,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.GT.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -515,7 +515,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.LT.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -524,7 +524,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.GE.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -533,7 +533,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.LE.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -541,7 +541,7 @@ public class EsWrapperProcessor {
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.BETWEEN.getType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getLeftValue(),
                         fieldValueModel.getRightValue(),
                         fieldValueModel.getBoost()));
@@ -550,7 +550,7 @@ public class EsWrapperProcessor {
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.NOT_BETWEEN.getType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getLeftValue(),
                         fieldValueModel.getRightValue(),
                         fieldValueModel.getBoost()));
@@ -559,7 +559,7 @@ public class EsWrapperProcessor {
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.IN.getType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValues(),
                         fieldValueModel.getBoost()));
 
@@ -567,7 +567,7 @@ public class EsWrapperProcessor {
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.NOT_IN.getType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValues(),
                         fieldValueModel.getBoost()));
 
@@ -576,7 +576,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.NOT_EXISTS.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         Optional.empty(),
                         fieldValueModel.getBoost()));
 
@@ -585,7 +585,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.EXISTS.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         Optional.empty(),
                         fieldValueModel.getBoost()));
 
@@ -594,7 +594,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.LIKE_LEFT.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
 
@@ -603,7 +603,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.LIKE_RIGHT.getType(),
                         fieldValueModel.getOriginalAttachType(),
-                        documentInfo.getMappingColumn(fieldValueModel.getField()),
+                        documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
                         fieldValueModel.getBoost()));
     }

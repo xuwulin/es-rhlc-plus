@@ -5,7 +5,7 @@ import com.xwl.esplus.core.annotation.EsDocument;
 import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.annotation.EsDocumentId;
 import com.xwl.esplus.core.annotation.EsHighLightField;
-import com.xwl.esplus.core.enums.EsIdTypeEnum;
+import com.xwl.esplus.core.enums.EsKeyTypeEnum;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -19,7 +19,7 @@ import java.util.Date;
 @Data
 @EsDocument(value = "user_document", keepGlobalIndexPrefix = false)
 public class UserDocument {
-    @EsDocumentId(value = "_id", type = EsIdTypeEnum.AUTO)
+    @EsDocumentId(value = "_id", type = EsKeyTypeEnum.AUTO)
     private String id;
     /**
      * 昵称
@@ -49,12 +49,13 @@ public class UserDocument {
     /**
      * 公司名称
      */
-    @EsHighLightField(value = "company_name")
+    @EsHighLightField
     @EsDocumentField(value = "company_name")
     private String companyName;
     /**
      * 公司地址
      */
+    @EsHighLightField
     private String companyAddress;
     /**
      * 公司地址纬经度（30.643077,104.023769）
@@ -65,7 +66,7 @@ public class UserDocument {
      */
     private String geoLocation;
     /**
-     * 备注，es中不存在此字段
+     * 备注
      */
     private String remark;
     /**
@@ -81,7 +82,6 @@ public class UserDocument {
      * 创建日期
      */
     @JSONField(format="yyyy-MM-dd HH:mm:ss")
-//    @EsDocumentField(value = "created_time")
     private LocalDateTime createdTime;
     /**
      * 是否删除

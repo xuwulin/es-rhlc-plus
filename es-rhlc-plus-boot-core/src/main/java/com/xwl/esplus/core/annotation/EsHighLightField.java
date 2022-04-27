@@ -14,5 +14,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @EsDocumentField(exist = false)
 public @interface EsHighLightField {
+    /**
+     * es字段名称，缺省时使用es索引对应的实体字段名称
+     * @return
+     */
     String value() default "";
 }

@@ -9,7 +9,7 @@ import com.xwl.esplus.core.annotation.EsHighLightField;
 import com.xwl.esplus.core.cache.BaseCache;
 import com.xwl.esplus.core.cache.GlobalConfigCache;
 import com.xwl.esplus.core.config.GlobalConfig;
-import com.xwl.esplus.core.enums.EsIdTypeEnum;
+import com.xwl.esplus.core.enums.EsKeyTypeEnum;
 import com.xwl.esplus.core.metadata.DocumentFieldInfo;
 import com.xwl.esplus.core.metadata.DocumentInfo;
 import org.springframework.util.ClassUtils;
@@ -28,16 +28,16 @@ import static java.util.stream.Collectors.toList;
  */
 public class DocumentInfoUtils {
     /**
-     * 默认主键名称
+     * 默认es索引对应的实体类主键名称
      */
-    private static final String DEFAULT_ID_NAME = "id";
+    private static final String DEFAULT_ID_FIELD_NAME = "id";
     /**
-     * ES默认的主键名称
+     * es索引默认的主键名称
      */
     private static final String DEFAULT_ES_ID_COLUMN_NAME = "_id";
     /**
      * 存放文档信息
-     * key: es对应的实体类
+     * key: es索引对应的实体类
      * value: 文档信息
      */
     private static final Map<Class<?>, DocumentInfo> DOCUMENT_INFO_CACHE = new ConcurrentHashMap<>();
@@ -54,8 +54,8 @@ public class DocumentInfoUtils {
     /**
      * 获取es对应的实体类映射的文档信息
      *
-     * @param clazz es对应的实体类
-     * @return es对应的实体类映射的文档信息
+     * @param clazz es索引对应的实体类
+     * @return 文档信息
      */
     public static DocumentInfo getDocumentInfo(Class<?> clazz) {
         if (clazz == null) {
@@ -86,8 +86,8 @@ public class DocumentInfoUtils {
      * 初始化es对应的实体类隐映射的文档信息
      *
      * @param globalConfig 全局配置
-     * @param clazz        es对应的实体类
-     * @return es对应的实体类隐映射的文档信息
+     * @param clazz        es索引对应的实体类
+     * @return 文档信息
      */
     public synchronized static DocumentInfo initDocumentInfo(GlobalConfig globalConfig, Class<?> clazz) {
         DocumentInfo documentInfo = DOCUMENT_INFO_CACHE.get(clazz);
@@ -108,17 +108,17 @@ public class DocumentInfoUtils {
     /**
      * 初始化索引名称
      *
-     * @param clazz        es对应的实体类
+     * @param entityClass  es索引对应的实体类
      * @param globalConfig 全局配置
      * @param documentInfo 文档信息
      */
-    private static void initIndexName(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo documentInfo) {
+    private static void initIndexName(Class<?> entityClass, GlobalConfig globalConfig, DocumentInfo documentInfo) {
         // 数据库全局配置
         GlobalConfig.DocumentConfig documentConfig = globalConfig.getDocumentConfig();
         // 获取es实体类上的@EsDocument注解
-        EsDocument esDocument = clazz.getAnnotation(EsDocument.class);
+        EsDocument esDocument = entityClass.getAnnotation(EsDocument.class);
         // 类名驼峰转下划线
-        String simpleName = StringUtils.camelToUnderline(clazz.getSimpleName());
+        String simpleName = StringUtils.camelToUnderline(entityClass.getSimpleName());
         // 索引前缀
         String indexPrefix = documentConfig.getIndexPrefix();
         // 索引名称
@@ -138,15 +138,15 @@ public class DocumentInfoUtils {
     /**
      * 初始化文档主键及文档字段
      *
-     * @param clazz        es对应的实体类
+     * @param entityClass  es索引对应的实体类
      * @param globalConfig 全局配置
      * @param documentInfo 文档信息
      */
-    public static void initDocumentFields(Class<?> clazz, GlobalConfig globalConfig, DocumentInfo documentInfo) {
+    public static void initDocumentFields(Class<?> entityClass, GlobalConfig globalConfig, DocumentInfo documentInfo) {
         // 文档全局配置
         GlobalConfig.DocumentConfig documentConfig = globalConfig.getDocumentConfig();
         // 获取实体类的所有字段（排除标注@EsDocumentField(exist = false)注解的字段）
-        List<Field> list = getAllFields(clazz);
+        List<Field> list = getAllFields(entityClass);
         // 标记是否已读取到主键
         boolean isReadId = false;
         // 是否存在@EsDocumentId注解
@@ -157,9 +157,9 @@ public class DocumentInfoUtils {
             // 主键ID初始化
             if (!isReadId) {
                 if (existDocumentId) {
-                    isReadId = initDocumentIdWithAnnotation(documentConfig, documentInfo, field, clazz);
+                    isReadId = initDocumentIdWithAnnotation(documentConfig, documentInfo, field, entityClass);
                 } else {
-                    isReadId = initDocumentIdWithoutAnnotation(documentConfig, documentInfo, field, clazz);
+                    isReadId = initDocumentIdWithoutAnnotation(documentConfig, documentInfo, field, entityClass);
                 }
                 if (isReadId) {
                     continue;
@@ -184,11 +184,11 @@ public class DocumentInfoUtils {
     /**
      * 获es对应的实体类的所有字段列表
      *
-     * @param clazz es对应的实体类
-     * @return es对应的实体类的字段列表
+     * @param entityClass es索引对应的实体类
+     * @return es索引对应的实体类字段列表
      */
-    public static List<Field> getAllFields(Class<?> clazz) {
-        List<Field> fieldList = ReflectionUtils.getFieldList(ClassUtils.getUserClass(clazz));
+    public static List<Field> getAllFields(Class<?> entityClass) {
+        List<Field> fieldList = ReflectionUtils.getFieldList(ClassUtils.getUserClass(entityClass));
         if (CollectionUtils.isNotEmpty(fieldList)) {
             return fieldList.stream()
                     .filter(i -> {
@@ -222,39 +222,39 @@ public class DocumentInfoUtils {
      * @param documentConfig 全局文档配置
      * @param documentInfo   文档信息
      * @param field          字段
-     * @param clazz          es对应的实体类
+     * @param entityClass    es索引对应的实体类
      * @return true-读取到id，false-未读取到id
      */
     private static boolean initDocumentIdWithAnnotation(GlobalConfig.DocumentConfig documentConfig,
                                                         DocumentInfo documentInfo,
                                                         Field field,
-                                                        Class<?> clazz) {
+                                                        Class<?> entityClass) {
         EsDocumentId esDocumentId = field.getAnnotation(EsDocumentId.class);
         if (esDocumentId != null) {
             documentInfo.setHasIdAnnotation(Boolean.TRUE);
-            if (StringUtils.isEmpty(documentInfo.getKeyColumn())) {
+            if (StringUtils.isEmpty(documentInfo.getKeyColumnName())) {
                 // 主键策略（ 注解 > 全局 ）
                 // 设置 Sequence 其他策略无效
-                if (EsIdTypeEnum.NONE == esDocumentId.type()) {
+                if (EsKeyTypeEnum.NONE == esDocumentId.type()) {
                     // 如果EsDocumentId注解中的type为NONE（默认值），则使用全局配置的主键策略（默认AUTO）
-                    documentInfo.setIdType(documentConfig.getIdType());
+                    documentInfo.setKeyType(documentConfig.getKeyType());
                 } else {
                     // 否则使用注解中指定的主键策略
-                    documentInfo.setIdType(esDocumentId.type());
+                    documentInfo.setKeyType(esDocumentId.type());
                 }
 
                 // es索引实际字段
                 String column = esDocumentId.value();
                 field.setAccessible(Boolean.TRUE);
-                documentInfo.setClazz(field.getDeclaringClass());
-                documentInfo.setIdClass(field.getType());
+                documentInfo.setEntityClass(field.getDeclaringClass());
+                documentInfo.setKeyClass(field.getType());
                 documentInfo.setKeyField(field);
-                documentInfo.setKeyProperty(field.getName());
-                documentInfo.setKeyColumn(column);
+                documentInfo.setKeyFieldName(field.getName());
+                documentInfo.setKeyColumnName(column);
                 return true;
             } else {
                 String msg = "@EsDocumentId annotation maximum one was allowed, but found more than one in %s";
-                throw new RuntimeException(String.format(msg, clazz));
+                throw new RuntimeException(String.format(msg, entityClass));
             }
         }
 //        documentInfo.setHasIdAnnotation(Boolean.TRUE);
@@ -267,27 +267,27 @@ public class DocumentInfoUtils {
      * @param documentConfig 全局文档配置
      * @param documentInfo   文档信息
      * @param field          字段
-     * @param clazz          es对应的实体类
+     * @param entityClass    es索引对应的实体类
      * @return true-读取到id，false-未读取到id
      */
     private static boolean initDocumentIdWithoutAnnotation(GlobalConfig.DocumentConfig documentConfig,
                                                            DocumentInfo documentInfo,
                                                            Field field,
-                                                           Class<?> clazz) {
+                                                           Class<?> entityClass) {
         String column = field.getName();
-        if (DEFAULT_ID_NAME.equalsIgnoreCase(column) || DEFAULT_ES_ID_COLUMN_NAME.equals(column)) {
-            if (StringUtils.isEmpty(documentInfo.getKeyColumn())) {
+        if (DEFAULT_ID_FIELD_NAME.equalsIgnoreCase(column) || DEFAULT_ES_ID_COLUMN_NAME.equals(column)) {
+            if (StringUtils.isEmpty(documentInfo.getKeyColumnName())) {
                 field.setAccessible(Boolean.TRUE);
-                documentInfo.setClazz(field.getDeclaringClass());
-                documentInfo.setIdClass(field.getType());
-                documentInfo.setIdType(documentConfig.getIdType());
+                documentInfo.setEntityClass(field.getDeclaringClass());
+                documentInfo.setKeyClass(field.getType());
+                documentInfo.setKeyType(documentConfig.getKeyType());
                 documentInfo.setKeyField(field);
-                documentInfo.setKeyProperty(field.getName());
-                documentInfo.setKeyColumn(DEFAULT_ES_ID_COLUMN_NAME);
+                documentInfo.setKeyFieldName(field.getName());
+                documentInfo.setKeyColumnName(DEFAULT_ES_ID_COLUMN_NAME);
                 return true;
             } else {
                 String msg = "@EsDocumentId annotation maximum one was allowed, but found more than one in %s";
-                throw new RuntimeException(String.format(msg, clazz));
+                throw new RuntimeException(String.format(msg, entityClass));
             }
         }
 //        documentInfo.setHasIdAnnotation(Boolean.FALSE);
@@ -316,28 +316,36 @@ public class DocumentInfoUtils {
             String mappingColumn;
             if (StringUtils.isNotBlank(esDocumentField.value().trim())) {
                 // 自定义注解指定的名称优先级最高
-                documentInfo.getMappingColumnMap().putIfAbsent(field.getName(), esDocumentField.value().trim());
-                documentInfo.getColumnMappingMap().putIfAbsent(esDocumentField.value().trim(), field.getName());
+                documentInfo.getFieldColumnMap().putIfAbsent(field.getName(), esDocumentField.value().trim());
+                documentInfo.getColumnFieldMap().putIfAbsent(esDocumentField.value().trim(), field.getName());
                 mappingColumn = esDocumentField.value().trim();
             } else {
                 // 下划线驼峰
                 mappingColumn = initMappingColumnMapAndGet(documentConfig, documentInfo, field);
             }
-            documentFieldInfo.setMappingColumn(mappingColumn);
+            documentFieldInfo.setColumnName(mappingColumn);
             fieldList.add(documentFieldInfo);
             hasAnnotation = true;
         }
 
         // 获取自定义注解@EsHighLightField（字段高亮），TODO 如果注解中的value为空，则默认是字段名
         EsHighLightField esFieldHighLight = field.getAnnotation(EsHighLightField.class);
-        if (Objects.nonNull(esFieldHighLight) && StringUtils.isNotBlank(esFieldHighLight.value())) {
-            String customField = documentInfo.getMappingColumnMap().get(esFieldHighLight.value());
-            String realHighLightField = Objects.isNull(customField) ? esFieldHighLight.value() : customField;
-            if (documentConfig.isMapUnderscoreToCamelCase()) {
-                realHighLightField = StringUtils.camelToUnderline(realHighLightField);
+        if (Objects.nonNull(esFieldHighLight)) {
+            String realHighLightFieldName;
+            if (StringUtils.isBlank(esFieldHighLight.value())) {
+                // value值为空，则使用字段名
+                realHighLightFieldName = documentInfo.getFieldColumnMap().get(field.getName());
+                if (StringUtils.isBlank(realHighLightFieldName)) {
+                    realHighLightFieldName = field.getName();
+                    if (documentConfig.isMapUnderscoreToCamelCase()) {
+                        realHighLightFieldName = StringUtils.camelToUnderline(realHighLightFieldName);
+                    }
+                }
+            } else {
+                // value值不为空，则使用value
+                realHighLightFieldName = esFieldHighLight.value();
             }
-            documentInfo.getHighlightFieldMap().putIfAbsent(realHighLightField, field.getName());
-            hasAnnotation = true;
+            documentInfo.getHighlightFieldMap().putIfAbsent(realHighLightFieldName, field.getName());
         }
         return hasAnnotation;
     }
@@ -356,7 +364,7 @@ public class DocumentInfoUtils {
                                                            Field field) {
         DocumentFieldInfo documentFieldInfo = new DocumentFieldInfo(documentConfig, field);
         // es中的字段名
-        documentFieldInfo.setMappingColumn(field.getName());
+        documentFieldInfo.setColumnName(field.getName());
         fieldList.add(documentFieldInfo);
         // 初始化
         initMappingColumnMapAndGet(documentConfig, documentInfo, field);
@@ -368,7 +376,7 @@ public class DocumentInfoUtils {
      * @param documentConfig 全局文档配置
      * @param documentInfo   文档信息
      * @param field          字段
-     * @return es中的字段名
+     * @return es索引字段名
      */
     private static String initMappingColumnMapAndGet(GlobalConfig.DocumentConfig documentConfig,
                                                      DocumentInfo documentInfo,
@@ -379,7 +387,7 @@ public class DocumentInfoUtils {
             // 下划线转驼峰
             mappingColumn = StringUtils.camelToUnderline(field.getName());
         }
-        documentInfo.getMappingColumnMap().putIfAbsent(field.getName(), mappingColumn);
+        documentInfo.getFieldColumnMap().putIfAbsent(field.getName(), mappingColumn);
         return mappingColumn;
     }
 
@@ -389,7 +397,7 @@ public class DocumentInfoUtils {
      * @param documentInfo 文档信息
      */
     private static void addNameFilter(DocumentInfo documentInfo) {
-        Map<String, String> mappingColumnMap = documentInfo.getMappingColumnMap();
+        Map<String, String> mappingColumnMap = documentInfo.getFieldColumnMap();
         if (!mappingColumnMap.isEmpty()) {
             NameFilter nameFilter = (object, name, value) -> {
                 String mappingColumn = mappingColumnMap.get(name);
@@ -408,10 +416,10 @@ public class DocumentInfoUtils {
      * @param documentInfo 文档信息
      */
     private static void addExtraProcessor(DocumentInfo documentInfo) {
-        Map<String, String> columnMappingMap = documentInfo.getColumnMappingMap();
+        Map<String, String> columnMappingMap = documentInfo.getColumnFieldMap();
         ExtraProcessor extraProcessor = (object, key, value) ->
                 Optional.ofNullable(columnMappingMap.get(key))
-                        .flatMap(realMethodName -> Optional.ofNullable(BaseCache.getEsEntitySetterMethod(documentInfo.getClazz(), realMethodName)))
+                        .flatMap(realMethodName -> Optional.ofNullable(BaseCache.getEsEntitySetterMethod(documentInfo.getEntityClass(), realMethodName)))
                         .ifPresent(method -> {
                             try {
                                 method.invoke(object, value);

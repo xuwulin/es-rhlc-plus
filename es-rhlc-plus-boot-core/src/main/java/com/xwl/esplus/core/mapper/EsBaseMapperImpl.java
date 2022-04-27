@@ -14,7 +14,7 @@ import com.xwl.esplus.core.config.GlobalConfig;
 import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
 import com.xwl.esplus.core.enums.EsFieldTypeEnum;
-import com.xwl.esplus.core.enums.EsIdTypeEnum;
+import com.xwl.esplus.core.enums.EsKeyTypeEnum;
 import com.xwl.esplus.core.metadata.DocumentFieldInfo;
 import com.xwl.esplus.core.metadata.DocumentInfo;
 import com.xwl.esplus.core.page.PageInfo;
@@ -84,7 +84,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * T对应的实体类（es对应的实体类）
+     * T对应的实体类（es索引对应的实体类）
      */
     private Class<T> entityClass;
 
@@ -588,7 +588,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         Map<String, Object> mapping = new HashMap<>(1);
         Map<String, Object> properties = new HashMap<>(indexParamList.size());
         DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
-        Map<String, String> mappingColumnMap = documentInfo.getMappingColumnMap();
+        Map<String, String> mappingColumnMap = documentInfo.getFieldColumnMap();
         indexParamList.forEach(indexParam -> {
             Map<String, Object> fieldInfo = new HashMap<>();
             // 设置字段类型
@@ -657,7 +657,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     /**
      * 构建IndexRequest
      *
-     * @param entity es对应的实体类
+     * @param entity es索引对应的实体类
      * @return IndexRequest
      */
     private IndexRequest buildIndexRequest(T entity) {
@@ -665,9 +665,9 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         // id处理，除下述情况，其它情况使用es默认的id，注解 > 全局配置
         DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entity.getClass());
         if (StringUtils.isNotBlank(documentInfo.getId())) {
-            if (EsIdTypeEnum.UUID.equals(documentInfo.getIdType())) {
+            if (EsKeyTypeEnum.UUID.equals(documentInfo.getKeyType())) {
                 indexRequest.id(UUID.randomUUID().toString());
-            } else if (EsIdTypeEnum.CUSTOMIZE.equals(documentInfo.getIdType())) {
+            } else if (EsKeyTypeEnum.CUSTOMIZE.equals(documentInfo.getKeyType())) {
                 indexRequest.id(getIdValue(entityClass, entity));
             }
         }
@@ -703,7 +703,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     /**
      * 构建,插入/更新 的JSON对象
      *
-     * @param entity es对应的实体类
+     * @param entity es索引对应的实体类
      * @return json
      */
     private String buildJsonSource(T entity) {
@@ -713,28 +713,29 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         // 根据字段配置的策略 决定是否加入到实际es处理字段中
         DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
         List<DocumentFieldInfo> fieldList = documentInfo.getFieldList();
-        Set<String> columnSet = new HashSet<>(fieldList.size());
+        Map<String, String> fieldColumnMap = documentInfo.getFieldColumnMap();
+        Set<String> fieldNameSet = new HashSet<>(fieldList.size());
 
         fieldList.forEach(field -> {
-            String column = field.getColumn();
-            Method invokeMethod = BaseCache.getEsEntityGetterMethod(entityClass, column);
+            String fieldName = field.getFieldName();
+            Method invokeMethod = BaseCache.getEsEntityGetterMethod(entityClass, fieldName);
             Object invoke;
             EsFieldStrategyEnum fieldStrategy = field.getFieldStrategy();
             try {
                 if (EsFieldStrategyEnum.IGNORED.equals(fieldStrategy) || EsFieldStrategyEnum.DEFAULT.equals(fieldStrategy)) {
                     // 忽略及无字段配置, 无全局配置 默认加入Json
-                    columnSet.add(column);
+                    fieldNameSet.add(fieldName);
                 } else if (EsFieldStrategyEnum.NOT_NULL.equals(fieldStrategy)) {
                     invoke = invokeMethod.invoke(entity);
                     if (Objects.nonNull(invoke)) {
-                        columnSet.add(column);
+                        fieldNameSet.add(fieldName);
                     }
                 } else if (EsFieldStrategyEnum.NOT_EMPTY.equals(fieldStrategy)) {
                     invoke = invokeMethod.invoke(entity);
                     if (Objects.nonNull(invoke) && invoke instanceof String) {
                         String value = (String) invoke;
                         if (StringUtils.isNotEmpty(value)) {
-                            columnSet.add(column);
+                            fieldNameSet.add(fieldName);
                         }
                     }
                 }
@@ -744,7 +745,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         });
 
         String jsonString;
-        SimplePropertyPreFilter simplePropertyPreFilter = getSimplePropertyPreFilter(entity.getClass(), columnSet);
+        SimplePropertyPreFilter simplePropertyPreFilter = getSimplePropertyPreFilter(entity.getClass(), fieldNameSet);
 //        SerializeFilter[] filters = {simplePropertyPreFilter, documentInfo.getSerializeFilter()};
         String dateFormat = this.globalConfig.getDocumentConfig().getDateFormat();
         boolean globalDateFormatEffect = false;
@@ -793,13 +794,13 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     /**
      * 设置id值
      *
-     * @param entity es对应的实体类
+     * @param entity es索引对应的实体类
      * @param id     主键值
      */
     private void setId(T entity, String id) {
         Method invokeMethod = BaseCache.getEsEntitySetterMethod(entityClass, getRealIdFieldName());
         // 将es返回的String类型id还原为字段实际的id类型,比如Long,否则反射会报错
-        Class<?> idClass = DocumentInfoUtils.getDocumentInfo(entityClass).getIdClass();
+        Class<?> idClass = DocumentInfoUtils.getDocumentInfo(entityClass).getKeyClass();
         Object value = ReflectionUtils.getValue(idClass, id);
         try {
             // 方法反射调用：方法.invoke(目标对象, 参数);
@@ -815,7 +816,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      * @return id实际字段名称
      */
     private String getRealIdFieldName() {
-        return DocumentInfoUtils.getDocumentInfo(entityClass).getKeyProperty();
+        return DocumentInfoUtils.getDocumentInfo(entityClass).getKeyFieldName();
     }
 
     /**
@@ -922,7 +923,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     /**
      * 构建更新数据请求参数
      *
-     * @param entity  es对应的实体类
+     * @param entity  es索引对应的实体类
      * @param idValue id值
      * @return 更新请求参数
      */
@@ -1083,7 +1084,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      * @return id字段名称
      */
     private String getIdFieldName() {
-        return DocumentInfoUtils.getDocumentInfo(entityClass).getKeyColumn();
+        return DocumentInfoUtils.getDocumentInfo(entityClass).getKeyColumnName();
     }
 
     /**

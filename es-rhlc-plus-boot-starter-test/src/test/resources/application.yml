@@ -4,8 +4,6 @@ spring:
 
 # es-plus配置
 es-plus:
-  # 是否开启es-plus自动配置
-  enable: true
   # es连接地址+端口 格式必须为ip:port,如果是集群则可用逗号隔开
 #  address : 10.10.50.177:9200,10.10.50.178:9200,10.10.50.179:9200
   address : 139.198.107.120:9200
@@ -19,7 +17,8 @@ es-plus:
     # 输出日志
     enable-dsl: true
     document-config:
-      id-type: customize
+      key-type: customize
       index-prefix: test_
-#      data-format: yyyy-MM-dd HH:mm:ss
+      field-strategy: not_null
+#      date-format: yyyy-MM-dd HH:mm:ss
 #      map-underscore-to-camel-case: true
