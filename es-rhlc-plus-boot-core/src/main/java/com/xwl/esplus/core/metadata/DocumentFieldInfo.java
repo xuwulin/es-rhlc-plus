@@ -83,9 +83,9 @@ public class DocumentFieldInfo {
      * @param field    字段
      */
     public DocumentFieldInfo(GlobalConfig.DocumentConfig dbConfig, Field field) {
-        this.fieldStrategy = dbConfig.getFieldStrategy();
         this.entityClass = field.getDeclaringClass();
         this.fieldName = field.getName();
+        this.fieldStrategy = dbConfig.getFieldStrategy();
     }
 
 //    public String getIndexName() {

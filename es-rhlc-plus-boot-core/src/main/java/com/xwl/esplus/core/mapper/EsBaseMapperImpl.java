@@ -3,8 +3,7 @@ package com.xwl.esplus.core.mapper;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.alibaba.fastjson.annotation.JSONField;
-import com.alibaba.fastjson.serializer.SerializeConfig;
+import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.SerializeFilter;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.fastjson.serializer.SimplePropertyPreFilter;
@@ -619,10 +618,10 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
                 Optional.ofNullable(indexParam.getSearchAnalyzer())
                         .ifPresent(searchAnalyzer -> fieldInfo.put(EsConstants.SEARCH_ANALYZER, searchAnalyzer));
             }
-            // 子字段properties
+            // 对象properties
             Optional.ofNullable(indexParam.getProperties())
                     .ifPresent(property -> fieldInfo.put(EsConstants.PROPERTIES, buildMapping(property).get(EsConstants.PROPERTIES)));
-            // 子属性fields
+            // 多（子）字段fields
             Optional.ofNullable(indexParam.getFields())
                     .ifPresent(field -> fieldInfo.put(EsConstants.FIELDS, buildMapping(field).get(EsConstants.PROPERTIES)));
 
@@ -633,7 +632,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             if (this.globalConfig.getDocumentConfig().isMapUnderscoreToCamelCase()) {
                 fieldName = StringUtils.camelToUnderline(fieldName);
             }
-            // 根据字段上的注解确定es的字段名（优先级高） TODO 待解决：子对象字段解析时会报错
+            // 根据字段上的注解确定es的字段名（优先级高） TODO 待解决：对象字段解析时会报错
             String columnName = mappingColumnMap.get(indexParam.getFieldName());
             if (StringUtils.isNotBlank(columnName)) {
                 fieldName = columnName;
@@ -707,10 +706,8 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      * @return json
      */
     private String buildJsonSource(T entity) {
-        // 获取所有字段列表
         Class<?> entityClass = entity.getClass();
-
-        // 根据字段配置的策略 决定是否加入到实际es处理字段中
+        // 根据字段配置的策略，决定是否加入到实际es处理字段中
         DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
         List<DocumentFieldInfo> fieldList = documentInfo.getFieldList();
         Map<String, String> fieldColumnMap = documentInfo.getFieldColumnMap();
@@ -744,44 +741,29 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             }
         });
 
-        String jsonString;
+        // 过滤掉实体类中不需要的属性
         SimplePropertyPreFilter simplePropertyPreFilter = getSimplePropertyPreFilter(entity.getClass(), fieldNameSet);
-//        SerializeFilter[] filters = {simplePropertyPreFilter, documentInfo.getSerializeFilter()};
-        String dateFormat = this.globalConfig.getDocumentConfig().getDateFormat();
-        boolean globalDateFormatEffect = false;
-        boolean annotationFormatEffect = false;
-        if (StringUtils.isNotBlank(dateFormat)) {
-            globalDateFormatEffect = true;
+        // 序列化过滤器
+        SerializeFilter[] filters = {simplePropertyPreFilter, documentInfo.getSerializeFilter()};
+
+        // 日期格式：所有的日期格式需要转换为全局配置的日期格式，但是如果有@JSONField(format="")注解的，按照注解的format配置内容来进行格式化
+        String globalDateFormat = this.globalConfig.getDocumentConfig().getDateFormat();
+        if (StringUtils.isNotBlank(globalDateFormat)) {
+            // 指定fastjson的全局日期格式
+            JSON.DEFFAULT_DATE_FORMAT = globalDateFormat;
+            /**
+             * SerializerFeature.DisableCircularReferenceDetect：消除循环引用
+             * SerializerFeature.WriteMapNullValue：返回结果保留null值
+             * SerializerFeature.WriteNullStringAsEmpty：将返回值为null的字符串转变成""
+             * SerializerFeature.WriteNullListAsEmpty：List字段如果为null，输出为[]，而非null
+             */
+            return JSON.toJSONString(entity, filters, SerializerFeature.WriteDateUseDateFormat);
         }
-        // 注解 > 配置
-        // 日期字段格式全局配置和使用注解指定日期格式能同时生效，注解优先级高，加了注解的字段使用注解中的值，没加注解的使用全局日期格式
-        // 判断当前类中是否使用了@JSONField注解
-        Field[] fields = entityClass.getDeclaredFields();
-        for (Field field : fields) {
-            JSONField jsonField = field.getAnnotation(JSONField.class);
-            if (jsonField != null) {
-                annotationFormatEffect = true;
-                break;
-            }
-        }
-        if (annotationFormatEffect) {
-            // 使用@JSONField注解配置的日期格式
-            jsonString = JSON.toJSONString(entity, simplePropertyPreFilter, SerializerFeature.WriteDateUseDateFormat);
-//            jsonString = JSON.toJSONString(entity, filters, SerializerFeature.WriteDateUseDateFormat);
-        } else if (globalDateFormatEffect) {
-            // 使用全局日期格式
-            jsonString = JSON.toJSONString(entity, SerializeConfig.globalInstance, new SerializeFilter[]{simplePropertyPreFilter}, dateFormat, JSON.DEFAULT_GENERATE_FEATURE, SerializerFeature.WriteDateUseDateFormat);
-//            jsonString = JSON.toJSONString(entity, SerializeConfig.globalInstance, filters, dateFormat, JSON.DEFAULT_GENERATE_FEATURE, SerializerFeature.WriteDateUseDateFormat);
-        } else {
-            // 不格式化日期
-            jsonString = JSON.toJSONString(entity, simplePropertyPreFilter, SerializerFeature.WriteMapNullValue);
-//            jsonString = JSON.toJSONString(entity, filters, SerializerFeature.WriteMapNullValue);
-        }
-        return jsonString;
+        return JSON.toJSONString(entity, filters);
     }
 
     /**
-     * 设置fastjson toJsonString字段
+     * 使用fastjson的SimplePropertyPreFilter过滤属性，过滤掉实体类中不需要的属性
      *
      * @param clazz  类
      * @param fields 字段列表
@@ -1156,8 +1138,10 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      * @return es对应的实体
      */
     private T parseOne(SearchHit searchHit, EsLambdaQueryWrapper<T> wrapper) {
+        // fastjson实体中不存在的字段处理器（处理多余字段，即json中有字段，但是在实体中不存在）
+        ExtraProcessor extraProcessor = DocumentInfoUtils.getDocumentInfo(entityClass).getExtraProcessor();
         // 解析json
-        T entity = JSON.parseObject(searchHit.getSourceAsString(), entityClass, DocumentInfoUtils.getDocumentInfo(entityClass).getExtraProcessor());
+        T entity = JSON.parseObject(searchHit.getSourceAsString(), entityClass, extraProcessor);
         // 高亮字段处理
         if (CollectionUtils.isNotEmpty(wrapper.getHighLightParamList())) {
             Map<String, String> highlightFieldMap = getHighlightFieldMap();

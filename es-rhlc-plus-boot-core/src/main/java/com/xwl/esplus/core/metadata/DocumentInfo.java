@@ -1,6 +1,5 @@
 package com.xwl.esplus.core.metadata;
 
-import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.parser.deserializer.ExtraProcessor;
 import com.alibaba.fastjson.serializer.SerializeFilter;
 import com.xwl.esplus.core.enums.EsKeyTypeEnum;
@@ -61,13 +60,13 @@ public class DocumentInfo {
      */
     private SerializeFilter serializeFilter;
     /**
-     * fastjson实体中不存在的字段处理器
+     * fastjson实体中不存在的字段处理器（处理多余字段，即json中有字段，但是在实体中不存在）
      */
     private ExtraProcessor extraProcessor;
     /**
      * fastjson字段命名策略
      */
-    private PropertyNamingStrategy propertyNamingStrategy;
+//    private PropertyNamingStrategy propertyNamingStrategy;
     /**
      * 实体字段->es字段映射
      * key: 实体字段名称 -> value: es字段名称
@@ -80,9 +79,14 @@ public class DocumentInfo {
     private final Map<String, String> columnFieldMap = new HashMap<>();
     /**
      * 高亮字段名称->实体字段映射
-     * key: @EsHighLightField注解值/es实际字段名称 -> value: 实体字段名称
+     * key: es字段名称 -> value: 实体字段名称
      */
-    private Map<String, String> highlightFieldMap = new HashMap<>();
+    private final Map<String, String> highlightFieldMap = new HashMap<>();
+    /**
+     * 嵌套对象实体字段->es字段映射
+     * key: 嵌套对象字段名称 -> value: es字段名称
+     */
+    private final Map<Class<?>, Map<String, String>> objectClassMap = new HashMap<>();
 
     /**
      * 获取id字段名
@@ -207,13 +211,13 @@ public class DocumentInfo {
         this.extraProcessor = extraProcessor;
     }
 
-    public PropertyNamingStrategy getPropertyNamingStrategy() {
+    /*public PropertyNamingStrategy getPropertyNamingStrategy() {
         return propertyNamingStrategy;
     }
 
     public void setPropertyNamingStrategy(PropertyNamingStrategy propertyNamingStrategy) {
         this.propertyNamingStrategy = propertyNamingStrategy;
-    }
+    }*/
 
     public Map<String, String> getFieldColumnMap() {
         return fieldColumnMap;
@@ -227,7 +231,7 @@ public class DocumentInfo {
         return highlightFieldMap;
     }
 
-    public void setHighlightFieldMap(Map<String, String> highlightFieldMap) {
-        this.highlightFieldMap = highlightFieldMap;
+    public Map<Class<?>, Map<String, String>> getObjectClassMap() {
+        return objectClassMap;
     }
 }

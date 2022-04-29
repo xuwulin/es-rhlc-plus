@@ -1,5 +1,6 @@
 package com.xwl.esplus.core.config;
 
+import com.xwl.esplus.core.constant.EsGlobalConstants;
 import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
 import com.xwl.esplus.core.enums.EsKeyTypeEnum;
 
@@ -37,13 +38,13 @@ public class GlobalConfig {
          */
         private EsFieldStrategyEnum fieldStrategy = EsFieldStrategyEnum.NOT_NULL;
         /**
-         * 统一设置存储的日期格式
+         * es全局日期格式，默认：yyyy-MM-dd HH:mm:ss
          */
-        private String dateFormat;
+        private String dateFormat = EsGlobalConstants.ES_GLOBAL_DEFAULT_DATE_FORMAT;
         /**
-         * 是否开启下划线转驼峰
+         * 是否开启下划线转驼峰，默认开启
          */
-        private boolean mapUnderscoreToCamelCase = false;
+        private boolean mapUnderscoreToCamelCase = true;
 
         public DocumentConfig() {
         }

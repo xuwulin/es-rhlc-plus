@@ -41,12 +41,19 @@ public class IndexTest {
         String analysis = "{\"analysis\":{\"filter\":{\"py\":{\"keep_joined_full_pinyin\":true,\"none_chinese_pinyin_tokenize\":false,\"keep_original\":true,\"remove_duplicated_term\":true,\"type\":\"pinyin\",\"limit_first_letter_length\":16,\"keep_full_pinyin\":false}},\"analyzer\":{\"completion_analyzer\":{\"filter\":\"py\",\"tokenizer\":\"keyword\"},\"text_anlyzer\":{\"filter\":\"py\",\"tokenizer\":\"ik_max_word\"}}}}";
         Map<String, Object> analysisMap = JSONObject.parseObject(analysis, Map.class);
 
-        EsIndexParam firstNameParam = new EsIndexParam();
-        firstNameParam.setFieldName("firstName");
-        firstNameParam.setFieldType(EsFieldTypeEnum.KEYWORD.getType());
-        EsIndexParam lastNameParam = new EsIndexParam();
-        lastNameParam.setFieldName("lastName");
-        lastNameParam.setFieldType(EsFieldTypeEnum.KEYWORD.getType());
+        EsIndexParam cnFirstNameParam = new EsIndexParam();
+        cnFirstNameParam.setFieldName("firstName");
+        cnFirstNameParam.setFieldType(EsFieldTypeEnum.KEYWORD.getType());
+        EsIndexParam cnLastNameParam = new EsIndexParam();
+        cnLastNameParam.setFieldName("lastName");
+        cnLastNameParam.setFieldType(EsFieldTypeEnum.KEYWORD.getType());
+
+        EsIndexParam enFirstNameParam = new EsIndexParam();
+        enFirstNameParam.setFieldName("firstName");
+        enFirstNameParam.setFieldType(EsFieldTypeEnum.KEYWORD.getType());
+        EsIndexParam enLastNameParam = new EsIndexParam();
+        enLastNameParam.setFieldName("lastName");
+        enLastNameParam.setFieldType(EsFieldTypeEnum.KEYWORD.getType());
 
         EsIndexParam deptNameParam = new EsIndexParam();
         deptNameParam.setFieldName("allName");
@@ -58,20 +65,23 @@ public class IndexTest {
                 .settings(1, 1, analysisMap)
                 .mapping(UserDocument::getId, EsFieldTypeEnum.KEYWORD)
                 .mapping(UserDocument::getNickname, EsFieldTypeEnum.KEYWORD, true)
-                .mapping(UserDocument::getFullName, Arrays.asList(firstNameParam, lastNameParam))
+                .mapping(UserDocument::getChineseName, Arrays.asList(cnFirstNameParam, cnLastNameParam))
+                .mapping(UserDocument::getEnglishName, Arrays.asList(enFirstNameParam, enLastNameParam), EsFieldTypeEnum.NESTED)
                 .mapping(UserDocument::getIdNumber, EsFieldTypeEnum.KEYWORD, false, 18)
                 .mapping(UserDocument::getAge, EsFieldTypeEnum.INTEGER)
                 .mapping(UserDocument::getGender, EsFieldTypeEnum.KEYWORD, false)
-                .mapping(UserDocument::getBirthdate, "yyyy-MM-dd")
+                .mapping(UserDocument::getBirthday, "yyyy-MM-dd")
                 .mapping(UserDocument::getCompanyName, EsFieldTypeEnum.TEXT, true, null, UserDocument::getAll, "text_anlyzer", EsAnalyzerEnum.IK_MAX_WORD, Arrays.asList(deptNameParam))
                 .mapping(UserDocument::getCompanyAddress, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
                 .mapping(UserDocument::getCompanyLocation, EsFieldTypeEnum.GEO_POINT)
                 .mapping(UserDocument::getGeoLocation, EsFieldTypeEnum.GEO_SHAPE)
                 .mapping(UserDocument::getRemark, EsFieldTypeEnum.TEXT, UserDocument::getAll, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
                 .mapping(UserDocument::getAll, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
-                // "format": "yyyy-MM-dd HH:mm:ss || yyyy-MM-dd HH:mm:ss.SSS ||yyyy-MM-dd || epoch_millis || strict_date_optional_time || yyyy-MM-dd'T'HH:mm:ss'+'08:00"
+                // "format": "yyyy-MM-dd HH:mm:ss || yyyy-MM-dd HH:mm:ss.SSS || yyyy-MM-dd || epoch_millis || strict_date_optional_time || yyyy-MM-dd'T'HH:mm:ss'+'08:00"
+                .mapping(UserDocument::getHireDate, "yyyy-MM-dd")
                 .mapping(UserDocument::getCreatedTime, "yyyy-MM-dd HH:mm:ss")
-                .mapping(UserDocument::isDeleted, EsFieldTypeEnum.KEYWORD);
+                .mapping(UserDocument::getUpdatedTime, "yyyy-MM-dd HH:mm:ss")
+                .mapping(UserDocument::isDeleted, EsFieldTypeEnum.BOOLEAN);
 
         // 创建索引，调用此方法时，会先去调用代理对象中的invoke方法，由代理对象去执行具体的逻辑（创建索引的方法）
         // 即，当我们调用 UserDocumentMapper.createIndex() 方法的时候，

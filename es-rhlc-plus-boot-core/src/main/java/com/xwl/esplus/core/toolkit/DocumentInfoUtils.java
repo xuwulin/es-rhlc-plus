@@ -5,7 +5,6 @@ import com.alibaba.fastjson.serializer.NameFilter;
 import com.xwl.esplus.core.annotation.EsDocument;
 import com.xwl.esplus.core.annotation.EsDocumentField;
 import com.xwl.esplus.core.annotation.EsDocumentId;
-import com.xwl.esplus.core.annotation.EsHighLightField;
 import com.xwl.esplus.core.cache.BaseCache;
 import com.xwl.esplus.core.cache.GlobalConfigCache;
 import com.xwl.esplus.core.config.GlobalConfig;
@@ -15,6 +14,8 @@ import com.xwl.esplus.core.metadata.DocumentInfo;
 import org.springframework.util.ClassUtils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -165,13 +166,17 @@ public class DocumentInfoUtils {
                     continue;
                 }
             }
-            // 有自定义注解的字段初始化
+            // 有自定义注解@EsDocumentField标注的字段初始化
             if (initDocumentFieldWithAnnotation(documentConfig, documentInfo, fieldList, field)) {
                 continue;
             }
-            // 无自定义注解的字段初始化
+            // 无自定义注解@EsDocumentField标注的字段初始化
             initDocumentFieldWithoutAnnotation(documentConfig, documentInfo, fieldList, field);
         }
+
+        /*Map<String, String> fieldColumnMap = documentInfo.getFieldColumnMap();
+        fieldColumnMap.put("firstName", "firstName");
+        fieldColumnMap.put("lastName", "lastName");*/
 
         // 添加字段列表
         documentInfo.setFieldList(fieldList);
@@ -311,41 +316,72 @@ public class DocumentInfoUtils {
         // 获取自定义注解@EsDocumentField
         EsDocumentField esDocumentField = field.getAnnotation(EsDocumentField.class);
         if (Objects.nonNull(esDocumentField) && esDocumentField.exist()) {
+            // 文档字段信息
             DocumentFieldInfo documentFieldInfo = new DocumentFieldInfo(documentConfig, field, esDocumentField);
             // es中的字段名
-            String mappingColumn;
+            String columnName;
             if (StringUtils.isNotBlank(esDocumentField.value().trim())) {
                 // 自定义注解指定的名称优先级最高
-                documentInfo.getFieldColumnMap().putIfAbsent(field.getName(), esDocumentField.value().trim());
-                documentInfo.getColumnFieldMap().putIfAbsent(esDocumentField.value().trim(), field.getName());
-                mappingColumn = esDocumentField.value().trim();
+                columnName = esDocumentField.value().trim();
+                documentInfo.getFieldColumnMap().putIfAbsent(field.getName(), columnName);
+                documentInfo.getColumnFieldMap().putIfAbsent(columnName, field.getName());
+                documentFieldInfo.setColumnName(columnName);
             } else {
-                // 下划线驼峰
-                mappingColumn = initMappingColumnMapAndGet(documentConfig, documentInfo, field);
+                // 如果自定义注解指定的名称为空，则使用字段名称
+                columnName = initFieldColumnMapAndGetColumnName(documentConfig, documentInfo, documentFieldInfo, field);
             }
-            documentFieldInfo.setColumnName(mappingColumn);
             fieldList.add(documentFieldInfo);
             hasAnnotation = true;
-        }
 
-        // 获取自定义注解@EsHighLightField（字段高亮），TODO 如果注解中的value为空，则默认是字段名
-        EsHighLightField esFieldHighLight = field.getAnnotation(EsHighLightField.class);
-        if (Objects.nonNull(esFieldHighLight)) {
-            String realHighLightFieldName;
-            if (StringUtils.isBlank(esFieldHighLight.value())) {
-                // value值为空，则使用字段名
-                realHighLightFieldName = documentInfo.getFieldColumnMap().get(field.getName());
-                if (StringUtils.isBlank(realHighLightFieldName)) {
-                    realHighLightFieldName = field.getName();
-                    if (documentConfig.isMapUnderscoreToCamelCase()) {
-                        realHighLightFieldName = StringUtils.camelToUnderline(realHighLightFieldName);
+            // 嵌套对象处理
+            if (esDocumentField.isObj() || esDocumentField.isNested()) {
+                Field[] declaredFields = new Field[0];
+                Class<?> type = field.getType();
+                // 获取当前对象的父接口
+                Class<?>[] interfaces = type.getInterfaces();
+                // 是否包含Collection接口，即是否是Collection的子接口
+                if (Arrays.asList(interfaces).contains(Collection.class)) {
+                    // 集合类型
+                    // 获取Collection中的泛型
+                    Type genericType = field.getGenericType();
+                    if (genericType instanceof ParameterizedType) {
+                        ParameterizedType parameterizedType = (ParameterizedType) genericType;
+                        // 得到泛型里的class类型对象
+                        Class<?> actualTypeArgument = (Class<?>) parameterizedType.getActualTypeArguments()[0];
+                        type = actualTypeArgument;
+                        declaredFields = actualTypeArgument.getDeclaredFields();
                     }
+                } else if (type.isArray()) {
+                    // 数组类型
+                    // 获取数组的类型
+                    Class<?> componentType = type.getComponentType();
+                    type = componentType;
+                    declaredFields = componentType.getDeclaredFields();
+                } else {
+                    declaredFields = type.getDeclaredFields();
                 }
-            } else {
-                // value值不为空，则使用value
-                realHighLightFieldName = esFieldHighLight.value();
+                Map<String, String> fieldMap = new HashMap<>(declaredFields.length);
+                for (Field declaredField : declaredFields) {
+                    String columName = declaredField.getName();
+                    if (documentConfig.isMapUnderscoreToCamelCase()) {
+                        // 驼峰转下划线
+                        columName = StringUtils.camelToUnderline(columName);
+                    }
+                    EsDocumentField annotation = declaredField.getAnnotation(EsDocumentField.class);
+                    if (Objects.nonNull(annotation) && annotation.exist()) {
+                        if (StringUtils.isNotBlank(annotation.value().trim())) {
+                            columName = annotation.value().trim();
+                        }
+                    }
+                    fieldMap.put(declaredField.getName(), columName);
+                }
+                documentInfo.getObjectClassMap().put(type, fieldMap);
             }
-            documentInfo.getHighlightFieldMap().putIfAbsent(realHighLightFieldName, field.getName());
+
+            // 字段高亮处理
+            if (esDocumentField.isHighLight()) {
+                documentInfo.getHighlightFieldMap().putIfAbsent(columnName, field.getName());
+            }
         }
         return hasAnnotation;
     }
@@ -363,11 +399,9 @@ public class DocumentInfoUtils {
                                                            List<DocumentFieldInfo> fieldList,
                                                            Field field) {
         DocumentFieldInfo documentFieldInfo = new DocumentFieldInfo(documentConfig, field);
-        // es中的字段名
-        documentFieldInfo.setColumnName(field.getName());
-        fieldList.add(documentFieldInfo);
         // 初始化
-        initMappingColumnMapAndGet(documentConfig, documentInfo, field);
+        initFieldColumnMapAndGetColumnName(documentConfig, documentInfo, documentFieldInfo, field);
+        fieldList.add(documentFieldInfo);
     }
 
     /**
@@ -378,40 +412,55 @@ public class DocumentInfoUtils {
      * @param field          字段
      * @return es索引字段名
      */
-    private static String initMappingColumnMapAndGet(GlobalConfig.DocumentConfig documentConfig,
-                                                     DocumentInfo documentInfo,
-                                                     Field field) {
+    private static String initFieldColumnMapAndGetColumnName(GlobalConfig.DocumentConfig documentConfig,
+                                                             DocumentInfo documentInfo,
+                                                             DocumentFieldInfo documentFieldInfo,
+                                                             Field field) {
         // 自定义字段名及驼峰下划线转换
-        String mappingColumn = field.getName();
+        String columnName = field.getName();
         if (documentConfig.isMapUnderscoreToCamelCase()) {
-            // 下划线转驼峰
-            mappingColumn = StringUtils.camelToUnderline(field.getName());
+            // 驼峰转下划线
+            columnName = StringUtils.camelToUnderline(field.getName());
         }
-        documentInfo.getFieldColumnMap().putIfAbsent(field.getName(), mappingColumn);
-        return mappingColumn;
+        documentInfo.getFieldColumnMap().putIfAbsent(field.getName(), columnName);
+        documentInfo.getColumnFieldMap().putIfAbsent(columnName, field.getName());
+        documentFieldInfo.setColumnName(columnName);
+        return columnName;
     }
 
     /**
-     * 添加fastjson字段过滤器
+     * fastjson序列化时（实体类转json）添加fastjson字段过滤器
      *
      * @param documentInfo 文档信息
      */
     private static void addNameFilter(DocumentInfo documentInfo) {
-        Map<String, String> mappingColumnMap = documentInfo.getFieldColumnMap();
-        if (!mappingColumnMap.isEmpty()) {
+        Map<String, String> fieldColumnMap = documentInfo.getFieldColumnMap();
+        Map<Class<?>, Map<String, String>> objectClassMap = documentInfo.getObjectClassMap();
+        if (!fieldColumnMap.isEmpty()) {
+            /**
+             * NameFilter：修改Key，如果需要修改Key，修改process返回值即可
+             * object：实体对象
+             * name：实体对象字段名
+             * value：实体对象字段值
+             */
             NameFilter nameFilter = (object, name, value) -> {
-                String mappingColumn = mappingColumnMap.get(name);
-                if (Objects.equals(mappingColumn, name)) {
+                String columnName = fieldColumnMap.get(name);
+                if (StringUtils.isBlank(columnName)) {
+                    Map<String, String> objectFieldColumnMap = objectClassMap.get(object.getClass());
+                    columnName = objectFieldColumnMap.get(name);
+                }
+                if (Objects.equals(columnName, name)) {
                     return name;
                 }
-                return mappingColumn;
+                return columnName;
             };
             documentInfo.setSerializeFilter(nameFilter);
         }
     }
 
     /**
-     * 预添加fastjson解析object时对非实体类字段的处理(比如自定义字段名,下划线等)
+     * fastjson反序列化（json解析为实体类）
+     * 预添加fastjson解析object时对非实体类字段的处理(比如自定义字段名，es字段名和实体类字段名不一致，驼峰&下划线)
      *
      * @param documentInfo 文档信息
      */

@@ -2,6 +2,7 @@ package com.xwl.esplus.autoconfigure;
 
 import com.xwl.esplus.core.cache.GlobalConfigCache;
 import com.xwl.esplus.core.config.GlobalConfig;
+import com.xwl.esplus.core.constant.EsGlobalConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -9,7 +10,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
  * @author xwl
  * @since 2022/3/11 14:43
  */
-@ConfigurationProperties(prefix = "es-plus")
+@ConfigurationProperties(prefix = EsGlobalConstants.PROPERTIES_PREFIX)
 public class ElasticsearchProperties {
     /**
      * 连接模式：默认http

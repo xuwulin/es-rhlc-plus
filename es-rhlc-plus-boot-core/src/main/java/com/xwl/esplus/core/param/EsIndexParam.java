@@ -43,7 +43,7 @@ public class EsIndexParam {
      */
     private String searchAnalyzer;
     /**
-     * 子对象，如:
+     * 对象，如:
      * "name":{
      *         "properties": {
      *           "firstName": {

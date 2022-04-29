@@ -143,7 +143,7 @@ public class AdvancedQueryTest {
         DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(UserDocument.class);
         GlobalConfig globalConfig = GlobalConfigCache.getGlobalConfig();
         List<UserDocument> userDocuments = userDocumentMapper.list(wrapper);
-        System.out.println(userDocuments);
+        System.out.println(JSON.toJSONString(userDocuments));
     }
 
     @Test

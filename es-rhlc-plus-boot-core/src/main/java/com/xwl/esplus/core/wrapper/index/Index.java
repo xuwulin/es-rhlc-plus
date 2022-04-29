@@ -206,13 +206,23 @@ public interface Index<Children, R> extends Serializable {
                      List<EsIndexParam> fields);
 
     /**
-     * 设置mapping信息，子对象
+     * 设置mapping信息，对象
      *
      * @param column     列
-     * @param properties 子对象信息列表
+     * @param properties 对象信息列表
      * @return
      */
     Children mapping(R column, List<EsIndexParam> properties);
+
+    /**
+     * 设置mapping信息，nested嵌套对象
+     *
+     * @param column     列
+     * @param fieldType  es中的类型
+     * @param properties 对象信息列表
+     * @return
+     */
+    Children mapping(R column, List<EsIndexParam> properties, EsFieldTypeEnum fieldType);
 
     /**
      * 设置mapping信息

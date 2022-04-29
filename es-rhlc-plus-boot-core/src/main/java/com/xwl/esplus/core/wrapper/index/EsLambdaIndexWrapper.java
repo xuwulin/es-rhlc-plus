@@ -300,6 +300,20 @@ public class EsLambdaIndexWrapper<T>
     }
 
     @Override
+    public EsLambdaIndexWrapper<T> mapping(SFunction<T, ?> column,
+                                           List<EsIndexParam> properties,
+                                           EsFieldTypeEnum fieldType) {
+        String fieldName = FieldUtils.getFieldName(column);
+        EsIndexParam esIndexParam = new EsIndexParam();
+        esIndexParam.setFieldName(fieldName);
+        Optional.ofNullable(fieldType)
+                .ifPresent(type -> esIndexParam.setFieldType(type.getType()));
+        esIndexParam.setProperties(properties);
+        esIndexParamList.add(esIndexParam);
+        return typedThis;
+    }
+
+    @Override
     public EsLambdaIndexWrapper<T> mapping(String column,
                                            EsFieldTypeEnum fieldType,
                                            Boolean index,

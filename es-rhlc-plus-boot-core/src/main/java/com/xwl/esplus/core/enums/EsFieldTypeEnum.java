@@ -14,6 +14,10 @@ public enum EsFieldTypeEnum {
     LONG("long"),
     FLOAT("float"),
     DOUBLE("double"),
+    /**
+     * 二进制
+     */
+    BINARY("binary"),
 
     HALF_FLOAT("half_float"),
     SCALED_FLOAT("scaled_float"),
@@ -25,8 +29,9 @@ public enum EsFieldTypeEnum {
      * 日期
      */
     DATE("date"),
+    DATE_NANOS("date_nanos"),
     RANGE("range"),
-    BINARY("binary"),
+
     /**
      * 字符串，不分词，精确值
      */
@@ -36,18 +41,24 @@ public enum EsFieldTypeEnum {
      */
     TEXT("text"),
     /**
-     * mix
+     * 数组类型
      */
     ARRAY("array"),
     /**
      * 对象
      */
     OBJECT("object"),
+    /**
+     * 嵌套类型
+     */
     NESTED("nested"),
     /**
-     * geo
+     * 地理坐标类型：用于经纬度坐标
      */
     GEO_POINT("geo_point"),
+    /**
+     * 地理形状类型：用于类似于多边形的复杂形状
+     */
     GEO_SHAPE("geo_shape"),
     /**
      * special
@@ -59,12 +70,18 @@ public enum EsFieldTypeEnum {
      * 字段的内容一般是用来补全的多个词条形成的数组
      */
     COMPLETION("completion"),
-    TOKEN("token"),
+    /**
+     * 用于统计做了标记的字段的index数目，该值会一直增加，不会因为过滤条件而减少。
+     */
+    TOKEN_COUNT("token_count "),
+    /**
+     * 附加类型
+     */
     ATTACHMENT("attachment"),
     PERCOLATOR("percolator"),
 
     /**
-     * 子对象
+     * 对象
      */
     PROPERTIES("properties"),
     /**
