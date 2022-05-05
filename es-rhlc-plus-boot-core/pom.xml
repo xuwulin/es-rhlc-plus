@@ -6,7 +6,7 @@
     <parent>
         <artifactId>es-rhlc-plus</artifactId>
         <groupId>com.xwl</groupId>
-        <version>0.0.1</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>es-rhlc-plus-boot-core</artifactId>
