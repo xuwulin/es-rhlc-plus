@@ -90,7 +90,8 @@ public class AggregationTest {
         ExtendedBounds extendedBounds = new ExtendedBounds("2022-03-25", "2022-04-08");
         ZoneId timeZone = ZoneId.systemDefault();
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
-                .dateHistogram(interval, format, minDocCount, extendedBounds, timeZone, UserDocument::getCreatedTime).size(0);
+                .dateHistogram(interval, format, minDocCount, extendedBounds, timeZone, UserDocument::getCreatedTime)
+                .size(0);
         SearchResponse response = userDocumentMapper.search(wrapper);
         System.out.println(response);
     }
