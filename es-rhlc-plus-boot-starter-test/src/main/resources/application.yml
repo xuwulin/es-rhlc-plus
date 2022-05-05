@@ -1,6 +1,7 @@
 spring:
   application:
     name: es-plus-test
+
 # es-plus配置
 es-plus:
   # es连接地址+端口 格式必须为ip:port,如果是集群则可用逗号隔开
@@ -15,3 +16,9 @@ es-plus:
   global-config:
     # 输出DSL日志
     enable-dsl: true
+    document-config:
+      key-type: customize
+      index-prefix: test_
+      field-strategy: not_null
+      date-format: yyyy-MM-dd HH:mm:ss
+      map-underscore-to-camel-case: false
