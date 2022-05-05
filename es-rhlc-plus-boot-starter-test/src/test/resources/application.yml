@@ -21,3 +21,4 @@ es-plus:
       index-prefix: test_
       field-strategy: not_null
       date-format: yyyy-MM-dd HH:mm:ss
+      map-underscore-to-camel-case: false

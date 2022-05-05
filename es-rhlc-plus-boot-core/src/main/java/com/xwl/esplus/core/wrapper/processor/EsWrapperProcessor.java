@@ -219,7 +219,7 @@ public class EsWrapperProcessor {
                                      Map<String, String> columnMappingMap,
                                      SearchSourceBuilder searchSourceBuilder) {
         // 获取配置
-        GlobalConfig.DocumentConfig dbConfig = getGlobalConfig().getDocumentConfig();
+        GlobalConfig.DocumentConfig documentConfig = getGlobalConfig().getDocumentConfig();
 
         // 设置高亮字段
         if (CollectionUtils.isNotEmpty(wrapper.getHighLightParamList())) {
@@ -230,7 +230,7 @@ public class EsWrapperProcessor {
                     if (Objects.nonNull(customField)) {
                         highlightBuilder.field(customField);
                     } else {
-                        if (dbConfig.isMapUnderscoreToCamelCase()) {
+                        if (documentConfig.isMapUnderscoreToCamelCase()) {
                             highlightBuilder.field(StringUtils.camelToUnderline(field));
                         } else {
                             highlightBuilder.field(field);

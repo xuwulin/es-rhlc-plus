@@ -3,7 +3,9 @@ package com.xwl.esplus.test;
 import com.xwl.esplus.core.toolkit.Wrappers;
 import com.xwl.esplus.core.wrapper.update.EsLambdaUpdateWrapper;
 import com.xwl.esplus.test.document.UserDocument;
+import com.xwl.esplus.test.document.WorkOrderDocument;
 import com.xwl.esplus.test.mapper.UserDocumentMapper;
+import com.xwl.esplus.test.mapper.WorkOrderDocumentMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -21,6 +23,9 @@ import java.util.List;
 public class UpdateTest {
     @Resource
     private UserDocumentMapper userDocumentMapper;
+
+    @Resource
+    private WorkOrderDocumentMapper workOrderDocumentMapper;
 
     @Test
     public void testUpdate() {
@@ -52,5 +57,13 @@ public class UpdateTest {
         list.add(userDocument);
         list.add(userDocument2);
         userDocumentMapper.updateBatchById(list);
+    }
+
+    @Test
+    public void testWorkDocumentUpdate() {
+        WorkOrderDocument workOrderDocument = new WorkOrderDocument();
+        workOrderDocument.setId("M735915");
+        workOrderDocument.setIsAD(true);
+        workOrderDocumentMapper.updateById(workOrderDocument);
     }
 }

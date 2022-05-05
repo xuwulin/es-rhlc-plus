@@ -57,10 +57,10 @@ public class ElasticsearchAutoConfiguration implements InitializingBean {
         List<HttpHost> hostLists = new ArrayList<>();
         String address = elasticsearchProperties.getAddress();
         if (StringUtils.isBlank(address)) {
-            throw new RuntimeException("please config the elasticsearch hosts: es-plus.hosts");
+            throw new RuntimeException("please config the elasticsearch address: es-plus.address");
         }
         if (!address.contains(":")) {
-            throw new RuntimeException("the hosts must contains port and separate by ':'");
+            throw new RuntimeException("the address must contains port and separate by ':'");
         }
         String schema = elasticsearchProperties.getSchema();
         schema = StringUtils.isBlank(schema) ? "http" : schema;

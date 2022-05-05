@@ -3,7 +3,9 @@ package com.xwl.esplus.test;
 import com.xwl.esplus.core.toolkit.Wrappers;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import com.xwl.esplus.test.document.UserDocument;
+import com.xwl.esplus.test.document.WorkOrderDocument;
 import com.xwl.esplus.test.mapper.UserDocumentMapper;
+import com.xwl.esplus.test.mapper.WorkOrderDocumentMapper;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
@@ -12,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
 import java.time.ZoneId;
+import java.util.List;
 
 /**
  * 聚合查询测试
@@ -24,6 +27,9 @@ public class AggregationTest {
 
     @Resource
     private UserDocumentMapper userDocumentMapper;
+
+    @Resource
+    private WorkOrderDocumentMapper workOrderDocumentMapper;
 
     @Test
     public void testMax() {
@@ -94,5 +100,14 @@ public class AggregationTest {
                 .size(0);
         SearchResponse response = userDocumentMapper.search(wrapper);
         System.out.println(response);
+    }
+
+    @Test
+    public void testGroupByMulti() {
+        EsLambdaQueryWrapper<WorkOrderDocument> wrapper = Wrappers.<WorkOrderDocument>lambdaQuery()
+                .groupBy(WorkOrderDocument::getFromAreaName)
+                .groupBy(WorkOrderDocument::getWfStatusCn);
+        List<WorkOrderDocument> list = workOrderDocumentMapper.list(wrapper);
+        System.out.println(list);
     }
 }

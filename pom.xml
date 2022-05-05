@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.xwl</groupId>
+    <groupId>io.github.xuwulin</groupId>
     <artifactId>es-rhlc-plus</artifactId>
     <version>1.0.0</version>
     <modules>
@@ -16,14 +16,33 @@
     <!-- 表明这是一个父工程 -->
     <packaging>pom</packaging>
     <description>Elasticsearch RestHighLevelClient增强工具包，简化CRUD操作</description>
+    <url>https://github.com/xuwulin/es-rhlc-plus.git</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <!-- 开发者 -->
     <developers>
         <developer>
-            <name>xwl</name>
+            <name>xuwulin</name>
             <email>978100228@qq.com</email>
+            <roles>
+                <role>Project Manager</role>
+                <role>Architect</role>
+            </roles>
+            <timezone>+8</timezone>
         </developer>
     </developers>
+
+    <scm>
+        <connection>https://github.com/xuwulin/es-rhlc-plus.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:xuwulin/es-rhlc-plusgit</developerConnection>
+        <url>https://github.com/xuwulin/es-rhlc-plus.git</url>
+    </scm>
 
     <!-- 统一管理依赖版本 -->
     <properties>
@@ -53,22 +72,23 @@
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
     </properties>
 
+    <!-- 依赖管理 -->
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.xwl</groupId>
+                <groupId>io.github.xuwulin</groupId>
                 <artifactId>es-rhlc-plus-boot-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.xwl</groupId>
+                <groupId>io.github.xuwulin</groupId>
                 <artifactId>es-rhlc-plus-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>com.xwl</groupId>
+                <groupId>io.github.xuwulin</groupId>
                 <artifactId>es-rhlc-plus-boot-autoconfigure</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -152,7 +172,7 @@
             </snapshots>
         </pluginRepository>
 
-        <!-- 公司地址 -->
+        <!-- 公司maven仓库地址 -->
         <pluginRepository>
             <id>central</id>
             <url>http://10.10.50.246:8081/repository/maven-public</url>
@@ -160,13 +180,14 @@
     </pluginRepositories>
 
     <!-- 定义maven deploy上传仓库 -->
+    <!-- snapshotRepository 与 repository 中的 id 一定要与 setting.xml 中 server 的 id 保持一致。 -->
     <distributionManagement>
+        <!-- 公司maven仓库地址 -->
         <repository>
             <id>releases</id>
             <name>Nexus Release Repository</name>
             <url>http://10.10.50.246:8081/repository/maven-releases/</url>
         </repository>
-
         <snapshotRepository>
             <id>snapshots</id>
             <name>Nexus Snapshot Repository</name>
@@ -174,86 +195,98 @@
         </snapshotRepository>
     </distributionManagement>
 
-    <build>
-        <!-- 指定资源文件位置 -->
-        <resources>
-            <!-- maven默认所有资源文件都是放在src/main/resources路径下的，但是如果指定了src/main/java，也必须指定src/main/resources，否则打包不会把resources下的资源文件打进jar包中 -->
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-            </resource>
-            <!-- maven默认src/main/java路径下的只有.java文件会被打进jar包，需要把.xml文件也打进jar包，则要使用include标签添加xml文件 -->
-            <resource>
-                <directory>src/main/java</directory>
-                <includes>
-                    <include>**/*.xml</include>
-                </includes>
-                <filtering>false</filtering>
-            </resource>
-        </resources>
+    <!-- 使用 Maven 的 profile 功能，只有在 release 的时候才创建源码包、文档包、使用 GPG 进行数字签名。 -->
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- 打编译jar包插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${compiler-plugin.version}</version>
+                        <configuration>
+                            <source>${java.version}</source>
+                            <target>${java.version}</target>
+                            <compilerVersion>${java.version}</compilerVersion>
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                        </configuration>
+                    </plugin>
+                    <!-- 打源码jar包插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${source-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- 发布Jar包到私服仓库插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <version>${maven-deploy-plugin.version}</version>
+                    </plugin>
+                    <!-- 打Javadoc jar包插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${javadoc-plugin.version}</version>
+                        <configuration>
+                            <show>private</show>
+                            <nohelp>true</nohelp>
+                            <charset>UTF-8</charset>
+                            <encoding>UTF-8</encoding>
+                            <docencoding>UTF-8</docencoding>
+                            <!-- 临时解决不规范的javadoc生成报错，后面要规范化后把这行去掉 -->
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- GPG签名插件：在将 Maven 的包上传到中央仓库并且创建发行版之前需要对包进行 GPG 签名。 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven-gpg-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
 
-        <plugins>
-            <!-- 打编译jar包插件 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${compiler-plugin.version}</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <compilerVersion>${java.version}</compilerVersion>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-            <!-- 打源码jar包插件 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>${source-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- 发布Jar包到私服仓库插件 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>${maven-deploy-plugin.version}</version>
-            </plugin>
-            <!-- 打Javadoc jar包插件 -->
-            <!--<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${javadoc-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>-->
-            <!-- GPG签名插件：在将 Maven 的包上传到中央仓库并且创建发行版之前需要对包进行 GPG 签名。 -->
-            <!--<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>${maven-gpg-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>-->
-        </plugins>
-    </build>
+            <!-- 定义maven deploy上传仓库 -->
+            <!-- snapshotRepository 与 repository 中的 id 一定要与 setting.xml 中 server 的 id 保持一致。 -->
+            <distributionManagement>
+                <!-- sonatype -->
+                <snapshotRepository>
+                    <id>release</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+                </snapshotRepository>
+                <repository>
+                    <id>release</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 </project>

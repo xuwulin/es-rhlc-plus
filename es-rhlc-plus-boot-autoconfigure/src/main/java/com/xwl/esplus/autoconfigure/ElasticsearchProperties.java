@@ -18,9 +18,9 @@ public class ElasticsearchProperties {
     private String schema = "http";
 
     /**
-     * 主机ip:端口，如果为集群可以用英文逗号（,）隔开，默认localhost:9200
+     * 主机ip:端口，如果为集群使用英文逗号（,）隔开
      */
-    private String address = "localhost:9200";
+    private String address;
 
     /**
      * 用户名：默认elastic
@@ -59,7 +59,7 @@ public class ElasticsearchProperties {
     private int maxConnPerRoute = 100;
 
     /**
-     * 全局配置
+     * 全局配置（嵌套配置）
      */
     @NestedConfigurationProperty
     private GlobalConfig globalConfig = GlobalConfigCache.defaults();
