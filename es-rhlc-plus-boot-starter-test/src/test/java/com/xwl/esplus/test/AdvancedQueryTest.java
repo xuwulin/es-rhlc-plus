@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
@@ -147,7 +146,7 @@ public class AdvancedQueryTest {
     }
 
     @Test
-    public void testBetween() throws IOException {
+    public void testBetween() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery();
         wrapper.between(UserDocument::getCreatedTime, "2022-03-01 00:00:00", "2022-04-11 00:00:00");
         SearchResponse response = userDocumentMapper.search(wrapper);
