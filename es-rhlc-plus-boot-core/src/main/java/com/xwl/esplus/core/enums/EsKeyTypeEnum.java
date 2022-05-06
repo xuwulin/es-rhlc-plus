@@ -12,15 +12,15 @@ public enum EsKeyTypeEnum {
      */
     AUTO,
     /**
-     * 该类型为未设置主键类型
+     * 无状态，该类型为未设置主键类型（注解里等于跟随全局，全局里约等于 INPUT）
      */
     NONE,
     /**
-     * 全局唯一ID (UUID)
+     * 32 位 UUID 字符串(please use `ASSIGN_UUID`)
      */
     UUID,
     /**
-     * 用户自定义,由用户传入
+     * 用户自定义，由用户传入
      */
     CUSTOMIZE;
 }

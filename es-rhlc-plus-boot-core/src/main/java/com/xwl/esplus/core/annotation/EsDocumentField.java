@@ -53,7 +53,7 @@ public @interface EsDocumentField {
     boolean isNested() default false;
 
     /**
-     * 字段验证策略
+     * 字段验证策略，默认DEFAULT（追随全局配置）
      *
      * @return 默认策略
      */

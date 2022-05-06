@@ -174,10 +174,6 @@ public class DocumentInfoUtils {
             initDocumentFieldWithoutAnnotation(documentConfig, documentInfo, fieldList, field);
         }
 
-        /*Map<String, String> fieldColumnMap = documentInfo.getFieldColumnMap();
-        fieldColumnMap.put("firstName", "firstName");
-        fieldColumnMap.put("lastName", "lastName");*/
-
         // 添加字段列表
         documentInfo.setFieldList(fieldList);
         // 添加fastjson NameFilter

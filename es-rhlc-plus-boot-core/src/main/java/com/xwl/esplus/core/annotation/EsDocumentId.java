@@ -16,14 +16,14 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface EsDocumentId {
     /**
-     * 字段值
+     * 文档主键字段名称
      *
      * @return es默认_id
      */
     String value() default "_id";
 
     /**
-     * 主键ID
+     * 文档主键策略
      *
      * @return 默认为未设置
      */

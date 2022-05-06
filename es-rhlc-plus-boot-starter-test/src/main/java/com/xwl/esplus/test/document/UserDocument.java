@@ -59,13 +59,11 @@ public class UserDocument {
     /**
      * 公司名称
      */
-//    @EsHighLightField
     @EsDocumentField(value = "enterprise", isHighLight = true)
     private String companyName;
     /**
      * 公司地址
      */
-//    @EsHighLightField
     @EsDocumentField(isHighLight = true)
     private String companyAddress;
     /**

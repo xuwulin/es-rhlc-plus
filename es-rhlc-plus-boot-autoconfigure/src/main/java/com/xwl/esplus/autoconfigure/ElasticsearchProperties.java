@@ -18,7 +18,7 @@ public class ElasticsearchProperties {
     private String schema = "http";
 
     /**
-     * 主机ip:端口，如果为集群使用英文逗号（,）隔开
+     * es主机ip:端口，如果为集群使用英文逗号（,）隔开
      */
     private String address;
 

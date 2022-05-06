@@ -17,7 +17,7 @@ public class GlobalConfig {
     private DocumentConfig documentConfig;
 
     /**
-     * elasticsearch DSL日志输出
+     * elasticsearch DSL日志输出，默认关闭
      */
     private boolean enableDsl = false;
 

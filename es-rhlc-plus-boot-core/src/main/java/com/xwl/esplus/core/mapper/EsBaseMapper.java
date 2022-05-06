@@ -47,7 +47,7 @@ public interface EsBaseMapper<T> {
     Boolean updateIndex(EsLambdaIndexWrapper<T> wrapper);
 
     /**
-     * 删除指定索引
+     * 删除索引
      *
      * @param indexName 索引名称
      * @return true-删除成功，false-删除失败

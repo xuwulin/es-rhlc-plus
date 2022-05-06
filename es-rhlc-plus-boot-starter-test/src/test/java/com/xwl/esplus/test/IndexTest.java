@@ -28,7 +28,6 @@ public class IndexTest {
 
     @Test
     public void testExistsIndex() {
-        // 测试是否存在指定名称的索引
         String indexName = "user_document";
         boolean existsIndex = userDocumentMapper.existsIndex(indexName);
         System.out.println(existsIndex);

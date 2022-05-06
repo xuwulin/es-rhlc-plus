@@ -17,8 +17,8 @@ es-plus:
     # 输出DSL日志
     enable-dsl: true
     document-config:
-      key-type: customize
       index-prefix: test_
+      key-type: auto
       field-strategy: not_null
       date-format: yyyy-MM-dd HH:mm:ss
       map-underscore-to-camel-case: false

@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 public @interface EsDocument {
     /**
-     * 实体对应的索引名
+     * 索引名称
      *
      * @return 默认为空
      */

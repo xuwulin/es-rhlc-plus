@@ -20,7 +20,7 @@ public enum EsFieldStrategyEnum {
      */
     NOT_EMPTY,
     /**
-     * 默认的,一般只用于注解里
+     * 默认的，一般只用于注解里
      */
     DEFAULT;
 }
