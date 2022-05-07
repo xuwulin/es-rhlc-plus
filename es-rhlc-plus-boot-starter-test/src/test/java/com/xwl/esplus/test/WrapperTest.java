@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 
 /**
  * 条件构造器测试
@@ -129,6 +130,22 @@ public class WrapperTest {
     public void testLikeRight() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .likeRight(UserDocument::getNickname, "张");
+        SearchResponse search = userDocumentMapper.search(wrapper);
+        System.out.println(search);
+    }
+
+    @Test
+    public void testIn() {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
+                .in(UserDocument::getNickname, Arrays.asList("张三疯", "李四"));
+        SearchResponse search = userDocumentMapper.search(wrapper);
+        System.out.println(search);
+    }
+
+    @Test
+    public void testNotIn() {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
+                .notIn(UserDocument::getNickname, Arrays.asList("张三疯", "李四"));
         SearchResponse search = userDocumentMapper.search(wrapper);
         System.out.println(search);
     }

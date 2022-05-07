@@ -534,7 +534,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
             EsBaseParam baseEsParam = new EsBaseParam();
             EsBaseParam.FieldValueModel model = new EsBaseParam.FieldValueModel();
             model.setField(field);
-            model.setValue(values);
+            model.setValues(values);
             model.setBoost(boost);
             model.setEsQueryType(TERMS_QUERY.getType());
             model.setOriginalAttachType(attachTypeEnum.getType());
