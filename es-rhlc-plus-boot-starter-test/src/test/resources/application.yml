@@ -21,4 +21,4 @@ es-plus:
       key-type: customize
 #      field-strategy: not_null
       date-format: yyyy-MM-dd HH:mm:ss
-      map-underscore-to-camel-case: false
+      map-underscore-to-camel-case: true

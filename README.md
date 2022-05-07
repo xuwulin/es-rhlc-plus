@@ -24,8 +24,8 @@ es-rhlc-plus是一个 RestHighLevelClient 的增强工具，在 RestHighLevelCli
 
 欢迎各路好汉一起来参与完善 es-rhlc-plus，期待你的 PR！
 
-- 贡献代码：代码地址 [es-rhlc-plus (opens new window)](https://github.com/xuwulin/es-rhlc-plus)，欢迎提交 Issue 或者 Pull Requests
-- 维护文档：文档地址 [es-rhlc-plus (opens new window)](https://github.com/xuwulin/es-rhlc-plus)，欢迎参与翻译和修订
+- 贡献代码：代码地址 [es-rhlc-plus](https://github.com/xuwulin/es-rhlc-plus)，欢迎提交 Issue 或者 Pull Requests
+- 维护文档：文档地址 [es-rhlc-plus ](https://github.com/xuwulin/es-rhlc-plus)，欢迎参与翻译和修订
 
 ## 快速开始
 
@@ -574,9 +574,16 @@ public void testDeleteIndex() {
 
 #### 条件构造器
 
+不想写了。。。参考[Mybatis-Plus](https://baomidou.com/pages/10c804/#abstractwrapper)条件构造器
 
+### 待完善
 
-
+- 自动创建索引
+- 新增、更新、删除后立马刷新功能
+- 查询时参数可以是一段脚本代码
+- 算分函数的实现
+- 子聚合
+- 。。。
 
 
 

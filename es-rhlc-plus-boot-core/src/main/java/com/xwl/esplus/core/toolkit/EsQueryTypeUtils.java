@@ -138,11 +138,12 @@ public class EsQueryTypeUtils {
         boolean must = Objects.equals(attachType, MUST.getType()) || Objects.equals(attachType, EXISTS.getType())
                 || Objects.equals(attachType, LT.getType()) || Objects.equals(attachType, GT.getType())
                 || Objects.equals(attachType, LE.getType()) || Objects.equals(attachType, GE.getType())
-                || Objects.equals(attachType, IN.getType()) || Objects.equals(attachType, NOT_IN.getType())
-                || Objects.equals(attachType, LIKE_LEFT.getType()) || Objects.equals(attachType, LIKE_RIGHT.getType())
-                || Objects.equals(attachType, BETWEEN.getType()) || Objects.equals(attachType, NOT_BETWEEN.getType());
+                || Objects.equals(attachType, IN.getType()) || Objects.equals(attachType, BETWEEN.getType())
+                || Objects.equals(attachType, LIKE_LEFT.getType()) || Objects.equals(attachType, LIKE_RIGHT.getType());
 
-        boolean mustNot = Objects.equals(attachType, MUST_NOT.getType()) || Objects.equals(attachType, NOT_EXISTS.getType());
+        boolean mustNot = Objects.equals(attachType, MUST_NOT.getType()) || Objects.equals(attachType, NOT_EXISTS.getType())
+                || Objects.equals(attachType, NOT_IN.getType()) || Objects.equals(attachType, NOT_BETWEEN.getType());
+
         if (must) {
             // must
             boolQueryBuilder.must(matchQueryBuilder);

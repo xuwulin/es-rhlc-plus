@@ -41,7 +41,7 @@ public interface Func<Children, R> extends Serializable {
      * @param preTag    高亮的开始标签
      * @param postTag   高亮的结束标签
      * @param column    列
-     * @return 泛型
+     * @return Children
      */
     Children highLight(boolean condition, String preTag, String postTag, R column);
 
@@ -60,7 +60,7 @@ public interface Func<Children, R> extends Serializable {
      * @param preTag    高亮的开始标签
      * @param postTag   高亮的结束标签
      * @param columns   列,支持多列
-     * @return 泛型
+     * @return Children
      */
     Children highLight(boolean condition, String preTag, String postTag, R... columns);
 
@@ -95,7 +95,7 @@ public interface Func<Children, R> extends Serializable {
      * @param condition 条件
      * @param isAsc     是否升序 是:按照升序排列,否:安卓降序排列
      * @param columns   列,支持多列
-     * @return 泛型
+     * @return Children
      */
     Children orderBy(boolean condition, boolean isAsc, R... columns);
 
@@ -104,7 +104,7 @@ public interface Func<Children, R> extends Serializable {
      *
      * @param condition     条件
      * @param orderByParams 排序字段及规则参数列表
-     * @return 泛型
+     * @return Children
      */
     Children orderBy(boolean condition, List<EsOrderByParam> orderByParams);
 
@@ -135,7 +135,7 @@ public interface Func<Children, R> extends Serializable {
      * @param column    列
      * @param coll      集合
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children in(boolean condition, R column, Collection<?> coll, Float boost);
 
@@ -163,7 +163,7 @@ public interface Func<Children, R> extends Serializable {
      * @param column    列
      * @param coll      集合
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children notIn(boolean condition, R column, Collection<?> coll, Float boost);
 
@@ -190,7 +190,7 @@ public interface Func<Children, R> extends Serializable {
      * @param condition 条件
      * @param column    列
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children isNull(boolean condition, R column, Float boost);
 
@@ -207,7 +207,7 @@ public interface Func<Children, R> extends Serializable {
      * @param condition 条件
      * @param column 列
      * @param boost 权重
-     * @return 泛型
+     * @return Children
      */
     Children isNotNull(boolean condition, R column, Float boost);
 
@@ -248,7 +248,7 @@ public interface Func<Children, R> extends Serializable {
      * @param returnName 返回的聚合字段名称
      * @param size       聚合返回的数量，默认10
      * @param column     列
-     * @return 泛型
+     * @return Children
      */
     Children termsAggregation(boolean condition, String returnName, Integer size, R column);
 
@@ -289,7 +289,7 @@ public interface Func<Children, R> extends Serializable {
      * @param condition  条件
      * @param returnName 返回的聚合字段名称
      * @param column     列
-     * @return 泛型
+     * @return Children
      */
     Children avg(boolean condition, String returnName, R column);
 
@@ -307,7 +307,7 @@ public interface Func<Children, R> extends Serializable {
      * @param condition  条件
      * @param returnName 返回的聚合字段名称
      * @param column     列
-     * @return 泛型
+     * @return Children
      */
     Children min(boolean condition, String returnName, R column);
 
@@ -325,7 +325,7 @@ public interface Func<Children, R> extends Serializable {
      * @param condition  条件
      * @param returnName 返回的聚合字段名称
      * @param column     列
-     * @return 泛型
+     * @return Children
      */
     Children max(boolean condition, String returnName, R column);
 
@@ -343,7 +343,7 @@ public interface Func<Children, R> extends Serializable {
      * @param condition  条件
      * @param returnName 返回的聚合字段名称
      * @param column     列
-     * @return 泛型
+     * @return Children
      */
     Children sum(boolean condition, String returnName, R column);
 
@@ -370,7 +370,7 @@ public interface Func<Children, R> extends Serializable {
      *
      * @param condition    条件
      * @param sortBuilders 排序规则
-     * @return 泛型
+     * @return Children
      */
     Children sort(boolean condition, List<SortBuilder<?>> sortBuilders);
 
@@ -381,7 +381,7 @@ public interface Func<Children, R> extends Serializable {
     /**
      * 根据得分_score排序 默认为降序 得分高得在前
      *
-     * @return 泛型
+     * @return Children
      */
     default Children sortByScore() {
         return sortByScore(true, SortOrder.DESC);
@@ -391,7 +391,7 @@ public interface Func<Children, R> extends Serializable {
      * 根据得分_score排序 默认为降序 得分高得在前
      *
      * @param condition 条件
-     * @return 泛型
+     * @return Children
      */
     default Children sortByScore(boolean condition) {
         return sortByScore(condition, SortOrder.DESC);
@@ -406,7 +406,7 @@ public interface Func<Children, R> extends Serializable {
      *
      * @param condition 条件
      * @param sortOrder 升序/降序
-     * @return 泛型
+     * @return Children
      */
     Children sortByScore(boolean condition, SortOrder sortOrder);
 }

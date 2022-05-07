@@ -7,7 +7,6 @@ import java.io.Serializable;
 /**
  * 查询条件封装
  * 比较值
- * 带default的方法是接口的默认实现方法
  *
  * @author xwl
  * @since 2022/3/14 19:55
@@ -26,13 +25,13 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     /**
-     * 等于
+     * 等于，term
      *
      * @param condition 条件
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children eq(boolean condition, R column, Object val, Float boost);
 
@@ -55,7 +54,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param column    列
      * @param val       值
      * @param boost     权重值
-     * @return 泛型
+     * @return Children
      */
     Children ne(boolean condition, R column, Object val, Float boost);
 
@@ -78,7 +77,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param column    列
      * @param val       值
      * @param boost     权重值
-     * @return 泛型
+     * @return Children
      */
     Children match(boolean condition, R column, Object val, Float boost);
 
@@ -101,7 +100,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children notMatch(boolean condition, R column, Object val, Float boost);
 
@@ -124,7 +123,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children gt(boolean condition, R column, Object val, Float boost);
 
@@ -147,7 +146,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children ge(boolean condition, R column, Object val, Float boost);
 
@@ -170,7 +169,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children lt(boolean condition, R column, Object val, Float boost);
 
@@ -193,7 +192,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children le(boolean condition, R column, Object val, Float boost);
 
@@ -217,7 +216,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param val1      左区间值
      * @param val2      右区间值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children between(boolean condition, R column, Object val1, Object val2, Float boost);
 
@@ -241,7 +240,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param val1      左区间值
      * @param val2      右区间值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children notBetween(boolean condition, R column, Object val1, Object val2, Float boost);
 
@@ -258,13 +257,13 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     /**
-     * like 左右皆模糊
+     * like '*值*'
      *
      * @param condition 条件
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children like(boolean condition, R column, Object val, Float boost);
 
@@ -287,7 +286,7 @@ public interface Compare<Children, R> extends Serializable {
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children notLike(boolean condition, R column, Object val, Float boost);
 
@@ -300,13 +299,13 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     /**
-     * LIKE左模糊
+     * LIKE '*值'
      *
      * @param condition 条件
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children likeLeft(boolean condition, R column, Object val, Float boost);
 
@@ -319,13 +318,13 @@ public interface Compare<Children, R> extends Serializable {
     }
 
     /**
-     * LIKE右模糊
+     * LIKE '值*'
      *
      * @param condition 条件
      * @param column    列
      * @param val       值
      * @param boost     权重
-     * @return 泛型
+     * @return Children
      */
     Children likeRight(boolean condition, R column, Object val, Float boost);
 }

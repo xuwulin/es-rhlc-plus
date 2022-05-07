@@ -59,7 +59,7 @@ public enum EsAttachTypeEnum {
      */
     BETWEEN(13),
     /**
-     * 在此区间范围,相当于Mysql中的 not between
+     * 不在此区间范围,相当于Mysql中的 not between
      */
     NOT_BETWEEN(14),
     /**
