@@ -34,7 +34,7 @@ import static com.xwl.esplus.core.enums.EsQueryTypeEnum.*;
 /**
  * 抽象Lambda表达式父类
  * T, R, Children 都是泛型标识：可以随便写任意标识号，标识指定的泛型的类型
- * Children extends AbstractWrapper<T, R, Children> 表示：Children类型只能是AbstractWrapper或AbstractWrapper的子类
+ * Children extends EsAbstractWrapper<T, R, Children> 表示：Children类型只能是EsAbstractWrapper或EsAbstractWrapper的子类
  *
  * @author xwl
  * @since 2022/3/15 18:31

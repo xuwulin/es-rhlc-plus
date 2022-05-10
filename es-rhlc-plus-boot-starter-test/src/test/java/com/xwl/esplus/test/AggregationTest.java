@@ -75,7 +75,8 @@ public class AggregationTest {
     @Test
     public void testGroupBy() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
-                .groupBy(UserDocument::getAge).size(0);
+                .groupBy(UserDocument::getAge)
+                .size(0);
         SearchResponse response = userDocumentMapper.search(wrapper);
         System.out.println(response);
     }

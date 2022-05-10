@@ -31,7 +31,7 @@ public class WrapperTest {
     }
 
     @Test
-    public void testEn() {
+    public void testNe() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .ne(UserDocument::getNickname, "张三疯");
         SearchResponse search = userDocumentMapper.search(wrapper);

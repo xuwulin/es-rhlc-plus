@@ -574,6 +574,110 @@ public void testDeleteIndex() {
 
 #### 条件构造器
 
+##### eq
+
+```java
+eq(R column, Object val)
+eq(R column, Object val, Float boost)
+eq(boolean condition, R column, Object val)
+eq(boolean condition, R column, Object val, Float boost)
+```
+
+- 等于
+- 例：`eq(UserDocument::getNickname, "张三疯")` --->
+
+```json
+{
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "term": {
+                        "nickname": {
+                            "value": "张三疯"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
+```
+
+##### ne
+
+```java
+ne(R column, Object val)
+ne(R column, Object val, Float boost)
+ne(boolean condition, R column, Object val)
+ne(boolean condition, R column, Object val, Float boost)
+```
+
+- 不等于
+- 例：`ne(UserDocument::getNickname, "张三疯")` --->
+
+```java
+{
+    "query": {
+        "bool": {
+            "must_not": [
+                {
+                    "term": {
+                        "nickname": {
+                            "value": "张三疯"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
+```
+
+##### match
+
+```java
+match(R column, Object val)
+match(R column, Object val, Float boost)
+match(boolean condition, R column, Object val)
+match(boolean condition, R column, Object val, Float boost)
+```
+
+- 分词匹配
+- 例：`match(UserDocument::getCompanyAddress, "成都市")`
+
+```java
+{
+    "query": {
+        "bool": {
+            "adjust_pure_negative": true,
+            "must": [
+                {
+                    "match": {
+                        "company_address": {
+                            "auto_generate_synonyms_phrase_query": true,
+                            "query": "成都市",
+                            "zero_terms_query": "NONE",
+                            "fuzzy_transpositions": true,
+                            "boost": 1,
+                            "prefix_length": 0,
+                            "operator": "OR",
+                            "lenient": false,
+                            "max_expansions": 50
+                        }
+                    }
+                }
+            ],
+            "boost": 1
+        }
+    }
+}
+```
+
+
+
+
+
 不想写了。。。参考[Mybatis-Plus](https://baomidou.com/pages/10c804/#abstractwrapper)条件构造器
 
 ### 待完善
