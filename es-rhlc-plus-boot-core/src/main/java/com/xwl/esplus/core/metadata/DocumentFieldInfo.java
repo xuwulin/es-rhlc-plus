@@ -14,21 +14,9 @@ import java.lang.reflect.Field;
  */
 public class DocumentFieldInfo {
     /**
-     * es索引名称
-     */
-//    private String indexName;
-    /**
      * es索引对应的实体类
      */
     private Class<?> entityClass;
-    /**
-     * es索引对应的实体类主键字段名称
-     */
-//    private String keyFieldName;
-    /**
-     * es索引主键字段名称
-     */
-//    private String keyColumnName;
     /**
      * es索引对应的实体类字段名
      */
@@ -38,25 +26,9 @@ public class DocumentFieldInfo {
      */
     private String columnName;
     /**
-     * 忽略的字段
-     */
-//    private String ignoreColumn;
-    /**
-     * 字段名过滤器
-     */
-//    private NameFilter nameFilter;
-    /**
-     * 文档映射结果集
-     */
-//    private String resultMap;
-    /**
      * 字段策略 默认，自判断 null
      */
     private final EsFieldStrategyEnum fieldStrategy;
-    /**
-     * 文档字段信息列表
-     */
-//    private List<DocumentFieldInfo> fieldList;
 
     /**
      * 存在 EsDocumentField 注解时, 使用的构造函数
@@ -88,14 +60,6 @@ public class DocumentFieldInfo {
         this.fieldStrategy = dbConfig.getFieldStrategy();
     }
 
-//    public String getIndexName() {
-//        return indexName;
-//    }
-//
-//    public void setIndexName(String indexName) {
-//        this.indexName = indexName;
-//    }
-
     public Class<?> getEntityClass() {
         return entityClass;
     }
@@ -103,22 +67,6 @@ public class DocumentFieldInfo {
     public void setEntityClass(Class<?> entityClass) {
         this.entityClass = entityClass;
     }
-
-//    public String getKeyFieldName() {
-//        return keyFieldName;
-//    }
-//
-//    public void setKeyFieldName(String keyFieldName) {
-//        this.keyFieldName = keyFieldName;
-//    }
-
-//    public String getKeyColumnName() {
-//        return keyColumnName;
-//    }
-//
-//    public void setKeyColumnName(String keyColumnName) {
-//        this.keyColumnName = keyColumnName;
-//    }
 
     public String getFieldName() {
         return fieldName;
@@ -136,39 +84,7 @@ public class DocumentFieldInfo {
         this.columnName = columnName;
     }
 
-//    public String getIgnoreColumn() {
-//        return ignoreColumn;
-//    }
-//
-//    public void setIgnoreColumn(String ignoreColumn) {
-//        this.ignoreColumn = ignoreColumn;
-//    }
-
-//    public NameFilter getNameFilter() {
-//        return nameFilter;
-//    }
-//
-//    public void setNameFilter(NameFilter nameFilter) {
-//        this.nameFilter = nameFilter;
-//    }
-
-//    public String getResultMap() {
-//        return resultMap;
-//    }
-//
-//    public void setResultMap(String resultMap) {
-//        this.resultMap = resultMap;
-//    }
-
     public EsFieldStrategyEnum getFieldStrategy() {
         return fieldStrategy;
     }
-
-//    public List<DocumentFieldInfo> getFieldList() {
-//        return fieldList;
-//    }
-//
-//    public void setFieldList(List<DocumentFieldInfo> fieldList) {
-//        this.fieldList = fieldList;
-//    }
 }

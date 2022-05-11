@@ -61,7 +61,7 @@ public class BaseCache {
                 invokeMethodsMap.put(methodName, entityMethod);
             }
         });
-        // 注意：比常规的getter/setter方法多出一个getClass方法
+        // 除常规的getter/setter方法外，还有一个getClass方法
         ES_ENTITY_GETTER_AND_SETTER_METHOD.putIfAbsent(entityClass, invokeMethodsMap);
     }
 

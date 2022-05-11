@@ -64,10 +64,6 @@ public class DocumentInfo {
      */
     private ExtraProcessor extraProcessor;
     /**
-     * fastjson字段命名策略
-     */
-//    private PropertyNamingStrategy propertyNamingStrategy;
-    /**
      * 实体字段->es字段映射
      * key: 实体字段名称 -> value: es字段名称
      */
@@ -210,14 +206,6 @@ public class DocumentInfo {
     public void setExtraProcessor(ExtraProcessor extraProcessor) {
         this.extraProcessor = extraProcessor;
     }
-
-    /*public PropertyNamingStrategy getPropertyNamingStrategy() {
-        return propertyNamingStrategy;
-    }
-
-    public void setPropertyNamingStrategy(PropertyNamingStrategy propertyNamingStrategy) {
-        this.propertyNamingStrategy = propertyNamingStrategy;
-    }*/
 
     public Map<String, String> getFieldColumnMap() {
         return fieldColumnMap;
