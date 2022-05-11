@@ -7,6 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
+ * elasticsearch连接配置
+ *
  * @author xwl
  * @since 2022/3/11 14:43
  */

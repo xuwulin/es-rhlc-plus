@@ -1,6 +1,7 @@
 package com.xwl.esplus.autoconfigure;
 
 import com.xwl.esplus.core.cache.GlobalConfigCache;
+import com.xwl.esplus.core.toolkit.ExceptionUtils;
 import com.xwl.esplus.core.toolkit.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -31,7 +32,7 @@ import java.util.List;
 @ConditionalOnClass(RestHighLevelClient.class)
 public class EsPlusAutoConfiguration implements InitializingBean {
     /**
-     * ElasticsearchProperties属性
+     * elasticsearch连接属性
      */
     private EsPlusProperties esPlusProperties;
 
@@ -57,10 +58,10 @@ public class EsPlusAutoConfiguration implements InitializingBean {
         List<HttpHost> hostLists = new ArrayList<>();
         String address = esPlusProperties.getAddress();
         if (StringUtils.isBlank(address)) {
-            throw new RuntimeException("please config the elasticsearch address: es-plus.address");
+            throw ExceptionUtils.epe("please config the elasticsearch address: es-plus.address");
         }
         if (!address.contains(":")) {
-            throw new RuntimeException("the address must contains port and separate by ':'");
+            throw ExceptionUtils.epe("the es-plus.address must contains port and separate by ':'");
         }
         String schema = esPlusProperties.getSchema();
         schema = StringUtils.isBlank(schema) ? "http" : schema;

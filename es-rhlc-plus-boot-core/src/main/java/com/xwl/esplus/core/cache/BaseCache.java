@@ -25,7 +25,7 @@ public class BaseCache {
      * key: mapper接口
      * value: mapper接口对于得实例
      */
-    private static final Map<Class<?>, EsBaseMapperImpl<?>> ES_BASE_MAPPER_INSTANCE = new ConcurrentHashMap<>();
+    public static final Map<Class<?>, EsBaseMapperImpl<?>> ES_BASE_MAPPER_INSTANCE = new ConcurrentHashMap<>();
 
     /**
      * 用于存放es对于实体中的字段的get/is方法

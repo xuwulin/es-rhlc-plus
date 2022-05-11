@@ -40,13 +40,6 @@ public @interface EsMapperScan {
     Class<?>[] basePackageClasses() default {};
 
     /**
-     * 包含过滤器，待优化
-     *
-     * @return
-     */
-    Filter[] includeFilters() default {};
-
-    /**
      * 排斥过滤器
      *
      * @return

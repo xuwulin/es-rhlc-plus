@@ -21,9 +21,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 注册bean，参照mybatis-plus
@@ -57,58 +56,26 @@ public class EsMapperScannerRegister implements ImportBeanDefinitionRegistrar, R
         // 对类进行扫描
         EsMapperScanner scanner = new EsMapperScanner(registry);
         // this check is needed in Spring 3.1
-        // java8写法
-//        Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);
-        // 普通写法
-        if (resourceLoader != null) {
-            scanner.setResourceLoader(resourceLoader);
-        }
+        Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);
 
         // @EsMapperScan注解扫描的包
         List<String> basePackages = new ArrayList<>();
-        // Stream写法
-        /*basePackages.addAll(Arrays.stream(annAttrs.getStringArray("value"))
+        basePackages.addAll(Arrays.stream(annAttrs.getStringArray("value"))
                 .filter(StringUtils::hasText)
                 .collect(Collectors.toList()));
         basePackages.addAll(Arrays.stream(annAttrs.getStringArray("basePackages"))
                 .filter(StringUtils::hasText)
                 .collect(Collectors.toList()));
+        // 标注@EsMapperScan注解所在类的包
         basePackages.addAll(Arrays.stream(annAttrs.getClassArray("basePackageClasses"))
                         .map(ClassUtils::getPackageName)
-                        .collect(Collectors.toList()));*/
-        // 普通写法
-        for (String pkg : annAttrs.getStringArray("value")) {
-            if (StringUtils.hasText(pkg)) {
-                basePackages.add(pkg);
-            }
-        }
-        for (String pkg : annAttrs.getStringArray("basePackages")) {
-            if (StringUtils.hasText(pkg)) {
-                basePackages.add(pkg);
-            }
-        }
-        for (Class<?> clazz : annAttrs.getClassArray("basePackageClasses")) {
-            basePackages.add(ClassUtils.getPackageName(clazz));
-        }
-        /*if (CollectionUtils.isEmpty(basePackages)) {
-            // 标注@EsMapperScan注解所在类的包
-            basePackages.add(ClassUtils.getPackageName(importingClassMetadata.getClassName()));
-        }*/
+                        .collect(Collectors.toList()));
 
-        // 包含过滤器
-        for (AnnotationAttributes filter : annAttrs.getAnnotationArray("includeFilters")) {
-            for (TypeFilter typeFilter : typeFiltersFor(filter)) {
-                scanner.addIncludeFilter(typeFilter);
-            }
-        }
         // 排斥过滤器
-        for (AnnotationAttributes filter : annAttrs.getAnnotationArray("excludeFilters")) {
-            for (TypeFilter typeFilter : typeFiltersFor(filter)) {
-                scanner.addExcludeFilter(typeFilter);
-            }
-        }
+        Arrays.stream(annAttrs.getAnnotationArray("excludeFilters"))
+                .forEach(filter -> typeFiltersFor(filter).forEach(typeFilter -> scanner.addExcludeFilter(typeFilter)));
         if (CollectionUtils.isEmpty(basePackages)) {
-            throw ExceptionUtils.epe("Annotation @EsMapper must be value(basePackages) or basePackageClasses");
+            throw ExceptionUtils.epe("Annotation @EsMapperScan must be value(basePackages) or basePackageClasses");
         }
         // 注册过滤器，自定义扫描规则，与Spring的默认机制不同
         scanner.registerFilters();

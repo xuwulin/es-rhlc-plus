@@ -15,6 +15,7 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 注册bean，参照mybatis-spring
@@ -43,13 +44,7 @@ public class EsMapperRegister implements BeanFactoryAware, ImportBeanDefinitionR
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
         EsMapperScanner scanner = new EsMapperScanner(registry);
-        // this check is needed in Spring 3.1
-        // java8写法
-//        Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);
-        // 普通写法
-        if (resourceLoader != null) {
-            scanner.setResourceLoader(resourceLoader);
-        }
+        Optional.ofNullable(resourceLoader).ifPresent(scanner::setResourceLoader);
 
         // 会获取到启动类所在的包，作为扫描包的根路径
         List<String> packages = AutoConfigurationPackages.get(this.beanFactory);

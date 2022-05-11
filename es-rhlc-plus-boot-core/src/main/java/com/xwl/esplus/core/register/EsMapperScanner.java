@@ -7,13 +7,9 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
-import org.springframework.core.type.classreading.MetadataReader;
-import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
-import org.springframework.core.type.filter.TypeFilter;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Set;
@@ -82,22 +78,14 @@ public class EsMapperScanner extends ClassPathBeanDefinitionScanner {
         if (acceptAllInterfaces) {
             // default include filter that accepts all classes
             // 新增一个默认的过滤器，比较永远返回true
-            addIncludeFilter(new TypeFilter() {
-                @Override
-                public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-                    return true;
-                }
-            });
+            addIncludeFilter((metadataReader, metadataReaderFactory) -> true);
         }
 
         // exclude package-info.java
         // 排除 package-info.java 类
-        addExcludeFilter(new TypeFilter() {
-            @Override
-            public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory) throws IOException {
-                String className = metadataReader.getClassMetadata().getClassName();
-                return className.endsWith("package-info");
-            }
+        addExcludeFilter((metadataReader, metadataReaderFactory) -> {
+            String className = metadataReader.getClassMetadata().getClassName();
+            return className.endsWith("package-info");
         });
     }
 
