@@ -6,17 +6,20 @@
 
     <groupId>io.github.xuwulin</groupId>
     <artifactId>es-rhlc-plus</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.01</version>
+    <packaging>pom</packaging>
+
+    <name>es-rhlc-plus</name>
+    <description>Elasticsearch RestHighLevelClient增强工具包，简化CRUD操作</description>
+    <url>https://github.com/xuwulin/es-rhlc-plus</url>
+    <inceptionYear>2022</inceptionYear>
+
     <modules>
         <module>es-rhlc-plus-boot-core</module>
         <module>es-rhlc-plus-boot-autoconfigure</module>
         <module>es-rhlc-plus-boot-starter</module>
         <module>es-rhlc-plus-boot-starter-test</module>
     </modules>
-    <!-- 表明这是一个父工程 -->
-    <packaging>pom</packaging>
-    <description>Elasticsearch RestHighLevelClient增强工具包，简化CRUD操作</description>
-    <url>https://github.com/xuwulin/es-rhlc-plus.git</url>
 
     <!-- 开发者 -->
     <developers>
@@ -76,17 +79,12 @@
         <javadoc-plugin.version>2.9.1</javadoc-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+        <versions-maven-plugin.version>2.3</versions-maven-plugin.version>
     </properties>
 
     <!-- 依赖管理 -->
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>io.github.xuwulin</groupId>
-                <artifactId>es-rhlc-plus-boot-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>io.github.xuwulin</groupId>
                 <artifactId>es-rhlc-plus-boot-starter</artifactId>
@@ -96,6 +94,12 @@
             <dependency>
                 <groupId>io.github.xuwulin</groupId>
                 <artifactId>es-rhlc-plus-boot-autoconfigure</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.xuwulin</groupId>
+                <artifactId>es-rhlc-plus-boot-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -192,7 +196,7 @@
             <id>dev</id>
             <activation>
                 <!-- 设置默认激活这个配置 -->
-                <activeByDefault>true</activeByDefault>
+<!--                <activeByDefault>true</activeByDefault>-->
             </activation>
             <build>
                 <plugins>
@@ -229,8 +233,24 @@
         <!-- 发布环境 -->
         <profile>
             <id>release</id>
+            <activation>
+                <!-- 设置默认激活这个配置 -->
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <build>
                 <plugins>
+                    <!-- compiler -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${compiler-plugin.version}</version>
+                        <configuration>
+                            <source>${java.version}</source>
+                            <target>${java.version}</target>
+                            <compilerVersion>${java.version}</compilerVersion>
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                        </configuration>
+                    </plugin>
                     <!-- source -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -283,26 +303,14 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- compiler -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>${compiler-plugin.version}</version>
-                        <configuration>
-                            <source>${java.version}</source>
-                            <target>${java.version}</target>
-                            <compilerVersion>${java.version}</compilerVersion>
-                            <encoding>${project.build.sourceEncoding}</encoding>
-                        </configuration>
-                    </plugin>
                     <!-- Release -->
-                    <plugin>
+                    <!--<plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-release-plugin</artifactId>
                         <version>${maven-release-plugin.version}</version>
-                    </plugin>
+                    </plugin>-->
                     <!-- 发布Jar包到私服仓库插件 -->
-                    <plugin>
+                    <!--<plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-deploy-plugin</artifactId>
                         <version>${maven-deploy-plugin.version}</version>
@@ -315,7 +323,7 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
+                    </plugin>-->
                 </plugins>
             </build>
             <!-- 定义snapshots库和releases库的nexus地址 -->
@@ -335,4 +343,19 @@
             </distributionManagement>
         </profile>
     </profiles>
+
+    <build>
+        <plugins>
+            <!-- 统一管理父子模块的版本号：mvn versions:set -DnewVersion=1.0.1。版本回滚：mvn versions:revert -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>${versions-maven-plugin.version}</version>
+                <configuration>
+                    <!-- 参数是设置是否修改版本时对现有版本的文件进行备份。因为我们的项目一般都是交给git管理的，所以不需要让该插件帮我们备份，改错了，直接revert就好了。 -->
+                    <generateBackupPoms>false</generateBackupPoms>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
