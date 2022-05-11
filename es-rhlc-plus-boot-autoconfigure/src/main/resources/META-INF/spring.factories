@@ -1,4 +1,4 @@
 # Auto Configure
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.xwl.esplus.autoconfigure.ElasticsearchAutoConfiguration,\
+  com.xwl.esplus.autoconfigure.EsPlusAutoConfiguration,\
   com.xwl.esplus.autoconfigure.EsMapperScannerRegisterNotFoundConfiguration

@@ -27,22 +27,22 @@ import java.util.List;
  * @since 2022/3/11 14:43
  */
 @Configuration
-@EnableConfigurationProperties(ElasticsearchProperties.class)
+@EnableConfigurationProperties(EsPlusProperties.class)
 @ConditionalOnClass(RestHighLevelClient.class)
-public class ElasticsearchAutoConfiguration implements InitializingBean {
+public class EsPlusAutoConfiguration implements InitializingBean {
     /**
      * ElasticsearchProperties属性
      */
-    private ElasticsearchProperties elasticsearchProperties;
+    private EsPlusProperties esPlusProperties;
 
-    public ElasticsearchAutoConfiguration(ElasticsearchProperties elasticsearchProperties) {
-        this.elasticsearchProperties = elasticsearchProperties;
+    public EsPlusAutoConfiguration(EsPlusProperties esPlusProperties) {
+        this.esPlusProperties = esPlusProperties;
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
         // 全局配置缓存至本地
-        GlobalConfigCache.setGlobalConfig(elasticsearchProperties.getGlobalConfig());
+        GlobalConfigCache.setGlobalConfig(esPlusProperties.getGlobalConfig());
     }
 
     /**
@@ -55,14 +55,14 @@ public class ElasticsearchAutoConfiguration implements InitializingBean {
     public RestHighLevelClient restHighLevelClient() {
         // 拆分地址
         List<HttpHost> hostLists = new ArrayList<>();
-        String address = elasticsearchProperties.getAddress();
+        String address = esPlusProperties.getAddress();
         if (StringUtils.isBlank(address)) {
             throw new RuntimeException("please config the elasticsearch address: es-plus.address");
         }
         if (!address.contains(":")) {
             throw new RuntimeException("the address must contains port and separate by ':'");
         }
-        String schema = elasticsearchProperties.getSchema();
+        String schema = esPlusProperties.getSchema();
         schema = StringUtils.isBlank(schema) ? "http" : schema;
         String[] addresses = address.split(",");
         for (String addr : addresses) {
@@ -77,24 +77,24 @@ public class ElasticsearchAutoConfiguration implements InitializingBean {
 
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         // 用户名，密码配置
-        String username = elasticsearchProperties.getUsername();
-        String password = elasticsearchProperties.getPassword();
+        String username = esPlusProperties.getUsername();
+        String password = esPlusProperties.getPassword();
         if (StringUtils.isNotBlank(username) && StringUtils.isNotBlank(password)) {
             credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
         }
 
         // 异步连接延时配置
         builder.setRequestConfigCallback(requestConfigBuilder -> {
-            requestConfigBuilder.setSocketTimeout(elasticsearchProperties.getSocketTimeout());
-            requestConfigBuilder.setConnectTimeout(elasticsearchProperties.getConnectTimeout());
-            requestConfigBuilder.setConnectionRequestTimeout(elasticsearchProperties.getConnectionRequestTimeout());
+            requestConfigBuilder.setSocketTimeout(esPlusProperties.getSocketTimeout());
+            requestConfigBuilder.setConnectTimeout(esPlusProperties.getConnectTimeout());
+            requestConfigBuilder.setConnectionRequestTimeout(esPlusProperties.getConnectionRequestTimeout());
             return requestConfigBuilder;
         });
         // 异步连接数配置
         builder.setHttpClientConfigCallback(httpClientBuilder -> {
             // 设置账号密码
-            httpClientBuilder.setMaxConnTotal(elasticsearchProperties.getMaxConnTotal());
-            httpClientBuilder.setMaxConnPerRoute(elasticsearchProperties.getMaxConnPerRoute());
+            httpClientBuilder.setMaxConnTotal(esPlusProperties.getMaxConnTotal());
+            httpClientBuilder.setMaxConnPerRoute(esPlusProperties.getMaxConnPerRoute());
             httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
             return httpClientBuilder;
         });

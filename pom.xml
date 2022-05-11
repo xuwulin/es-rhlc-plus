@@ -195,8 +195,8 @@
         <profile>
             <id>dev</id>
             <activation>
-                <!-- 设置默认激活这个配置 -->
-<!--                <activeByDefault>true</activeByDefault>-->
+                <!-- 设置是否默认激活这个配置 -->
+                <activeByDefault>true</activeByDefault>
             </activation>
             <build>
                 <plugins>
@@ -234,8 +234,8 @@
         <profile>
             <id>release</id>
             <activation>
-                <!-- 设置默认激活这个配置 -->
-                <activeByDefault>true</activeByDefault>
+                <!-- 设置是否默认激活这个配置 -->
+                <activeByDefault>false</activeByDefault>
             </activation>
             <build>
                 <plugins>

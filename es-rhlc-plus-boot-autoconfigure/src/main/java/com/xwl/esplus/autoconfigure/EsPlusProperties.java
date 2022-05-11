@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
  * @since 2022/3/11 14:43
  */
 @ConfigurationProperties(prefix = EsGlobalConstants.PROPERTIES_PREFIX)
-public class ElasticsearchProperties {
+public class EsPlusProperties {
     /**
      * 连接模式：默认http
      */
