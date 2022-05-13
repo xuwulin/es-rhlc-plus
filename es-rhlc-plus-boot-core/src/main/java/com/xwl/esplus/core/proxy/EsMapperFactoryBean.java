@@ -1,4 +1,4 @@
-package com.xwl.esplus.core.register;
+package com.xwl.esplus.core.proxy;
 
 import com.xwl.esplus.core.cache.BaseCache;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.lang.reflect.Proxy;
 
 /**
- * 代理类工厂bean，参照mybatis-spring
+ * 代理类工厂bean，用于生成代理类，参照mybatis-spring
  * 注意这个工厂只能注入接口，不能注入具体类。
  * <p>
  * 所有被@EsMapperScan注解扫描到的Mapper接口的bean都会经由MapperFactoryBean类来创建,
@@ -51,6 +51,7 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
     }
 
     /**
+     * 根据加载到内存中的被代理接口，动态的创建一个代理类及其对象
      * 当 ioc 容器提取对象时(比如使用@Autowired/@Resource注解注入时)，调用此方法获取一个代理对象
      * Mapper代理对象的创建就是在EsMapperFactoryBean的getObject方法中返回的
      *
@@ -59,12 +60,15 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
      */
     @Override
     public T getObject() throws Exception {
-        // 代理对象
-        EsMapperProxy<T> esMapperProxy = new EsMapperProxy<>(mapperInterface);
+        // 代理类handler
+        EsMapperProxyHandler<T> handler = new EsMapperProxyHandler<>(mapperInterface);
         // 初始化缓存
         BaseCache.initCache(mapperInterface, restHighLevelClient);
-        // 获取代理对象（com.xwl.esplus.core.condition.BaseEsMapperImpl@78e68401）
-        return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[]{mapperInterface}, esMapperProxy);
+        // 创建一个代理类的对象（com.xwl.esplus.core.condition.BaseEsMapperImpl@78e68401）
+        // 参数一：类加载器，即此代理类对象是由哪个类加载器加载，通常和被代理的接口的类加载器一致
+        // 参数二：代理类要和被代理类实现相同的接口，即被代理类实现了哪些接口，代理类对象也要实现
+        // 参数三：代理类handler，InvocationHandler的实现类
+        return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[]{mapperInterface}, handler);
     }
 
     /**

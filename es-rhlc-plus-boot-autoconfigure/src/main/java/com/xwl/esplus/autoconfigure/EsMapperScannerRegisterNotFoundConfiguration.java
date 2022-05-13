@@ -1,7 +1,7 @@
 package com.xwl.esplus.autoconfigure;
 
 import com.xwl.esplus.core.register.EsMapperRegister;
-import com.xwl.esplus.core.register.EsMapperFactoryBean;
+import com.xwl.esplus.core.proxy.EsMapperFactoryBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;

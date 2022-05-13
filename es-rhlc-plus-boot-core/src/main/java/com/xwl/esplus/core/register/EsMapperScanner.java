@@ -1,5 +1,6 @@
 package com.xwl.esplus.core.register;
 
+import com.xwl.esplus.core.proxy.EsMapperFactoryBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
