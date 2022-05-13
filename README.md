@@ -48,7 +48,7 @@ Maven：
 <dependency>
     <groupId>io.github.xuwulin</groupId>
     <artifactId>es-rhlc-plus-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>latest</version>
 </dependency>
 ```
 
