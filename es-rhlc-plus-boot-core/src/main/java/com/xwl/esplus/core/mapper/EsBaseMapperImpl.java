@@ -423,7 +423,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     @Override
     public Long count(EsLambdaQueryWrapper<T> wrapper) {
         CountRequest countRequest = new CountRequest(getIndexName());
-        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList(), entityClass);
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper, entityClass);
         countRequest.query(boolQueryBuilder);
         CountResponse count;
         try {
@@ -1227,7 +1227,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     private void logQueryCountDSL(EsLambdaQueryWrapper<T> wrapper) {
         if (this.globalConfig.isEnableDsl()) {
             CountRequest countRequest = new CountRequest(getIndexName());
-            BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList(), entityClass);
+            BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper, entityClass);
             countRequest.query(boolQueryBuilder);
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().query(countRequest.query());
             logPrettyQueryDSL(searchSourceBuilder);

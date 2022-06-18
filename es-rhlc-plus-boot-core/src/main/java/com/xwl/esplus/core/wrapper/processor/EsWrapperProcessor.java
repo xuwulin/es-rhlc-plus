@@ -247,6 +247,20 @@ public class EsWrapperProcessor {
     /**
      * 构建BoolQueryBuilder
      *
+     * @param wrapper     参数包装类
+     * @param entityClass es索引对应的实体类
+     * @return BoolQueryBuilder
+     */
+    public static BoolQueryBuilder buildBoolQueryBuilder(EsLambdaQueryWrapper<?> wrapper, Class<?> entityClass) {
+        List<EsBaseParam> baseParamList = wrapper.getBaseParamList();
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(baseParamList, entityClass);
+        Optional.ofNullable(wrapper.getGeoParam()).ifPresent(esGeoParam -> setGeoQuery(esGeoParam, boolQueryBuilder, entityClass));
+        return boolQueryBuilder;
+    }
+
+    /**
+     * 构建BoolQueryBuilder
+     *
      * @param baseParamList 基础参数列表
      * @param entityClass   es索引对应的实体类
      * @return BoolQueryBuilder
