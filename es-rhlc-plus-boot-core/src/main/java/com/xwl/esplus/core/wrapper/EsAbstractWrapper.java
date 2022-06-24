@@ -166,6 +166,11 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     }
 
     @Override
+    public Children reg(boolean condition, R column, Object val, Float boost) {
+        return doIt(condition, REGEXP_QUERY, MUST, FieldUtils.getFieldName(column), val, boost);
+    }
+
+    @Override
     public Children and(boolean condition, Function<Children, Children> func) {
         return doIt(condition, func, AND_LEFT_BRACKET, AND_RIGHT_BRACKET);
     }

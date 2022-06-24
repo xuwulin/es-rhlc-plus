@@ -58,6 +58,29 @@ public interface Compare<Children, R> extends Serializable {
      */
     Children ne(boolean condition, R column, Object val, Float boost);
 
+    default Children reg(R column, Object val) {
+        return reg(true, column, val);
+    }
+
+    default Children reg(R column, Object val, Float boost) {
+        return reg(true, column, val, boost);
+    }
+
+    default Children reg(boolean condition, R column, Object val) {
+        return reg(condition, column, val, EsConstants.DEFAULT_BOOST);
+    }
+
+    /**
+     * 正则匹配
+     *
+     * @param condition 条件
+     * @param column    列
+     * @param val       值
+     * @param boost     权重值
+     * @return Children
+     */
+    Children reg(boolean condition, R column, Object val, Float boost);
+
     default Children match(R column, Object val) {
         return match(true, column, val);
     }

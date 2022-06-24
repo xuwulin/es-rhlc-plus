@@ -81,6 +81,14 @@ public class QueryTest {
     }
 
     @Test
+    public void testSearchReg() {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
+                .reg(UserDocument::getTel, "(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])[0-9]{8}");
+        SearchResponse search = userDocumentMapper.search(wrapper);
+        System.out.println(search);
+    }
+
+    @Test
     public void testSelectCount() {
         Long count = userDocumentMapper.count();
         System.out.println(count);
@@ -172,7 +180,7 @@ public class QueryTest {
     public void testSelectMapsPageWith() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .select(UserDocument::getNickname, UserDocument::getAge);
-        PageInfo<Map<String, Object>> mapPageInfo = userDocumentMapper.pageMaps(wrapper,  1, 5);
+        PageInfo<Map<String, Object>> mapPageInfo = userDocumentMapper.pageMaps(wrapper, 1, 5);
         System.out.println(mapPageInfo);
     }
 }

@@ -54,7 +54,7 @@ public class UserDocument {
     /**
      * 生日
      */
-    @JSONField(format="yyyy-MM-dd")
+    @JSONField(format = "yyyy-MM-dd")
     private Date birthday;
     /**
      * 公司名称
@@ -83,6 +83,10 @@ public class UserDocument {
      */
     private transient String all;
     /**
+     * 电话
+     */
+    private String tel;
+    /**
      * 其他，es中不存在此字段，使用@EsDocumentField(exist = false)标注
      */
     @EsDocumentField(exist = false)
@@ -90,7 +94,7 @@ public class UserDocument {
     /**
      * 入职时间
      */
-    @JSONField(format="yyyy-MM-dd")
+    @JSONField(format = "yyyy-MM-dd")
     private LocalDate hireDate;
     /**
      * 创建日期
@@ -99,7 +103,7 @@ public class UserDocument {
     /**
      * 更新时间
      */
-    @JSONField(format="yyyy-MM-dd HH:mm:ss")
+    @JSONField(format = "yyyy-MM-dd HH:mm:ss")
     private Date updatedTime;
     /**
      * 是否删除

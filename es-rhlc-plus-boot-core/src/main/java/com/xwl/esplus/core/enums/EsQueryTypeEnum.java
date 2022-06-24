@@ -37,7 +37,11 @@ public enum EsQueryTypeEnum {
     /**
      * 通配,相当于mysql中的like
      */
-    WILDCARD_QUERY(8);
+    WILDCARD_QUERY(8),
+    /**
+     * 正则匹配
+     */
+    REGEXP_QUERY(9);
 
     /**
      * 类型

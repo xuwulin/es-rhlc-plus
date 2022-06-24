@@ -70,6 +70,10 @@ public class EsQueryTypeUtils {
             }
             WildcardQueryBuilder wildcardQueryBuilder = QueryBuilders.wildcardQuery(field, query).boost(boost);
             setQueryBuilder(boolQueryBuilder, attachType, wildcardQueryBuilder);
+        } else if (Objects.equals(queryType, REGEXP_QUERY.getType())) {
+            // 封装正则查询参数
+            RegexpQueryBuilder regexpQueryBuilder = QueryBuilders.regexpQuery(field, value.toString()).boost(boost);
+            setQueryBuilder(boolQueryBuilder, attachType, regexpQueryBuilder);
         }
     }
 

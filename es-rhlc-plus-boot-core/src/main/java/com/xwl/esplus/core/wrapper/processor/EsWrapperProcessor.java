@@ -476,7 +476,7 @@ public class EsWrapperProcessor {
      *
      * @param baseEsParam      基础参数
      * @param boolQueryBuilder es boolQueryBuilder
-     * @param documentInfo     文档信息
+     * @param documentInfo     文档信息8
      */
     private static void addQuery(EsBaseParam baseEsParam, BoolQueryBuilder boolQueryBuilder, DocumentInfo documentInfo) {
         baseEsParam.getMustList().forEach(fieldValueModel ->
