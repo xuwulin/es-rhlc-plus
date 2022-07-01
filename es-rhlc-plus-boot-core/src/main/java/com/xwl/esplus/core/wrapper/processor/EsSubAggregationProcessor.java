@@ -16,7 +16,7 @@ import java.util.Arrays;
  * @Author: hl
  * @Date: 2022/7/1 11:21
  */
-public class EsSubAggregationProcessor<T> implements SubAggregation<T> {
+public class EsSubAggregationProcessor {
 
 
     public static <T, R> EsAggregationParam<T> termsAggregation(boolean condition, Integer size, SFunction<? super T, ? extends R> column, EsAggregationParam<T>[] aggregationParams) {
@@ -49,9 +49,10 @@ public class EsSubAggregationProcessor<T> implements SubAggregation<T> {
         return doIt(condition, EsAggregationTypeEnum.SUM, "sum", null, column, null);
     }
 
-    public static <T, R> EsAggregationParam<T> cardinality(boolean condition, SFunction<? super T,? extends R> column) {
+    public static <T, R> EsAggregationParam<T> cardinality(boolean condition, SFunction<? super T, ? extends R> column) {
         return doIt(condition, EsAggregationTypeEnum.CARDINALITY, "cardinality", null, column, null);
     }
+
     /**
      * 封装查询参数 聚合类
      *

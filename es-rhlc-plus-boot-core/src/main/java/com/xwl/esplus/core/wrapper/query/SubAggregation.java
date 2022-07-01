@@ -12,7 +12,7 @@ import java.time.ZoneId;
 /**
  * @author hl
  */
-public interface SubAggregation<T> extends Serializable {
+public interface SubAggregation extends Serializable {
 
     static <T, R> EsAggregationParam<T> termsAggregation(SFunction<? super T, ? extends R> column, EsAggregationParam<T>... esAggregationParams) {
         return termsAggregation(true, 10, column, esAggregationParams);
