@@ -10,6 +10,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @Description:
@@ -71,7 +72,9 @@ public class EsSubAggregationProcessor {
             aggregationParam.setField(FieldUtils.getFieldName(column));
             aggregationParam.setSize(size);
             aggregationParam.setAggregationType(aggregationTypeEnum);
-            aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
+            if(Objects.nonNull(aggregationParams)){
+                aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
+            }
             return aggregationParam;
         }
         return null;
@@ -104,7 +107,9 @@ public class EsSubAggregationProcessor {
             aggregationParam.setExtendedBounds(extendedBounds);
             aggregationParam.setTimeZone(timeZone);
             aggregationParam.setAggregationType(EsAggregationTypeEnum.DATE_HISTOGRAM);
-            aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
+            if(Objects.nonNull(aggregationParams)){
+                aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
+            }
             return aggregationParam;
         }
         return null;

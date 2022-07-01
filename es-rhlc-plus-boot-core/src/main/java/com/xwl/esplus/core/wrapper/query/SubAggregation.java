@@ -100,7 +100,7 @@ public interface SubAggregation extends Serializable {
     }
 
     static <T, R> EsAggregationParam<T> cardinality(SFunction<? super T, ? extends R> column) {
-        return EsSubAggregationProcessor.sum(true, column);
+        return EsSubAggregationProcessor.cardinality(true, column);
     }
 
     /**
