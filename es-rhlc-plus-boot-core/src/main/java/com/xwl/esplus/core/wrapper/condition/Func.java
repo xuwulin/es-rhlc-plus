@@ -1,6 +1,7 @@
 package com.xwl.esplus.core.wrapper.condition;
 
 import com.xwl.esplus.core.constant.EsConstants;
+import com.xwl.esplus.core.param.EsAggregationParam;
 import com.xwl.esplus.core.param.EsOrderByParam;
 import com.xwl.esplus.core.toolkit.FieldUtils;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
@@ -21,7 +22,7 @@ import static java.util.stream.Collectors.toList;
  * @author xwl
  * @since 2022/3/14 20:50
  */
-public interface Func<Children, R> extends Serializable {
+public interface Func<T, Children, R> extends Serializable {
     default Children highLight(R column) {
         return highLight(true, EsConstants.HIGH_LIGHT_PRE_TAG, EsConstants.HIGH_LIGHT_POST_TAG, column);
     }
@@ -233,6 +234,10 @@ public interface Func<Children, R> extends Serializable {
      */
     Children groupBy(boolean condition, Integer size, R... columns);
 
+    default Children termsAggregation(R column, EsAggregationParam<T>... subAggregation) {
+        return termsAggregation(true, FieldUtils.getFieldName(column), null, column, subAggregation);
+    }
+
     default Children termsAggregation(R column) {
         return termsAggregation(true, FieldUtils.getFieldName(column), null, column);
     }
@@ -250,10 +255,14 @@ public interface Func<Children, R> extends Serializable {
      * @param column     列
      * @return Children
      */
-    Children termsAggregation(boolean condition, String returnName, Integer size, R column);
+    Children termsAggregation(boolean condition, String returnName, Integer size, R column, EsAggregationParam<T>... subAggregation);
 
     default Children dateHistogram(DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
         return dateHistogram(true, FieldUtils.getFieldName(column), interval, format, minDocCount, extendedBounds, timeZone, column);
+    }
+
+    default Children dateHistogram(DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column, EsAggregationParam<T>... subAggregation) {
+        return dateHistogram(true, FieldUtils.getFieldName(column), interval, format, minDocCount, extendedBounds, timeZone, column, subAggregation);
     }
 
     default Children dateHistogram(String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
@@ -273,7 +282,25 @@ public interface Func<Children, R> extends Serializable {
      * @param column         列
      * @return
      */
-    Children dateHistogram(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column);
+    Children dateHistogram(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column, EsAggregationParam<T>... subAggregation);
+
+    default Children cardinality(R column) {
+        return cardinality(true, FieldUtils.getFieldName(column), column);
+    }
+
+    default Children cardinality(String returnName, R column) {
+        return cardinality(true, returnName, column);
+    }
+
+    /**
+     * 基数统计
+     *
+     * @param condition  条件
+     * @param returnName 返回的聚合字段名称
+     * @param column     列
+     * @return Children
+     */
+    Children cardinality(boolean condition, String returnName, R column);
 
     default Children avg(R column) {
         return avg(true, FieldUtils.getFieldName(column), column);

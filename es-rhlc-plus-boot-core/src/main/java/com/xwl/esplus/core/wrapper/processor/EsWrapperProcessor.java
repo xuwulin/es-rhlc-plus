@@ -11,6 +11,7 @@ import com.xwl.esplus.core.param.EsGeoParam;
 import com.xwl.esplus.core.toolkit.*;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import org.elasticsearch.index.query.*;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
@@ -316,6 +317,95 @@ public class EsWrapperProcessor {
         return boolQueryBuilder;
     }
 
+
+    static AggregationBuilder convertAggregationBuilder(EsAggregationParam aggregationParam,
+                                                        Map<String, String> columnMappingMap,
+                                                        GlobalConfig.DocumentConfig documentConfig) {
+        String realField = getRealField(aggregationParam.getField(), columnMappingMap, documentConfig);
+        AggregationBuilder aggregationBuilder;
+        switch (aggregationParam.getAggregationType()) {
+            case AVG:
+                aggregationBuilder = AggregationBuilders
+                        .avg(aggregationParam.getName())
+                        .field(realField);
+                break;
+            case MIN:
+                aggregationBuilder = AggregationBuilders
+                        .min(aggregationParam.getName())
+                        .field(realField);
+                break;
+            case MAX:
+                aggregationBuilder = AggregationBuilders
+                        .max(aggregationParam.getName())
+                        .field(realField);
+                break;
+            case SUM:
+                aggregationBuilder = AggregationBuilders
+                        .sum(aggregationParam.getName())
+                        .field(realField);
+                break;
+            case STATS:
+                aggregationBuilder = AggregationBuilders
+                        .stats(aggregationParam.getName())
+                        .field(realField);
+                break;
+            case TERMS:
+                aggregationBuilder = AggregationBuilders
+                        .terms(aggregationParam.getName())
+                        .field(realField)
+                        .size(aggregationParam.getSize() == null ? EsConstants.TEN : aggregationParam.getSize());
+                break;
+            case CARDINALITY:
+                aggregationBuilder = AggregationBuilders.cardinality(aggregationParam.getName()).field(realField);
+                break;
+            case TOP_HITS:
+                TopHitsAggregationBuilder topHitsAggregationBuilder = AggregationBuilders.topHits(aggregationParam.getName())
+                        .size(aggregationParam.getSize())
+                        .fetchSource(aggregationParam.getIncludes(), aggregationParam.getExcludes());
+                if (StringUtils.isNotBlank(aggregationParam.getHighLight())) {
+                    String field = aggregationParam.getHighLight();
+                    HighlightBuilder highlightBuilder = new HighlightBuilder();
+                    String customField = columnMappingMap.get(field);
+                    if (Objects.nonNull(customField)) {
+                        highlightBuilder.field(customField);
+                    } else {
+                        if (documentConfig.isMapUnderscoreToCamelCase()) {
+                            highlightBuilder.field(StringUtils.camelToUnderline(field));
+                        } else {
+                            highlightBuilder.field(field);
+                        }
+                    }
+                    highlightBuilder.preTags(EsConstants.HIGH_LIGHT_PRE_TAG);
+                    highlightBuilder.postTags(EsConstants.HIGH_LIGHT_POST_TAG);
+                    topHitsAggregationBuilder.highlighter(highlightBuilder);
+                }
+                aggregationBuilder = topHitsAggregationBuilder;
+                break;
+            case DATE_HISTOGRAM:
+                aggregationBuilder = AggregationBuilders
+                        .dateHistogram(aggregationParam.getName())
+                        .field(realField)
+                        .calendarInterval(aggregationParam.getInterval())
+                        .format(aggregationParam.getFormat())
+                        .minDocCount(aggregationParam.getMinDocCount())
+                        .extendedBounds(aggregationParam.getExtendedBounds())
+                        .timeZone(aggregationParam.getTimeZone());
+                break;
+            default:
+                throw new UnsupportedOperationException("不支持的聚合类型，聚合类型参见EsAggregationTypeEnum");
+        }
+        List<? extends EsAggregationParam<?>> subAggregations = aggregationParam.getSubAggregations();
+        // 添加子聚合
+        if (Objects.nonNull(subAggregations) && subAggregations.size() > 0) {
+            subAggregations.forEach(x -> {
+                if (Objects.nonNull(x)) {
+                    aggregationBuilder.subAggregation(convertAggregationBuilder(x, columnMappingMap, documentConfig));
+                }
+            });
+        }
+        return aggregationBuilder;
+    }
+
     /**
      * 设置聚合参数
      *
@@ -326,7 +416,7 @@ public class EsWrapperProcessor {
     private static void setAggregations(EsLambdaQueryWrapper<?> wrapper,
                                         Map<String, String> columnMappingMap,
                                         SearchSourceBuilder searchSourceBuilder) {
-        List<EsAggregationParam> aggregationParamList = wrapper.getAggregationParamList();
+        List<? extends EsAggregationParam<?>> aggregationParamList = wrapper.getAggregationParamList();
         if (CollectionUtils.isEmpty(aggregationParamList)) {
             return;
         }
@@ -336,61 +426,13 @@ public class EsWrapperProcessor {
 
         // 封装聚合参数
         aggregationParamList.forEach(aggregationParam -> {
-            String realField = getRealField(aggregationParam.getField(), columnMappingMap, documentConfig);
-            switch (aggregationParam.getAggregationType()) {
-                case AVG:
-                    AvgAggregationBuilder avg = AggregationBuilders
-                            .avg(aggregationParam.getName())
-                            .field(realField);
-                    searchSourceBuilder.aggregation(avg);
-                    break;
-                case MIN:
-                    MinAggregationBuilder min = AggregationBuilders
-                            .min(aggregationParam.getName())
-                            .field(realField);
-                    searchSourceBuilder.aggregation(min);
-                    break;
-                case MAX:
-                    MaxAggregationBuilder max = AggregationBuilders
-                            .max(aggregationParam.getName())
-                            .field(realField);
-                    searchSourceBuilder.aggregation(max);
-                    break;
-                case SUM:
-                    SumAggregationBuilder sum = AggregationBuilders
-                            .sum(aggregationParam.getName())
-                            .field(realField);
-                    searchSourceBuilder.aggregation(sum);
-                    break;
-                case STATS:
-                    StatsAggregationBuilder stats = AggregationBuilders
-                            .stats(aggregationParam.getName())
-                            .field(realField);
-                    searchSourceBuilder.aggregation(stats);
-                    break;
-                case TERMS:
-                    TermsAggregationBuilder terms = AggregationBuilders
-                            .terms(aggregationParam.getName())
-                            .field(realField)
-                            .size(aggregationParam.getSize() == null ? EsConstants.TEN : aggregationParam.getSize());
-                    searchSourceBuilder.aggregation(terms);
-                    break;
-                case DATE_HISTOGRAM:
-                    DateHistogramAggregationBuilder dateHistogram = AggregationBuilders
-                            .dateHistogram(aggregationParam.getName())
-                            .field(realField)
-                            .calendarInterval(aggregationParam.getInterval())
-                            .format(aggregationParam.getFormat())
-                            .minDocCount(aggregationParam.getMinDocCount())
-                            .extendedBounds(aggregationParam.getExtendedBounds())
-                            .timeZone(aggregationParam.getTimeZone());
-                    searchSourceBuilder.aggregation(dateHistogram);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("不支持的聚合类型，聚合类型参见EsAggregationTypeEnum");
+            AggregationBuilder aggregationBuilder = convertAggregationBuilder(aggregationParam, columnMappingMap, documentConfig);
+            if (Objects.nonNull(aggregationBuilder)) {
+                searchSourceBuilder.aggregation(aggregationBuilder);
             }
         });
     }
+
 
     /**
      * 构建GeoBoundingBoxQueryBuilder

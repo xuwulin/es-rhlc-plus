@@ -40,7 +40,7 @@ import static com.xwl.esplus.core.enums.EsQueryTypeEnum.*;
  * @since 2022/3/15 18:31
  */
 public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper<T, R, Children>> extends EsWrapper<T>
-        implements Compare<Children, R>, Nested<Children, Children>, Join<Children>, Func<Children, R>, Geo<Children, R> {
+        implements Compare<Children, R>, Nested<Children, Children>, Join<Children>, Func<T, Children, R>, Geo<Children, R> {
     protected final Children typedThis = (Children) this;
 
     /**
@@ -58,7 +58,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     /**
      * 聚合查询参数列表
      */
-    protected List<EsAggregationParam> aggregationParamList;
+    protected List<EsAggregationParam<T>> aggregationParamList;
     /**
      * geo相关参数
      */
@@ -127,7 +127,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
         return sortParamList;
     }
 
-    public List<EsAggregationParam> getAggregationParamList() {
+    public List<EsAggregationParam<T>> getAggregationParamList() {
         return aggregationParamList;
     }
 
@@ -330,13 +330,18 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     }
 
     @Override
-    public Children termsAggregation(boolean condition, String returnName, Integer size, R column) {
-        return doIt(condition, EsAggregationTypeEnum.TERMS, returnName, size, column);
+    public Children termsAggregation(boolean condition, String returnName, Integer size, R column, EsAggregationParam<T>... subAggregation) {
+        return doIt(condition, EsAggregationTypeEnum.TERMS, returnName, size, column, subAggregation);
     }
 
     @Override
-    public Children dateHistogram(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
-        return doIt(condition, returnName, interval, format, minDocCount, extendedBounds, timeZone, column);
+    public Children dateHistogram(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column, EsAggregationParam<T>... subAggregation) {
+        return doIt(condition, returnName, interval, format, minDocCount, extendedBounds, timeZone, column, subAggregation);
+    }
+
+    @Override
+    public Children cardinality(boolean condition, String returnName, R column) {
+        return doIt(condition, EsAggregationTypeEnum.CARDINALITY, returnName, null, column);
     }
 
     @Override
@@ -461,13 +466,14 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param column              列
      * @return 泛型
      */
-    private Children doIt(boolean condition, EsAggregationTypeEnum aggregationTypeEnum, String returnName, Integer size, R column) {
+    private Children doIt(boolean condition, EsAggregationTypeEnum aggregationTypeEnum, String returnName, Integer size, R column, EsAggregationParam<T>... esAggregationParams) {
         if (condition) {
             EsAggregationParam aggregationParam = new EsAggregationParam();
             aggregationParam.setName(returnName);
             aggregationParam.setField(FieldUtils.getFieldName(column));
             aggregationParam.setSize(size);
             aggregationParam.setAggregationType(aggregationTypeEnum);
+            aggregationParam.setSubAggregations(Arrays.asList(esAggregationParams));
             aggregationParamList.add(aggregationParam);
         }
         return typedThis;
@@ -486,7 +492,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      * @param column         列
      * @return 泛型
      */
-    private Children doIt(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
+    private Children doIt(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column, EsAggregationParam<T>... aggregationParams) {
         if (condition) {
             EsAggregationParam aggregationParam = new EsAggregationParam();
             aggregationParam.setName(returnName);
@@ -497,6 +503,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
             aggregationParam.setExtendedBounds(extendedBounds);
             aggregationParam.setTimeZone(timeZone);
             aggregationParam.setAggregationType(EsAggregationTypeEnum.DATE_HISTOGRAM);
+            aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
             aggregationParamList.add(aggregationParam);
         }
         return typedThis;

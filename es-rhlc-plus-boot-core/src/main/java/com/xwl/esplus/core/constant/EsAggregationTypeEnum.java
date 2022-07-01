@@ -28,6 +28,14 @@ public enum EsAggregationTypeEnum {
      */
     STATS,
     /**
+     * 基数聚合
+     */
+    CARDINALITY,
+    /**
+     * 热门匹配聚合
+     */
+    TOP_HITS,
+    /**
      * 按字段分组，相当于mysql group by
      */
     TERMS,

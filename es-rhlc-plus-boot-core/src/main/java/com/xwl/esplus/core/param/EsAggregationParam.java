@@ -5,13 +5,15 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 
 import java.time.ZoneId;
+import java.util.List;
 
 /**
  * 聚合参数
+ *
  * @author xwl
  * @since 2022/3/16 11:05
  */
-public class EsAggregationParam {
+public class EsAggregationParam<T> {
     /**
      * 返回字段名称
      */
@@ -20,6 +22,22 @@ public class EsAggregationParam {
      * 聚合字段
      */
     private String field;
+    /**
+     * 高亮字段
+     */
+    private String highLight;
+    /**
+     * 查询字段
+     */
+    private String[] includes;
+    /**
+     * 排除字段
+     */
+    private String[] excludes;
+    /**
+     * 便宜值 默认0
+     */
+    private Integer from;
     /**
      * 聚合返回条数，默认10
      */
@@ -59,6 +77,11 @@ public class EsAggregationParam {
      * 聚合类型
      */
     private EsAggregationTypeEnum aggregationType;
+
+    /**
+     * 子聚合
+     */
+    private List<EsAggregationParam<T>> subAggregations;
 
     public EsAggregationParam() {
     }
@@ -133,5 +156,45 @@ public class EsAggregationParam {
 
     public void setAggregationType(EsAggregationTypeEnum aggregationType) {
         this.aggregationType = aggregationType;
+    }
+
+    public List<EsAggregationParam<T>> getSubAggregations() {
+        return subAggregations;
+    }
+
+    public void setSubAggregations(List<EsAggregationParam<T>> subAggregations) {
+        this.subAggregations = subAggregations;
+    }
+
+    public String[] getIncludes() {
+        return includes;
+    }
+
+    public void setIncludes(String[] includes) {
+        this.includes = includes;
+    }
+
+    public String[] getExcludes() {
+        return excludes;
+    }
+
+    public void setExcludes(String[] excludes) {
+        this.excludes = excludes;
+    }
+
+    public Integer getFrom() {
+        return from;
+    }
+
+    public void setFrom(Integer from) {
+        this.from = from;
+    }
+
+    public String getHighLight() {
+        return highLight;
+    }
+
+    public void setHighLight(String highLight) {
+        this.highLight = highLight;
     }
 }
