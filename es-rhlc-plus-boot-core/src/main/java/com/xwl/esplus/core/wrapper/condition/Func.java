@@ -242,8 +242,8 @@ public interface Func<T, Children, R> extends Serializable {
         return termsAggregation(true, FieldUtils.getFieldName(column), null, column);
     }
 
-    default Children termsAggregation(String returnName, R column) {
-        return termsAggregation(true, returnName, null, column);
+    default Children termsAggregation(String returnName, R column, EsAggregationParam<T>... subAggregation) {
+        return termsAggregation(true, returnName, null, column, subAggregation);
     }
 
     /**
@@ -265,8 +265,8 @@ public interface Func<T, Children, R> extends Serializable {
         return dateHistogram(true, FieldUtils.getFieldName(column), interval, format, minDocCount, extendedBounds, timeZone, column, subAggregation);
     }
 
-    default Children dateHistogram(String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column) {
-        return dateHistogram(true, returnName, interval, format, minDocCount, extendedBounds, timeZone, column);
+    default Children dateHistogram(String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column, EsAggregationParam<T>... subAggregation) {
+        return dateHistogram(true, returnName, interval, format, minDocCount, extendedBounds, timeZone, column, subAggregation);
     }
 
     /**
