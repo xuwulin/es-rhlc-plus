@@ -1,9 +1,12 @@
 package com.xwl.esplus.test;
 
 import com.xwl.esplus.core.toolkit.Wrappers;
+import com.xwl.esplus.core.wrapper.query.SubAggregation;
 import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
+import com.xwl.esplus.test.document.EsUrbanBrainMapInfo;
 import com.xwl.esplus.test.document.UserDocument;
 import com.xwl.esplus.test.document.WorkOrderDocument;
+import com.xwl.esplus.test.mapper.EsUrbanBrainMapInfoMapper;
 import com.xwl.esplus.test.mapper.UserDocumentMapper;
 import com.xwl.esplus.test.mapper.WorkOrderDocumentMapper;
 import org.elasticsearch.action.search.SearchResponse;
@@ -85,6 +88,16 @@ public class AggregationTest {
     public void testTermsAggregation() {
         EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
                 .termsAggregation(UserDocument::getNickname).size(0);
+        SearchResponse response = userDocumentMapper.search(wrapper);
+        System.out.println(response);
+    }
+
+    @Test
+    public void testSubAggregation() {
+        EsLambdaQueryWrapper<UserDocument> wrapper = Wrappers.<UserDocument>lambdaQuery()
+                .termsAggregation(UserDocument::getNickname,
+                        SubAggregation.termsAggregation(UserDocument::getAge))
+                .size(0);
         SearchResponse response = userDocumentMapper.search(wrapper);
         System.out.println(response);
     }
