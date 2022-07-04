@@ -361,7 +361,7 @@ public class EsWrapperProcessor {
             case TOP_HITS:
                 TopHitsAggregationBuilder topHitsAggregationBuilder = AggregationBuilders.topHits(aggregationParam.getName())
                         .size(aggregationParam.getSize())
-                        .fetchSource(aggregationParam.getIncludes(), aggregationParam.getExcludes());
+                        .fetchSource(aggregationParam.getIncludes(), null);
                 if (StringUtils.isNotBlank(aggregationParam.getHighLight())) {
                     String field = aggregationParam.getHighLight();
                     HighlightBuilder highlightBuilder = new HighlightBuilder();

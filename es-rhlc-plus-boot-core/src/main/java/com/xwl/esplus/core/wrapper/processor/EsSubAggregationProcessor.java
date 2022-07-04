@@ -11,6 +11,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @Description:
@@ -20,38 +21,38 @@ import java.util.Objects;
 public class EsSubAggregationProcessor {
 
 
-    public static <T, R> EsAggregationParam<T> termsAggregation(boolean condition, Integer size, SFunction<? super T, ? extends R> column, EsAggregationParam<T>[] aggregationParams) {
+    public static <T> EsAggregationParam<T> termsAggregation(boolean condition, Integer size, SFunction<T, ?> column, EsAggregationParam<T>[] aggregationParams) {
         return doIt(condition, EsAggregationTypeEnum.TERMS, FieldUtils.getFieldName(column), size, column, aggregationParams);
     }
 
-    public static <T, R> EsAggregationParam<T> dateHistogram(boolean condition, SFunction<? super T, ? extends R> column, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, EsAggregationParam<T>[] aggregationParams) {
+    public static <T> EsAggregationParam<T> dateHistogram(boolean condition, SFunction<T, ?> column, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, EsAggregationParam<T>[] aggregationParams) {
         return doIt(condition, FieldUtils.getFieldName(column), interval, format, minDocCount, extendedBounds, timeZone, column, aggregationParams);
     }
 
-    public static <T, R> EsAggregationParam<T> topHist(boolean condition, String returnName, Integer from, Integer size, SFunction<? super T, ? extends R> highLight, String[] includes, String[] excludes) {
-        return doIt(condition, returnName, from, size, FieldUtils.getFieldName(highLight), includes, excludes);
+    public static <T> EsAggregationParam<T> topHist(boolean condition, String returnName, Integer from, Integer size, SFunction<T, ?> highLight, SFunction<T, ?>... column) {
+        return doIt(condition, returnName, from, size, highLight, column);
     }
 
-    public static <T, R> EsAggregationParam<T> min(boolean condition, SFunction<? super T, ? extends R> column) {
-        return doIt(condition, EsAggregationTypeEnum.MIN, "min", null, column, null);
+    public static <T> EsAggregationParam<T> min(boolean condition, SFunction<T, ?> column) {
+        return doIt(condition, EsAggregationTypeEnum.MIN, "min_".concat(FieldUtils.getFieldName(column)), null, column, null);
     }
 
-    public static <T, R> EsAggregationParam<T> max(boolean condition, SFunction<? super T, ? extends R> column) {
-        return doIt(condition, EsAggregationTypeEnum.MAX, "max", null, column, null);
-
-    }
-
-    public static <T, R> EsAggregationParam<T> avg(boolean condition, SFunction<? super T, ? extends R> column) {
-        return doIt(condition, EsAggregationTypeEnum.AVG, "avg", null, column, null);
+    public static <T> EsAggregationParam<T> max(boolean condition, SFunction<T, ?> column) {
+        return doIt(condition, EsAggregationTypeEnum.MAX, "max_".concat(FieldUtils.getFieldName(column)), null, column, null);
 
     }
 
-    public static <T, R> EsAggregationParam<T> sum(boolean condition, SFunction<? super T, ? extends R> column) {
-        return doIt(condition, EsAggregationTypeEnum.SUM, "sum", null, column, null);
+    public static <T> EsAggregationParam<T> avg(boolean condition, SFunction<T, ?> column) {
+        return doIt(condition, EsAggregationTypeEnum.AVG, "avg_".concat(FieldUtils.getFieldName(column)), null, column, null);
+
     }
 
-    public static <T, R> EsAggregationParam<T> cardinality(boolean condition, SFunction<? super T, ? extends R> column) {
-        return doIt(condition, EsAggregationTypeEnum.CARDINALITY, "cardinality", null, column, null);
+    public static <T> EsAggregationParam<T> sum(boolean condition, SFunction<T, ?> column) {
+        return doIt(condition, EsAggregationTypeEnum.SUM, "sum_".concat(FieldUtils.getFieldName(column)), null, column, null);
+    }
+
+    public static <T> EsAggregationParam<T> cardinality(boolean condition, SFunction<T, ?> column) {
+        return doIt(condition, EsAggregationTypeEnum.CARDINALITY, "cardinality_".concat(FieldUtils.getFieldName(column)), null, column, null);
     }
 
     /**
@@ -65,14 +66,14 @@ public class EsSubAggregationProcessor {
      * @param aggregationParams   子聚合
      * @return 泛型
      */
-    private static <T, R> EsAggregationParam<T> doIt(boolean condition, EsAggregationTypeEnum aggregationTypeEnum, String returnName, Integer size, SFunction<? super T, ? extends R> column, EsAggregationParam<T>[] aggregationParams) {
+    private static <T> EsAggregationParam<T> doIt(boolean condition, EsAggregationTypeEnum aggregationTypeEnum, String returnName, Integer size, SFunction<T, ?> column, EsAggregationParam<T>[] aggregationParams) {
         if (condition) {
             EsAggregationParam<T> aggregationParam = new EsAggregationParam<T>();
             aggregationParam.setName(returnName);
             aggregationParam.setField(FieldUtils.getFieldName(column));
             aggregationParam.setSize(size);
             aggregationParam.setAggregationType(aggregationTypeEnum);
-            if(Objects.nonNull(aggregationParams)){
+            if (Objects.nonNull(aggregationParams)) {
                 aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
             }
             return aggregationParam;
@@ -96,7 +97,7 @@ public class EsSubAggregationProcessor {
      * @param aggregationParams 子聚合
      * @return
      */
-    private static <T, R> EsAggregationParam<T> doIt(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, R column, EsAggregationParam<T>... aggregationParams) {
+    private static <T> EsAggregationParam<T> doIt(boolean condition, String returnName, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, SFunction<T, ?> column, EsAggregationParam<T>... aggregationParams) {
         if (condition) {
             EsAggregationParam aggregationParam = new EsAggregationParam();
             aggregationParam.setName(returnName);
@@ -107,7 +108,7 @@ public class EsSubAggregationProcessor {
             aggregationParam.setExtendedBounds(extendedBounds);
             aggregationParam.setTimeZone(timeZone);
             aggregationParam.setAggregationType(EsAggregationTypeEnum.DATE_HISTOGRAM);
-            if(Objects.nonNull(aggregationParams)){
+            if (Objects.nonNull(aggregationParams)) {
                 aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
             }
             return aggregationParam;
@@ -122,18 +123,19 @@ public class EsSubAggregationProcessor {
      * @param size       条数
      * @param highLight  高亮字段
      * @param includes   查询字段
-     * @param excludes   排除字段
      * @return
      */
-    private static <T> EsAggregationParam<T> doIt(boolean condition, String returnName, Integer from, Integer size, String highLight, String[] includes, String[] excludes) {
+    private static <T> EsAggregationParam<T> doIt(boolean condition, String returnName, Integer from, Integer size, SFunction<T, ?> highLight, SFunction<T, ?>... includes) {
         if (condition) {
             EsAggregationParam aggregationParam = new EsAggregationParam();
             aggregationParam.setName(returnName);
-            aggregationParam.setIncludes(includes);
-            aggregationParam.setExcludes(excludes);
+            if (Objects.nonNull(includes)) {
+                String[] strings = Arrays.stream(includes).map(FieldUtils::getFieldName).collect(Collectors.toList()).toArray(new String[]{});
+                aggregationParam.setIncludes(strings);
+            }
             aggregationParam.setSize(size);
             aggregationParam.setFrom(from);
-            aggregationParam.setHighLight(highLight);
+            aggregationParam.setHighLight(Objects.nonNull(highLight) ? FieldUtils.getFieldName(highLight) : null);
             aggregationParam.setAggregationType(EsAggregationTypeEnum.TOP_HITS);
             return aggregationParam;
         }

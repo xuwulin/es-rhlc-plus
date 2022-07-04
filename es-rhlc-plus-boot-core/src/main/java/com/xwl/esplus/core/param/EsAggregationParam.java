@@ -31,10 +31,6 @@ public class EsAggregationParam<T> {
      */
     private String[] includes;
     /**
-     * 排除字段
-     */
-    private String[] excludes;
-    /**
      * 便宜值 默认0
      */
     private Integer from;
@@ -172,14 +168,6 @@ public class EsAggregationParam<T> {
 
     public void setIncludes(String[] includes) {
         this.includes = includes;
-    }
-
-    public String[] getExcludes() {
-        return excludes;
-    }
-
-    public void setExcludes(String[] excludes) {
-        this.excludes = excludes;
     }
 
     public Integer getFrom() {

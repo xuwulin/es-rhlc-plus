@@ -14,15 +14,15 @@ import java.time.ZoneId;
  */
 public interface SubAggregation extends Serializable {
 
-    static <T, R> EsAggregationParam<T> termsAggregation(SFunction<? super T, ? extends R> column, EsAggregationParam<T>... esAggregationParams) {
+    static <T> EsAggregationParam<T> termsAggregation(SFunction<T, ?> column, EsAggregationParam<T>... esAggregationParams) {
         return termsAggregation(true, 10, column, esAggregationParams);
     }
 
-    static <T, R> EsAggregationParam<T> termsAggregation(Integer size, SFunction<? super T, ? extends R> column, EsAggregationParam<T>... esAggregationParams) {
+    static <T> EsAggregationParam<T> termsAggregation(Integer size, SFunction<T, ?> column, EsAggregationParam<T>... esAggregationParams) {
         return termsAggregation(true, size, column, esAggregationParams);
     }
 
-    static <T, R> EsAggregationParam<T> termsAggregation(boolean condition, SFunction<? super T, ? extends R> column, EsAggregationParam<T>... esAggregationParams) {
+    static <T> EsAggregationParam<T> termsAggregation(boolean condition, SFunction<T, ?> column, EsAggregationParam<T>... esAggregationParams) {
         return termsAggregation(condition, 10, column, esAggregationParams);
     }
 
@@ -35,11 +35,11 @@ public interface SubAggregation extends Serializable {
      * @param esAggregationParams
      * @return EsAggregationParam
      */
-    static <T, R> EsAggregationParam<T> termsAggregation(boolean condition, Integer size, SFunction<? super T, ? extends R> column, EsAggregationParam<T>... esAggregationParams) {
+    static <T> EsAggregationParam<T> termsAggregation(boolean condition, Integer size, SFunction<T, ?> column, EsAggregationParam<T>... esAggregationParams) {
         return EsSubAggregationProcessor.termsAggregation(condition, size, column, esAggregationParams);
     }
 
-    static <T, R> EsAggregationParam<T> min(SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> min(SFunction<T, ?> column) {
         return EsSubAggregationProcessor.min(true, column);
     }
 
@@ -50,11 +50,11 @@ public interface SubAggregation extends Serializable {
      * @param column
      * @return
      */
-    static <T, R> EsAggregationParam<T> min(boolean condition, SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> min(boolean condition, SFunction<T, ?> column) {
         return EsSubAggregationProcessor.min(condition, column);
     }
 
-    static <T, R> EsAggregationParam<T> max(SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> max(SFunction<T, ?> column) {
         return EsSubAggregationProcessor.max(true, column);
     }
 
@@ -65,11 +65,11 @@ public interface SubAggregation extends Serializable {
      * @param column
      * @return
      */
-    static <T, R> EsAggregationParam<T> max(boolean condition, SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> max(boolean condition, SFunction<T, ?> column) {
         return EsSubAggregationProcessor.max(condition, column);
     }
 
-    static <T, R> EsAggregationParam<T> avg(SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> avg(SFunction<T, ?> column) {
         return EsSubAggregationProcessor.avg(true, column);
     }
 
@@ -80,11 +80,11 @@ public interface SubAggregation extends Serializable {
      * @param column
      * @return
      */
-    static <T, R> EsAggregationParam<T> avg(boolean condition, SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> avg(boolean condition, SFunction<T, ?> column) {
         return EsSubAggregationProcessor.avg(condition, column);
     }
 
-    static <T, R> EsAggregationParam<T> sum(SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> sum(SFunction<T, ?> column) {
         return EsSubAggregationProcessor.sum(true, column);
     }
 
@@ -95,11 +95,11 @@ public interface SubAggregation extends Serializable {
      * @param column
      * @return
      */
-    static <T, R> EsAggregationParam<T> sum(boolean condition, SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> sum(boolean condition, SFunction<T, ?> column) {
         return EsSubAggregationProcessor.sum(condition, column);
     }
 
-    static <T, R> EsAggregationParam<T> cardinality(SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> cardinality(SFunction<T, ?> column) {
         return EsSubAggregationProcessor.cardinality(true, column);
     }
 
@@ -110,11 +110,11 @@ public interface SubAggregation extends Serializable {
      * @param column
      * @return
      */
-    static <T, R> EsAggregationParam<T> cardinality(boolean condition, SFunction<? super T, ? extends R> column) {
+    static <T> EsAggregationParam<T> cardinality(boolean condition, SFunction<T, ?> column) {
         return EsSubAggregationProcessor.cardinality(condition, column);
     }
 
-    static <T, R> EsAggregationParam<T> dateHistogram(SFunction<? super T, ? extends R> column, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, EsAggregationParam<T>... esAggregationParams) {
+    static <T> EsAggregationParam<T> dateHistogram(SFunction<T, ?> column, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, EsAggregationParam<T>... esAggregationParams) {
         return EsSubAggregationProcessor.dateHistogram(true, column, interval, format, minDocCount, extendedBounds, timeZone, esAggregationParams);
     }
 
@@ -131,36 +131,28 @@ public interface SubAggregation extends Serializable {
      * @param esAggregationParams 子聚合
      * @return
      */
-    static <T, R> EsAggregationParam<T> dateHistogram(boolean condition, SFunction<? super T, ? extends R> column, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, EsAggregationParam<T>... esAggregationParams) {
+    static <T> EsAggregationParam<T> dateHistogram(boolean condition, SFunction<T, ?> column, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, EsAggregationParam<T>... esAggregationParams) {
         return EsSubAggregationProcessor.dateHistogram(condition, column, interval, format, minDocCount, extendedBounds, timeZone, esAggregationParams);
     }
 
-    static <T, R> EsAggregationParam<T> topHist(String returnName) {
+    static <T> EsAggregationParam<T> topHist(String returnName) {
         return EsSubAggregationProcessor.topHist(true, returnName, 0, 10, null, null, null);
     }
 
-    static <T, R> EsAggregationParam<T> topHist(String returnName, String[] includes, String[] excludes) {
-        return EsSubAggregationProcessor.topHist(true, returnName, 0, 10, null, includes, excludes);
+    static <T> EsAggregationParam<T> topHist(String returnName, SFunction<T, ?>... column) {
+        return EsSubAggregationProcessor.topHist(true, returnName, 0, 10, null, column);
     }
 
-    static <T, R> EsAggregationParam<T> topHist(String returnName, Integer size, String[] includes, String[] excludes) {
-        return EsSubAggregationProcessor.topHist(true, returnName, 0, size, null, null, null);
+    static <T> EsAggregationParam<T> topHist(String returnName, Integer size, SFunction<T, ?>... column) {
+        return EsSubAggregationProcessor.topHist(true, returnName, 0, size, null, column);
     }
 
-    static <T, R> EsAggregationParam<T> topHist(String returnName, SFunction<? super T, ? extends R> highLight) {
-        return EsSubAggregationProcessor.topHist(true, returnName, 0, 10, highLight, null, null);
+    static <T> EsAggregationParam<T> topHist(String returnName, Integer from, Integer size, SFunction<T, ?>... column) {
+        return EsSubAggregationProcessor.topHist(true, returnName, from, size, null, column);
     }
 
-    static <T, R> EsAggregationParam<T> topHist(String returnName, Integer size, SFunction<? super T, ? extends R> highLight) {
-        return EsSubAggregationProcessor.topHist(true, returnName, 0, size, highLight, null, null);
-    }
-
-    static <T, R> EsAggregationParam<T> topHist(String returnName, Integer from, Integer size, SFunction<? super T, ? extends R> highLight) {
-        return EsSubAggregationProcessor.topHist(true, returnName, from, size, highLight, null, null);
-    }
-
-    static <T, R> EsAggregationParam<T> topHist(String returnName, Integer from, Integer size, SFunction<? super T, ? extends R> highLight, String[] includes, String[] excludes) {
-        return EsSubAggregationProcessor.topHist(true, returnName, from, size, highLight, includes, excludes);
+    static <T> EsAggregationParam<T> topHist(String returnName, Integer from, Integer size, SFunction<T, ?> highLight, SFunction<T, ?>... column) {
+        return EsSubAggregationProcessor.topHist(true, returnName, from, size, highLight, column);
     }
 
     /**
@@ -171,11 +163,10 @@ public interface SubAggregation extends Serializable {
      * @param from       偏移值
      * @param size       条数
      * @param highLight  高亮字段
-     * @param includes   查询字段
-     * @param excludes   排除字段
+     * @param column     查询字段
      * @return
      */
-    static <T, R> EsAggregationParam<T> topHist(boolean condition, String returnName, Integer from, Integer size, SFunction<? super T, ? extends R> highLight, String[] includes, String[] excludes) {
-        return EsSubAggregationProcessor.topHist(condition, returnName, from, size, highLight, includes, excludes);
+    static <T> EsAggregationParam<T> topHist(boolean condition, String returnName, Integer from, Integer size, SFunction<T, ?> highLight, SFunction<T, ?>... column) {
+        return EsSubAggregationProcessor.topHist(condition, returnName, from, size, highLight, column);
     }
 }
