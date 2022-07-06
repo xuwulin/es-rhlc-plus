@@ -1,11 +1,17 @@
 package com.xwl.esplus.core.param;
 
 import com.xwl.esplus.core.constant.EsAggregationTypeEnum;
+import com.xwl.esplus.core.toolkit.FieldUtils;
+import com.xwl.esplus.core.wrapper.condition.SFunction;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 聚合参数
@@ -78,6 +84,12 @@ public class EsAggregationParam<T> {
      * 子聚合
      */
     private List<EsAggregationParam<T>> subAggregations;
+
+
+    /**
+     * 排序查询参数列表
+     */
+    private List<EsSortParam> sortParamList;
 
     public EsAggregationParam() {
     }
@@ -184,5 +196,22 @@ public class EsAggregationParam<T> {
 
     public void setHighLight(String highLight) {
         this.highLight = highLight;
+    }
+
+    public List<EsSortParam> getSortParamList() {
+        return sortParamList;
+    }
+
+    public void setSortParamList(List<EsSortParam> sortParamList) {
+        this.sortParamList = sortParamList;
+    }
+
+    public EsAggregationParam<T> orderBy(boolean isAsc, SFunction<T, ?>... columns) {
+        if (Objects.isNull(this.sortParamList)) {
+            this.sortParamList = new ArrayList<>();
+        }
+        List<String> fields = Arrays.stream(columns).map(FieldUtils::getFieldName).collect(Collectors.toList());
+        this.sortParamList.add(new EsSortParam(isAsc, fields));
+        return this;
     }
 }
