@@ -181,6 +181,11 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     }
 
     @Override
+    public Children matchPhrase(boolean condition, R column, Object val, Integer slop, Float boost) {
+        return doIt(condition, MATCH_PHRASE_QUERY, MUST, FieldUtils.getFieldName(column), val, slop, boost);
+    }
+
+    @Override
     public Children match(boolean condition, R column, Object val, Float boost) {
         return doIt(condition, MATCH_QUERY, MUST, FieldUtils.getFieldName(column), val, boost);
     }
@@ -551,6 +556,34 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
             model.setEsQueryType(TERMS_QUERY.getType());
             model.setOriginalAttachType(attachTypeEnum.getType());
 
+            setModel(baseEsParam, model, attachTypeEnum);
+            baseParamList.add(baseEsParam);
+        }
+        return typedThis;
+    }
+
+    /**
+     * 封装查询参数(普通情况,不带括号)
+     *
+     * @param condition      条件
+     * @param queryTypeEnum  查询类型
+     * @param attachTypeEnum 连接类型
+     * @param field          字段
+     * @param val            值
+     * @param slop           位置距离
+     * @param boost          权重
+     * @return 泛型
+     */
+    private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum, String field, Object val, Integer slop, Float boost) {
+        if (condition) {
+            EsBaseParam baseEsParam = new EsBaseParam();
+            EsBaseParam.FieldValueModel model = new EsBaseParam.FieldValueModel();
+            model.setField(field);
+            model.setValue(val);
+            model.setSlop(slop);
+            model.setBoost(boost);
+            model.setEsQueryType(queryTypeEnum.getType());
+            model.setOriginalAttachType(attachTypeEnum.getType());
             setModel(baseEsParam, model, attachTypeEnum);
             baseParamList.add(baseEsParam);
         }

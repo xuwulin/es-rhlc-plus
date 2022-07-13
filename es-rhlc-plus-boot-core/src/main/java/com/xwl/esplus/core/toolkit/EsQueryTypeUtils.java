@@ -33,7 +33,8 @@ public class EsQueryTypeUtils {
                                       Integer originalAttachType,
                                       String field,
                                       Object value,
-                                      Float boost) {
+                                      Float boost,
+                                      Integer slop) {
         if (Objects.equals(queryType, TERM_QUERY.getType())) {
             // 封装精确查询参数
             TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery(field, value).boost(boost);
@@ -74,6 +75,10 @@ public class EsQueryTypeUtils {
             // 封装正则查询参数
             RegexpQueryBuilder regexpQueryBuilder = QueryBuilders.regexpQuery(field, value.toString()).boost(boost);
             setQueryBuilder(boolQueryBuilder, attachType, regexpQueryBuilder);
+        } else if (Objects.equals(queryType, MATCH_PHRASE_QUERY.getType())) {
+            // 封装短语查询参数
+            MatchPhraseQueryBuilder matchPhraseQueryBuilder = QueryBuilders.matchPhraseQuery(field, value.toString()).boost(boost).slop(slop);
+            setQueryBuilder(boolQueryBuilder, attachType, matchPhraseQueryBuilder);
         }
     }
 

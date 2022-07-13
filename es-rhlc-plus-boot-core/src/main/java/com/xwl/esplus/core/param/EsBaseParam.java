@@ -101,6 +101,10 @@ public class EsBaseParam {
          */
         private Object rightValue;
         /**
+         * 位置距离
+         */
+        private Integer slop;
+        /**
          * boost权重值
          */
         private Float boost;
@@ -155,6 +159,14 @@ public class EsBaseParam {
 
         public void setBoost(Float boost) {
             this.boost = boost;
+        }
+
+        public Integer getSlop() {
+            return slop;
+        }
+
+        public void setSlop(Integer slop) {
+            this.slop = slop;
         }
 
         public List<Object> getValues() {

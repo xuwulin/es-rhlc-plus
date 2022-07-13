@@ -547,7 +547,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getFilterList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -556,7 +557,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getShouldList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -565,7 +567,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getMustNotList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -574,7 +577,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getGtList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -583,7 +587,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getLtList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -592,7 +597,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getGeList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -601,7 +607,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getLeList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -610,7 +617,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getBetweenList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -620,7 +628,6 @@ public class EsWrapperProcessor {
                         fieldValueModel.getLeftValue(),
                         fieldValueModel.getRightValue(),
                         fieldValueModel.getBoost()));
-
         baseEsParam.getNotBetweenList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
@@ -653,7 +660,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         Optional.empty(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getNotNullList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -662,7 +670,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         Optional.empty(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getLikeLeftList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -671,7 +680,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
 
         baseEsParam.getLikeRightList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
@@ -680,7 +690,8 @@ public class EsWrapperProcessor {
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
-                        fieldValueModel.getBoost()));
+                        fieldValueModel.getBoost(),
+                        fieldValueModel.getSlop()));
     }
 
     /**

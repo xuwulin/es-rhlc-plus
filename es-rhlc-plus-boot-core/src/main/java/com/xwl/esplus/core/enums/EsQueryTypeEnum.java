@@ -41,7 +41,11 @@ public enum EsQueryTypeEnum {
     /**
      * 正则匹配
      */
-    REGEXP_QUERY(9);
+    REGEXP_QUERY(9),
+    /**
+     * 模糊匹配 分词 相当于mysql like
+     */
+    MATCH_PHRASE_QUERY(10),;
 
     /**
      * 类型

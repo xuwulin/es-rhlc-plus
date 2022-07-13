@@ -104,6 +104,30 @@ public interface Compare<Children, R> extends Serializable {
      */
     Children match(boolean condition, R column, Object val, Float boost);
 
+    default Children matchPhrase(R column, Object val) {
+        return matchPhrase(true, column, val);
+    }
+
+    default Children matchPhrase(R column, Object val, Integer slop) {
+        return matchPhrase(true, column, val, slop, EsConstants.DEFAULT_BOOST);
+    }
+
+    default Children matchPhrase(boolean condition, R column, Object val) {
+        return matchPhrase(condition, column, val, EsConstants.ZERO, EsConstants.DEFAULT_BOOST);
+    }
+
+    /**
+     * match 短语匹配
+     *
+     * @param condition 条件
+     * @param column    列
+     * @param val       值
+     * @param slop      位置距离
+     * @param boost     权重值
+     * @return Children
+     */
+    Children matchPhrase(boolean condition, R column, Object val, Integer slop, Float boost);
+
     default Children notMatch(R column, Object val) {
         return notMatch(true, column, val);
     }
