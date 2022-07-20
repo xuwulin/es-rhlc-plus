@@ -381,23 +381,25 @@ public class EsWrapperProcessor {
                     topHitsAggregationBuilder.highlighter(highlightBuilder);
                 }
                 List<EsSortParam> sortParamList = aggregationParam.getSortParamList();
-                sortParamList.forEach(sortParam -> {
-                    SortOrder sortOrder = sortParam.getAsc() ? SortOrder.ASC : SortOrder.DESC;
-                    sortParam.getFields().forEach(field -> {
-                        FieldSortBuilder fieldSortBuilder;
-                        String customField = columnMappingMap.get(field);
-                        if (Objects.nonNull(customField)) {
-                            fieldSortBuilder = new FieldSortBuilder(customField).order(sortOrder);
-                        } else {
-                            if (documentConfig.isMapUnderscoreToCamelCase()) {
-                                fieldSortBuilder = new FieldSortBuilder(StringUtils.camelToUnderline(field)).order(sortOrder);
+                if (Objects.nonNull(sortParamList) && sortParamList.size() > 0) {
+                    sortParamList.forEach(sortParam -> {
+                        SortOrder sortOrder = sortParam.getAsc() ? SortOrder.ASC : SortOrder.DESC;
+                        sortParam.getFields().forEach(field -> {
+                            FieldSortBuilder fieldSortBuilder;
+                            String customField = columnMappingMap.get(field);
+                            if (Objects.nonNull(customField)) {
+                                fieldSortBuilder = new FieldSortBuilder(customField).order(sortOrder);
                             } else {
-                                fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
+                                if (documentConfig.isMapUnderscoreToCamelCase()) {
+                                    fieldSortBuilder = new FieldSortBuilder(StringUtils.camelToUnderline(field)).order(sortOrder);
+                                } else {
+                                    fieldSortBuilder = new FieldSortBuilder(field).order(sortOrder);
+                                }
                             }
-                        }
-                        topHitsAggregationBuilder.sort(fieldSortBuilder);
+                            topHitsAggregationBuilder.sort(fieldSortBuilder);
+                        });
                     });
-                });
+                }
                 aggregationBuilder = topHitsAggregationBuilder;
                 break;
             case DATE_HISTOGRAM:

@@ -136,7 +136,11 @@ public interface SubAggregation extends Serializable {
     }
 
     static <T> EsAggregationParam<T> topHist(String returnName) {
-        return EsSubAggregationProcessor.topHist(true, returnName, 0, 10, null, null, null);
+        return EsSubAggregationProcessor.topHist(true, returnName, 0, 10, null, null);
+    }
+
+    static <T> EsAggregationParam<T> topHist(String returnName,Integer size) {
+        return EsSubAggregationProcessor.topHist(true, returnName, 0, size, null, null);
     }
 
     static <T> EsAggregationParam<T> topHist(String returnName, SFunction<T, ?>... column) {
