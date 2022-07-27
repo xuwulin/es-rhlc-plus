@@ -357,7 +357,7 @@ public class EsWrapperProcessor {
                         .size(aggregationParam.getSize() == null ? EsConstants.TEN : aggregationParam.getSize());
                 break;
             case CARDINALITY:
-                aggregationBuilder = AggregationBuilders.cardinality(aggregationParam.getName()).field(realField);
+                aggregationBuilder = AggregationBuilders.cardinality(aggregationParam.getName()).field(realField).precisionThreshold(aggregationParam.getPrecisionThreshold());
                 break;
             case TOP_HITS:
                 TopHitsAggregationBuilder topHitsAggregationBuilder = AggregationBuilders.topHits(aggregationParam.getName())
