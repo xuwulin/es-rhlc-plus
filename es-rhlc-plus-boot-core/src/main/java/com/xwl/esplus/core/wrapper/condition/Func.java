@@ -238,6 +238,10 @@ public interface Func<T, Children, R> extends Serializable {
         return termsAggregation(true, FieldUtils.getFieldName(column), null, column, subAggregation);
     }
 
+    default Children termsAggregation(Integer size, R column, EsAggregationParam<T>... subAggregation) {
+        return termsAggregation(true, FieldUtils.getFieldName(column), size, column, subAggregation);
+    }
+
     default Children termsAggregation(R column) {
         return termsAggregation(true, FieldUtils.getFieldName(column), null, column);
     }

@@ -51,8 +51,8 @@ public class EsSubAggregationProcessor {
         return doIt(condition, EsAggregationTypeEnum.SUM, "sum_".concat(FieldUtils.getFieldName(column)), null, column, null);
     }
 
-    public static <T> EsAggregationParam<T> cardinality(boolean condition, SFunction<T, ?> column) {
-        return doIt(condition, EsAggregationTypeEnum.CARDINALITY, "cardinality_".concat(FieldUtils.getFieldName(column)), null, column, null);
+    public static <T> EsAggregationParam<T> cardinality(boolean condition, SFunction<T, ?> column, Integer precisionThreshold) {
+        return doIt(condition, EsAggregationTypeEnum.CARDINALITY, "cardinality_".concat(FieldUtils.getFieldName(column)), null, column, precisionThreshold, null);
     }
 
     /**
@@ -73,6 +73,33 @@ public class EsSubAggregationProcessor {
             aggregationParam.setField(FieldUtils.getFieldName(column));
             aggregationParam.setSize(size);
             aggregationParam.setAggregationType(aggregationTypeEnum);
+            if (Objects.nonNull(aggregationParams)) {
+                aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
+            }
+            return aggregationParam;
+        }
+        return null;
+    }
+
+    /**
+     * 封装查询参数 聚合类
+     *
+     * @param condition           条件
+     * @param aggregationTypeEnum 聚合类型
+     * @param returnName          返回的聚合字段名称
+     * @param size                返回的聚合字段大小
+     * @param column              列
+     * @param aggregationParams   子聚合
+     * @return 泛型
+     */
+    private static <T> EsAggregationParam<T> doIt(boolean condition, EsAggregationTypeEnum aggregationTypeEnum, String returnName, Integer size, SFunction<T, ?> column, Integer precisionThreshold, EsAggregationParam<T>[] aggregationParams) {
+        if (condition) {
+            EsAggregationParam<T> aggregationParam = new EsAggregationParam<T>();
+            aggregationParam.setName(returnName);
+            aggregationParam.setField(FieldUtils.getFieldName(column));
+            aggregationParam.setSize(size);
+            aggregationParam.setAggregationType(aggregationTypeEnum);
+            aggregationParam.setPrecisionThreshold(precisionThreshold);
             if (Objects.nonNull(aggregationParams)) {
                 aggregationParam.setSubAggregations(Arrays.asList(aggregationParams));
             }
@@ -115,6 +142,7 @@ public class EsSubAggregationProcessor {
         }
         return null;
     }
+
 
     /**
      * @param condition  条件

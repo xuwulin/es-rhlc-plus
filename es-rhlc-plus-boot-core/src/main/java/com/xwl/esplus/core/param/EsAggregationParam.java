@@ -91,6 +91,12 @@ public class EsAggregationParam<T> {
      */
     private List<EsSortParam> sortParamList;
 
+
+    /**
+     * 排序查询参数列表
+     */
+    private Integer precisionThreshold;
+
     public EsAggregationParam() {
     }
 
@@ -204,6 +210,14 @@ public class EsAggregationParam<T> {
 
     public void setSortParamList(List<EsSortParam> sortParamList) {
         this.sortParamList = sortParamList;
+    }
+
+    public Integer getPrecisionThreshold() {
+        return precisionThreshold;
+    }
+
+    public void setPrecisionThreshold(Integer precisionThreshold) {
+        this.precisionThreshold = precisionThreshold;
     }
 
     public EsAggregationParam<T> orderBy(boolean isAsc, SFunction<T, ?>... columns) {

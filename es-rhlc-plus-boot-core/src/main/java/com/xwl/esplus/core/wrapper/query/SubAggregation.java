@@ -99,8 +99,12 @@ public interface SubAggregation extends Serializable {
         return EsSubAggregationProcessor.sum(condition, column);
     }
 
+    static <T> EsAggregationParam<T> cardinality(SFunction<T, ?> column, Integer precisionThreshold) {
+        return cardinality(true, column, precisionThreshold);
+    }
+
     static <T> EsAggregationParam<T> cardinality(SFunction<T, ?> column) {
-        return EsSubAggregationProcessor.cardinality(true, column);
+        return cardinality(true, column, 100);
     }
 
     /**
@@ -110,8 +114,8 @@ public interface SubAggregation extends Serializable {
      * @param column
      * @return
      */
-    static <T> EsAggregationParam<T> cardinality(boolean condition, SFunction<T, ?> column) {
-        return EsSubAggregationProcessor.cardinality(condition, column);
+    static <T> EsAggregationParam<T> cardinality(boolean condition, SFunction<T, ?> column, Integer precisionThreshold) {
+        return EsSubAggregationProcessor.cardinality(condition, column, precisionThreshold);
     }
 
     static <T> EsAggregationParam<T> dateHistogram(SFunction<T, ?> column, DateHistogramInterval interval, String format, long minDocCount, ExtendedBounds extendedBounds, ZoneId timeZone, EsAggregationParam<T>... esAggregationParams) {
@@ -139,7 +143,7 @@ public interface SubAggregation extends Serializable {
         return EsSubAggregationProcessor.topHist(true, returnName, 0, 10, null, null);
     }
 
-    static <T> EsAggregationParam<T> topHist(String returnName,Integer size) {
+    static <T> EsAggregationParam<T> topHist(String returnName, Integer size) {
         return EsSubAggregationProcessor.topHist(true, returnName, 0, size, null, null);
     }
 
