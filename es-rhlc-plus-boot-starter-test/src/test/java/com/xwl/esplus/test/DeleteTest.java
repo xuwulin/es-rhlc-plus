@@ -33,7 +33,7 @@ public class DeleteTest {
 
     @Test
     public void testDeleteById() {
-        Integer delete = userDocumentMapper.removeById("I2f7wH8Brppw3wlArMVX");
+        Integer delete = userDocumentMapper.removeById("o8SfQoIByjUntWdVYrkO");
         Assert.assertTrue(delete > 0);
     }
 

@@ -32,12 +32,12 @@ public class InsertTest {
     @Test
     public void testInsert() throws ParseException {
         UserDocument userDocument = new UserDocument();
-        userDocument.setNickname("张三疯");
-        userDocument.setChineseName(new ChineseName().setFirstName("张").setLastName("三疯"));
+        userDocument.setNickname("哈哈哈");
+        userDocument.setChineseName(new ChineseName().setFirstName("王").setLastName("三"));
 //        userDocument.setEnglishName(new EnglishName[]{new EnglishName().setFirstName("zhang").setLastName("san"), new EnglishName().setFirstName("li").setLastName("si")});
-        userDocument.setEnglishName(Arrays.asList(new EnglishName().setFirstName("zhang").setLastName("san"), new EnglishName().setFirstName("li").setLastName("si")));
-        userDocument.setIdNumber("1001");
-        userDocument.setAge(100);
+        userDocument.setEnglishName(Arrays.asList(new EnglishName().setFirstName("wang").setLastName("san")));
+        userDocument.setIdNumber("1003");
+        userDocument.setAge(88);
         userDocument.setGender("男");
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         userDocument.setBirthday(formatter.parse("1922-03-25 00:00:00"));
@@ -61,7 +61,7 @@ public class InsertTest {
         for (int i = 5001; i <= 10009; i++) {
             UserDocument userDocument = new UserDocument();
             userDocument.setNickname("张三疯" + i);
-            userDocument.setChineseName(new ChineseName().setFirstName("张").setLastName("三疯"));
+//            userDocument.setChineseName(new ChineseName().setFirstName("张").setLastName("三疯"));
             userDocument.setIdNumber(String.valueOf(i));
             userDocument.setAge(i);
             userDocument.setGender("男");
