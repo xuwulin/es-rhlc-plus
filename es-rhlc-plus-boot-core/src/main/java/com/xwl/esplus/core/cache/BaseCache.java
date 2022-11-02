@@ -6,6 +6,7 @@ import com.xwl.esplus.core.toolkit.ExceptionUtils;
 import com.xwl.esplus.core.toolkit.FieldUtils;
 import com.xwl.esplus.core.toolkit.GenericTypeUtils;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -47,7 +48,7 @@ public class BaseCache {
         // 获取接口泛型的实际类型
         Class<?> entityClass = GenericTypeUtils.getInterfaceGeneric(mapperInterface, 0);
         esBaseMapper.setEntityClass(entityClass);
-        esBaseMapper.setGlobalConfig(GlobalConfigCache.getGlobalConfig());
+        //esBaseMapper.setGlobalConfig(GlobalConfigCache.getGlobalConfig());
         ES_BASE_MAPPER_INSTANCE.put(mapperInterface, esBaseMapper);
 
         // 初始化entity中所有方法

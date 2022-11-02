@@ -22,7 +22,7 @@ import java.util.Set;
  * @since 2022/3/11 20:30
  */
 public class EsMapperScanner extends ClassPathBeanDefinitionScanner {
-    private EsMapperFactoryBean<?> esMapperFactoryBean = new EsMapperFactoryBean<>();
+    private EsMapperFactoryBean<?> esMapperFactoryBean;
 
     private Class<? extends Annotation> annotationClass;
 
@@ -151,7 +151,7 @@ public class EsMapperScanner extends ClassPathBeanDefinitionScanner {
              * beanName是userDocumentMapper，beanClass是EsMapperFactoryBean.class。
              * 那么在IOC初始化的时候，实例化的对象就是EsMapperFactoryBean对象。
              */
-            definition.setBeanClass(this.esMapperFactoryBean.getClass());
+            definition.setBeanClass(EsMapperFactoryBean.class);
 
             logger.debug("Enabling autowire by type for EsMapperFactoryBean with name '" + holder.getBeanName() + "'.");
             /**

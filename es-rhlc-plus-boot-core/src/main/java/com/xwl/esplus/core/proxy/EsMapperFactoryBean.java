@@ -4,6 +4,7 @@ import com.xwl.esplus.core.cache.BaseCache;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Proxy;
 

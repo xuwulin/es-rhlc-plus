@@ -22,6 +22,8 @@ import java.util.Map;
  * @since 2022/3/11 19:31
  */
 public interface EsBaseMapper<T> {
+
+    void setRestHighLevelClient();
     /**
      * 判断索引是否存在
      *

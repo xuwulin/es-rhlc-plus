@@ -60,6 +60,7 @@ import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -107,6 +108,13 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
     public void setRestHighLevelClient(RestHighLevelClient restHighLevelClient) {
         this.restHighLevelClient = restHighLevelClient;
+    }
+
+    @Override
+    public void setRestHighLevelClient() {
+        String peek = DynamicClientContextHolder.peek();
+        RestHighLevelClient client = DynamicRoutingClient.getClient(peek);
+        this.restHighLevelClient = client;
     }
 
     @Override
@@ -496,9 +504,9 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     public List<T> list(EsLambdaQueryWrapper<T> wrapper) {
         // 请求es获取数据
         SearchHit[] searchHits = getSearchHitArray(wrapper);
-        if (CollectionUtils.isEmpty(searchHits)) {
-            return new ArrayList<>(0);
-        }
+        //if (CollectionUtils.isEmpty(searchHits)) {
+        //    return new ArrayList<>(0);
+        //}
 
         // 批量解析
         return Arrays.stream(searchHits)
@@ -629,7 +637,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             // 注解 > 配置
             // 创建索引时，全局驼峰转下划线配置和使用注解指定es字段名，能同时生效，注解优先级高，加了注解的字段使用注解中的值，没加注解的使用驼峰转下划线
             // 根据全局配置确定es字段名是否要进行驼峰转下划线
-            if (this.globalConfig.getDocumentConfig().isMapUnderscoreToCamelCase()) {
+            if (GlobalConfigCache.getGlobalConfig().getDocumentConfig().isMapUnderscoreToCamelCase()) {
                 fieldName = StringUtils.camelToUnderline(fieldName);
             }
             // 根据字段上的注解确定es的字段名（优先级高） TODO 待解决：对象字段解析时会报错
@@ -747,7 +755,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         SerializeFilter[] filters = {simplePropertyPreFilter, documentInfo.getSerializeFilter()};
 
         // 日期格式：所有的日期格式需要转换为全局配置的日期格式，但是如果有@JSONField(format="")注解的，按照注解的format配置内容来进行格式化
-        String globalDateFormat = this.globalConfig.getDocumentConfig().getDateFormat();
+        String globalDateFormat = GlobalConfigCache.getGlobalConfig().getDocumentConfig().getDateFormat();
         if (StringUtils.isNotBlank(globalDateFormat)) {
             // 指定fastjson的全局日期格式
             JSON.DEFFAULT_DATE_FORMAT = globalDateFormat;
@@ -1202,7 +1210,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      * @param wrapper 查询参数包装类
      */
     private void logQueryDSL(EsLambdaQueryWrapper<T> wrapper) {
-        if (this.globalConfig.isEnableDsl()) {
+        if (GlobalConfigCache.getGlobalConfig().isEnableDsl()) {
             SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper, entityClass);
             logPrettyQueryDSL(searchSourceBuilder);
         }
@@ -1214,7 +1222,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      * @param searchSourceBuilder es查询请求参数
      */
     private void logQueryDSL(SearchSourceBuilder searchSourceBuilder) {
-        if (this.globalConfig.isEnableDsl()) {
+        if (GlobalConfigCache.getGlobalConfig().isEnableDsl()) {
             logPrettyQueryDSL(searchSourceBuilder);
         }
     }
@@ -1225,7 +1233,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
      * @param wrapper 查询参数包装类
      */
     private void logQueryCountDSL(EsLambdaQueryWrapper<T> wrapper) {
-        if (this.globalConfig.isEnableDsl()) {
+        if (GlobalConfigCache.getGlobalConfig().isEnableDsl()) {
             CountRequest countRequest = new CountRequest(getIndexName());
             BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper, entityClass);
             countRequest.query(boolQueryBuilder);

@@ -12,6 +12,8 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -30,6 +32,8 @@ import java.util.List;
 @Configuration
 @EnableConfigurationProperties(EsPlusProperties.class)
 @ConditionalOnClass(RestHighLevelClient.class)
+@ConditionalOnMissingBean(DynamicEsPlusAutoConfiguration.class)
+@AutoConfigureAfter(DynamicEsPlusAutoConfiguration.class)
 public class EsPlusAutoConfiguration implements InitializingBean {
     /**
      * elasticsearch连接属性
