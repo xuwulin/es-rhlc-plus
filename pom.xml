@@ -19,6 +19,7 @@
         <module>es-rhlc-plus-boot-autoconfigure</module>
         <module>es-rhlc-plus-boot-starter</module>
         <module>es-rhlc-plus-boot-starter-test</module>
+        <module>es-rhlc-plus-boot-starter-dynamic-test</module>
     </modules>
 
     <!-- 开发者 -->
