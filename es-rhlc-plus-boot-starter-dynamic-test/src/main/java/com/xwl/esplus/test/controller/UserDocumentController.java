@@ -6,12 +6,15 @@ import com.xwl.esplus.test.document.UserDocument;
 import com.xwl.esplus.test.document.WorkOrderDocument;
 import com.xwl.esplus.test.mapper.UserDocumentMapper;
 import com.xwl.esplus.test.mapper.WorkOrderDocumentMapper;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+
+import static com.xwl.esplus.core.constant.EsGlobalConstants.CLIENT_PREFIX;
 
 /**
  * @author xwl
@@ -26,6 +29,13 @@ public class UserDocumentController {
 
     @Resource
     private WorkOrderDocumentMapper workOrderDocumentMapper;
+
+
+    @Resource
+    private RestHighLevelClient restHighLevelClient_master;
+
+    @Resource
+    private RestHighLevelClient restHighLevelClient_slave;
 
     @GetMapping("/selectSlaveList")
     @EsClient("slave")

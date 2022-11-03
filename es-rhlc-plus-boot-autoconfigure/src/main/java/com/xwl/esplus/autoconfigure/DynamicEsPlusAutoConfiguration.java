@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.xwl.esplus.core.constant.EsGlobalConstants.CLIENT_PREFIX;
+
 /**
  * @Description:
  * @Author: hl
@@ -38,8 +40,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DynamicEsPlusAutoConfiguration implements InitializingBean {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
-
-    private final String CLIENT_PREFIX = "restHighLevelClient_";
 
     private DynamicEsPlusProperties dynamicEsPlusProperties;
 
@@ -78,7 +78,7 @@ public class DynamicEsPlusAutoConfiguration implements InitializingBean {
             if (entry.getKey().equals(dynamicEsPlusProperties.getPrimary())) {
                 atomicReference.set(restHighLevelClient);
             }
-            beanFactory.registerSingleton(CLIENT_PREFIX.concat("_").concat(entry.getKey()), restHighLevelClient);
+            beanFactory.registerSingleton(CLIENT_PREFIX.concat(entry.getKey()), restHighLevelClient);
             DynamicRoutingClient.addClient(entry.getKey(), restHighLevelClient);
         });
         if (!DynamicRoutingClient.containsClient(dynamicEsPlusProperties.getPrimary())) {

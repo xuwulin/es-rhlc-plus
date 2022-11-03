@@ -19,19 +19,19 @@ public class DynamicClientAnnotationInterceptor implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         try {
-            DynamicClientContextHolder.push(determineDatasource(invocation));
+            DynamicClientContextHolder.push(determineClient(invocation));
             return invocation.proceed();
         } finally {
             DynamicClientContextHolder.poll();
         }
     }
 
-    private String determineDatasource(MethodInvocation invocation){
+    private String determineClient(MethodInvocation invocation){
         Method method = invocation.getMethod();
-        EsClient ds = method.isAnnotationPresent(EsClient.class)
+        EsClient ec = method.isAnnotationPresent(EsClient.class)
                 ? method.getAnnotation(EsClient.class)
                 : AnnotationUtils.findAnnotation(targetClass(invocation), EsClient.class);
-        String key = ds.value();
+        String key = ec.value();
         return key;
     }
 
