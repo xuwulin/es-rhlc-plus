@@ -12,6 +12,11 @@
     <artifactId>es-rhlc-plus-boot-autoconfigure</artifactId>
     <description>es-rhlc-plus自动配置</description>
 
+    <properties>
+        <!-- 不需要deploy此模块 -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.github.xuwulin</groupId>

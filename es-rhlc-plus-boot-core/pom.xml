@@ -12,6 +12,11 @@
     <artifactId>es-rhlc-plus-boot-core</artifactId>
     <description>es-rhlc-plus核心</description>
 
+    <properties>
+        <!-- 不需要deploy此模块 -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
