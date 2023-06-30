@@ -60,7 +60,6 @@ import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -320,6 +319,74 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             bulkRequest.add(updateRequest);
         });
         return doBulkRequest(bulkRequest, RequestOptions.DEFAULT);
+    }
+
+    @Override
+    public Integer saveOrUpdate(T entity) {
+        if (null != entity) {
+            // id处理，除下述情况，其它情况使用es默认的id，注解 > 全局配置
+            String idValue = null;
+            DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entity.getClass());
+            if (StringUtils.isNotBlank(documentInfo.getId())) {
+                if (EsKeyTypeEnum.UUID.equals(documentInfo.getKeyType())) {
+                    idValue = UUID.randomUUID().toString();
+                } else if (EsKeyTypeEnum.CUSTOMIZE.equals(documentInfo.getKeyType())) {
+                    idValue = getIdValue(entityClass, entity);
+                }
+            }
+            return StringUtils.checkValNull(idValue) || Objects.isNull(getById((Serializable) idValue)) ? save(entity) : updateById(entity);
+        }
+        return 0;
+    }
+
+    @Override
+    public Integer saveOrUpdate(T entity, EsLambdaUpdateWrapper<T> wrapper) {
+        Integer update = update(entity, wrapper);
+        if (update > EsConstants.ZERO) {
+            return update;
+        }
+        return saveOrUpdate(entity);
+    }
+
+    @Override
+    public Integer saveOrUpdateBatch(Collection<T> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return EsConstants.ZERO;
+        }
+
+        List<T> saveEntityList = new ArrayList<>();
+        BulkRequest saveBulkRequest = new BulkRequest();
+
+        List<T> updateEntityList = new ArrayList<>();
+        BulkRequest updateBulkRequest = new BulkRequest();
+        entityList.forEach(entity -> {
+            // 获取id值
+            Object idValue = getIdValueCanBeNull(entityClass, entity);
+            if (Objects.nonNull(idValue) && StringUtils.isNotBlank((CharSequence) idValue)) {
+                // 根据id判断该记录是否存在
+                if (Objects.nonNull(getById((Serializable) idValue))) {
+                    UpdateRequest updateRequest = buildUpdateRequest(entity, (String) idValue);
+                    updateEntityList.add(entity);
+                    updateBulkRequest.add(updateRequest);
+                } else {
+                    // 不存在则为新增
+                    IndexRequest indexRequest = buildIndexRequest(entity);
+                    saveEntityList.add(entity);
+                    saveBulkRequest.add(indexRequest);
+                }
+            } else {
+                // 如果id为空（自动生成id）则一定是新增
+                IndexRequest indexRequest = buildIndexRequest(entity);
+                saveEntityList.add(entity);
+                saveBulkRequest.add(indexRequest);
+            }
+        });
+
+        int saveCounts = doBulkRequest(saveBulkRequest, RequestOptions.DEFAULT, saveEntityList);
+        int updateCounts = doBulkRequest(updateBulkRequest, RequestOptions.DEFAULT);
+        log.info("exec saveOrUpdateBatch method, save [{}] records， update [{}] records", saveCounts, updateCounts);
+
+        return saveCounts + updateCounts;
     }
 
     @Override
@@ -702,6 +769,26 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             return Optional.ofNullable(value)
                     .map(Object::toString)
                     .orElseThrow(() -> ExceptionUtils.epe("the entity id can not be null"));
+        } catch (IllegalAccessException e) {
+            throw ExceptionUtils.epe("get id value exception", e);
+        }
+    }
+
+    /**
+     * 获取文档实体对象的id值
+     *
+     * @param entityClass 实体类
+     * @param entity      实体对象
+     * @return id值
+     */
+    private Object getIdValueCanBeNull(Class<T> entityClass, T entity) {
+        try {
+            DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
+            Field keyField = Optional.ofNullable(documentInfo.getKeyField())
+                    .orElseThrow(() -> ExceptionUtils.epe("the entity id field not found"));
+            // 获取id值
+            Object value = keyField.get(entity);
+            return value;
         } catch (IllegalAccessException e) {
             throw ExceptionUtils.epe("get id value exception", e);
         }

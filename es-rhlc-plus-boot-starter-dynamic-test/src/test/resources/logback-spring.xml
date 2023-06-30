@@ -41,8 +41,7 @@
             <!-- 设置字符集 -->
             <charset>UTF-8</charset>
             <!-- 日志输出格式：使用彩色日志 -->
-            <Pattern>%red(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %boldMagenta(%logger : %line) - %msg%n
-            </Pattern>
+            <pattern>%red(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %boldMagenta(%logger : %line) - %msg%n</pattern>
         </encoder>
     </appender>
 

@@ -8,11 +8,18 @@ import com.xwl.esplus.core.toolkit.Wrappers;
 import com.xwl.esplus.core.wrapper.index.EsLambdaIndexWrapper;
 import com.xwl.esplus.test.document.UserDocument;
 import com.xwl.esplus.test.mapper.UserDocumentMapper;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +32,9 @@ import java.util.Map;
 public class IndexTest {
     @Resource
     private UserDocumentMapper userDocumentMapper;
+
+    @Autowired
+    private RestHighLevelClient restHighLevelClient;
 
     @Test
     public void testExistsIndex() {
@@ -106,5 +116,138 @@ public class IndexTest {
         String indexName = "user_document";
         boolean isOk = userDocumentMapper.deleteIndex(indexName);
         System.out.println(isOk);
+    }
+
+    @Test
+    public void testDeleteIndexs() throws IOException {
+        List<String> list = Arrays.asList("uia_skywalking_alarm_record-20230415",
+                "uia_skywalking_alarm_record-20230416",
+                "uia_skywalking_alarm_record-20230417",
+                "uia_skywalking_browser_error_log-20230415",
+                "uia_skywalking_browser_error_log-20230416",
+                "uia_skywalking_browser_error_log-20230417",
+                "uia_skywalking_endpoint_relation_server_side-20230414",
+                "uia_skywalking_endpoint_relation_server_side-20230415",
+                "uia_skywalking_endpoint_relation_server_side-20230416",
+                "uia_skywalking_endpoint_relation_server_side-20230417",
+                "uia_skywalking_endpoint_traffic-20230414",
+                "uia_skywalking_endpoint_traffic-20230415",
+                "uia_skywalking_endpoint_traffic-20230416",
+                "uia_skywalking_endpoint_traffic-20230417",
+                "uia_skywalking_events-20230412",
+                "uia_skywalking_events-20230414",
+                "uia_skywalking_events-20230415",
+                "uia_skywalking_events-20230416",
+                "uia_skywalking_events-20230417",
+                "uia_skywalking_instance_traffic-20230414",
+                "uia_skywalking_instance_traffic-20230415",
+                "uia_skywalking_instance_traffic-20230416",
+                "uia_skywalking_instance_traffic-20230417",
+                "uia_skywalking_log-20230415",
+                "uia_skywalking_log-20230416",
+                "uia_skywalking_log-20230417",
+                "uia_skywalking_meter-avg-20230414",
+                "uia_skywalking_meter-avg-20230415",
+                "uia_skywalking_meter-avg-20230416",
+                "uia_skywalking_meter-avg-20230417",
+                "uia_skywalking_meter-avglabeled-20230414",
+                "uia_skywalking_meter-avglabeled-20230415",
+                "uia_skywalking_meter-avglabeled-20230416",
+                "uia_skywalking_meter-avglabeled-20230417",
+                "uia_skywalking_metrics-all-20230417",
+                "uia_skywalking_metrics-apdex-20230414",
+                "uia_skywalking_metrics-apdex-20230415",
+                "uia_skywalking_metrics-apdex-20230416",
+                "uia_skywalking_metrics-apdex-20230417",
+                "uia_skywalking_metrics-count-20230412",
+                "uia_skywalking_metrics-count-20230414",
+                "uia_skywalking_metrics-count-20230415",
+                "uia_skywalking_metrics-count-20230416",
+                "uia_skywalking_metrics-count-20230417",
+                "uia_skywalking_metrics-cpm-20230414",
+                "uia_skywalking_metrics-cpm-20230415",
+                "uia_skywalking_metrics-cpm-20230416",
+                "uia_skywalking_metrics-cpm-20230417",
+                "uia_skywalking_metrics-doubleavg-20230414",
+                "uia_skywalking_metrics-doubleavg-20230415",
+                "uia_skywalking_metrics-doubleavg-20230416",
+                "uia_skywalking_metrics-doubleavg-20230417",
+                "uia_skywalking_metrics-histogram-20230414",
+                "uia_skywalking_metrics-histogram-20230415",
+                "uia_skywalking_metrics-histogram-20230416",
+                "uia_skywalking_metrics-histogram-20230417",
+                "uia_skywalking_metrics-longavg-20230414",
+                "uia_skywalking_metrics-longavg-20230415",
+                "uia_skywalking_metrics-longavg-20230416",
+                "uia_skywalking_metrics-longavg-20230417",
+                "uia_skywalking_metrics-max-20230414",
+                "uia_skywalking_metrics-max-20230415",
+                "uia_skywalking_metrics-max-20230416",
+                "uia_skywalking_metrics-max-20230417",
+                "uia_skywalking_metrics-percent-20230414",
+                "uia_skywalking_metrics-percent-20230415",
+                "uia_skywalking_metrics-percent-20230416",
+                "uia_skywalking_metrics-percent-20230417",
+                "uia_skywalking_metrics-percentile-20230414",
+                "uia_skywalking_metrics-percentile-20230415",
+                "uia_skywalking_metrics-percentile-20230416",
+                "uia_skywalking_metrics-percentile-20230417",
+                "uia_skywalking_metrics-rate-20230414",
+                "uia_skywalking_metrics-rate-20230415",
+                "uia_skywalking_metrics-rate-20230416",
+                "uia_skywalking_metrics-rate-20230417",
+                "uia_skywalking_metrics-sum-20230414",
+                "uia_skywalking_metrics-sum-20230415",
+                "uia_skywalking_metrics-sum-20230416",
+                "uia_skywalking_metrics-sum-20230417",
+                "uia_skywalking_network_address_alias-20230414",
+                "uia_skywalking_network_address_alias-20230415",
+                "uia_skywalking_network_address_alias-20230416",
+                "uia_skywalking_network_address_alias-20230417",
+                "uia_skywalking_profile_task-20230415",
+                "uia_skywalking_profile_task-20230416",
+                "uia_skywalking_profile_task-20230417",
+                "uia_skywalking_profile_task_log-20230415",
+                "uia_skywalking_profile_task_log-20230416",
+                "uia_skywalking_profile_task_log-20230417",
+                "uia_skywalking_profile_task_segment_snapshot-20230415",
+                "uia_skywalking_profile_task_segment_snapshot-20230416",
+                "uia_skywalking_profile_task_segment_snapshot-20230417",
+                "uia_skywalking_segment-20230415",
+                "uia_skywalking_segment-20230416",
+                "uia_skywalking_segment-20230417",
+                "uia_skywalking_service_instance_relation_client_side-20230414",
+                "uia_skywalking_service_instance_relation_client_side-20230415",
+                "uia_skywalking_service_instance_relation_client_side-20230416",
+                "uia_skywalking_service_instance_relation_client_side-20230417",
+                "uia_skywalking_service_instance_relation_server_side-20230414",
+                "uia_skywalking_service_instance_relation_server_side-20230415",
+                "uia_skywalking_service_instance_relation_server_side-20230416",
+                "uia_skywalking_service_instance_relation_server_side-20230417",
+                "uia_skywalking_service_relation_client_side-20230414",
+                "uia_skywalking_service_relation_client_side-20230415",
+                "uia_skywalking_service_relation_client_side-20230416",
+                "uia_skywalking_service_relation_client_side-20230417",
+                "uia_skywalking_service_relation_server_side-20230414",
+                "uia_skywalking_service_relation_server_side-20230415",
+                "uia_skywalking_service_relation_server_side-20230416",
+                "uia_skywalking_service_relation_server_side-20230417",
+                "uia_skywalking_service_traffic-20230414",
+                "uia_skywalking_service_traffic-20230415",
+                "uia_skywalking_service_traffic-20230416",
+                "uia_skywalking_service_traffic-20230417",
+                "uia_skywalking_top_n_database_statement-20230415",
+                "uia_skywalking_top_n_database_statement-20230416",
+                "uia_skywalking_top_n_database_statement-20230417",
+                "uia_skywalking_ui_template",
+                "uia_skywalking_zipkin_span-20230415",
+                "uia_skywalking_zipkin_span-20230416",
+                "uia_skywalking_zipkin_span-20230417");
+        for (String s : list) {
+            DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(s);
+            AcknowledgedResponse response = restHighLevelClient.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
+            boolean acknowledged = response.isAcknowledged();
+            System.out.println(acknowledged);
+        }
     }
 }

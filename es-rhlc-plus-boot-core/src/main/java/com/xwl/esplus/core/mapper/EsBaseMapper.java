@@ -24,6 +24,7 @@ import java.util.Map;
 public interface EsBaseMapper<T> {
 
     void setRestHighLevelClient();
+
     /**
      * 判断索引是否存在
      *
@@ -96,6 +97,31 @@ public interface EsBaseMapper<T> {
      * @return 成功条数
      */
     Integer updateBatchById(Collection<T> entityList);
+
+    /**
+     * 存在更新记录，否插入一条记录
+     *
+     * @param entity 实体对象
+     * @return 成功条数
+     */
+    Integer saveOrUpdate(T entity);
+
+    /**
+     * 存在更新记录，否插入一条记录
+     *
+     * @param entity  实体对象
+     * @param wrapper 更新条件
+     * @return 成功条数
+     */
+    Integer saveOrUpdate(T entity, EsLambdaUpdateWrapper<T> wrapper);
+
+    /**
+     * 批量插入或更新
+     *
+     * @param entityList es对应的实体类列表
+     * @return 成功条数
+     */
+    Integer saveOrUpdateBatch(Collection<T> entityList);
 
     /**
      * 根据条件删除文档
