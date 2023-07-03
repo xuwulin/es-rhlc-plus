@@ -684,8 +684,8 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             // 设置copy_to
             Optional.ofNullable(indexParam.getCopyTo())
                     .ifPresent(copyTo -> fieldInfo.put(EsConstants.COPY_TO, copyTo));
-            // 设置分词器，只有text类型才有此属性
-            if (StringUtils.equals(indexParam.getFieldType(), EsFieldTypeEnum.TEXT.getType())) {
+            // 设置分词器，只有text或者completion类型才有此属性
+            if (StringUtils.equals(indexParam.getFieldType(), EsFieldTypeEnum.TEXT.getType()) || StringUtils.equals(indexParam.getFieldType(), EsFieldTypeEnum.COMPLETION.getType())) {
                 // 创建索引时的分词器
                 Optional.ofNullable(indexParam.getAnalyzer())
                         .ifPresent(analyzer -> fieldInfo.put(EsConstants.ANALYZER, analyzer));

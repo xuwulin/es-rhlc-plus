@@ -676,6 +676,66 @@ match(boolean condition, R column, Object val, Float boost)
 
 
 
+## 自定义分词器
+
+默认的拼音分词器会将每个汉字单独分为拼音，而我们希望的是每个词条形成一组拼音，需要对拼音分词器做个性化定制，形成自定义分词器。
+
+elasticsearch中分词器（analyzer）的组成包含三部分：
+
+- character filters：在tokenizer之前对文本进行处理。例如删除字符、替换字符
+- tokenizer：将文本按照一定的规则切割成词条（term）。例如keyword，就是不分词；还有ik_smart
+- tokenizer filter：将tokenizer输出的词条做进一步处理。例如大小写转换、同义词处理、拼音处理等
+
+文档分词时会依次由这三部分来处理文档：
+
+![image-20210723210427878](https://images-1318546573.cos.ap-chengdu.myqcloud.com/typora/image-20210723210427878.png)
+
+我们可以在创建索引库时，通过settings来配置自定义的analysis（分词器）：**仅对当前索引库有效**
+
+声明自定义分词器的语法如下：
+
+```json
+PUT /test
+{
+  "settings": {
+    "analysis": {
+      "analyzer": { // 自定义分词器
+        "my_analyzer": {  // 分词器名称
+          "tokenizer": "ik_max_word", // tokenizer：先分词（指定分词器为ik_max_word）
+          "filter": "py" // filter(tokenizer filter)：再把分好词的交给拼音分词器处理（不能直接使用pinyin分词器，需要配置下拼音分词器：py）
+        },
+        "completion_analyzer": { // 拼音自动补全时用，不分词直接转拼音
+        "tokenizer": "keyword", // 不分词，词条就是一个整体
+        "filter": "py" // 使用拼音分词器转成拼音
+        }
+      },
+      "filter": { // 自定义tokenizer filter
+        "py": { // 过滤器名称
+          "type": "pinyin", // 过滤器类型，这里是pinyin
+		  "keep_full_pinyin": false, // 是否每个汉字都生产拼音
+          "keep_joined_full_pinyin": true, // 是否全拼
+          "keep_original": true, // 是否保留中文
+          "limit_first_letter_length": 16,
+          "remove_duplicated_term": true, // 是否去重
+          "none_chinese_pinyin_tokenize": false
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "name": {
+        "type": "text",
+        "analyzer": "my_analyzer", // 创建索引时使用自定义分词器
+        "search_analyzer": "ik_smart" // 搜索时使用：ik_smart/ik_max_word分词器
+      }
+    }
+  }
+}
+```
+
+
+
 
 
 不想写了。。。参考[Mybatis-Plus](https://baomidou.com/pages/10c804/#abstractwrapper)条件构造器

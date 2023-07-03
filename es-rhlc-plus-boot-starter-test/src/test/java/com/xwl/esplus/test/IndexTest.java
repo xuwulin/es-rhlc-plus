@@ -47,7 +47,7 @@ public class IndexTest {
     public void testCreateIndex() {
         EsLambdaIndexWrapper<UserDocument> wrapper = Wrappers.lambdaIndex();
         // 自定义分词器
-        String analysis = "{\"analysis\":{\"filter\":{\"py\":{\"keep_joined_full_pinyin\":true,\"none_chinese_pinyin_tokenize\":false,\"keep_original\":true,\"remove_duplicated_term\":true,\"type\":\"pinyin\",\"limit_first_letter_length\":16,\"keep_full_pinyin\":false}},\"analyzer\":{\"completion_analyzer\":{\"filter\":\"py\",\"tokenizer\":\"keyword\"},\"text_anlyzer\":{\"filter\":\"py\",\"tokenizer\":\"ik_max_word\"}}}}";
+        String analysis = "{\"analysis\":{\"filter\":{\"py\":{\"keep_joined_full_pinyin\":true,\"none_chinese_pinyin_tokenize\":false,\"keep_original\":true,\"remove_duplicated_term\":true,\"type\":\"pinyin\",\"limit_first_letter_length\":16,\"keep_full_pinyin\":false}},\"analyzer\":{\"completion_analyzer\":{\"filter\":\"py\",\"tokenizer\":\"keyword\"},\"text_analyzer\":{\"filter\":\"py\",\"tokenizer\":\"ik_max_word\"}}}}";
         Map<String, Object> analysisMap = JSONObject.parseObject(analysis, Map.class);
 
         EsIndexParam cnFirstNameParam = new EsIndexParam();
@@ -75,12 +75,13 @@ public class IndexTest {
                 .mapping(UserDocument::getId, EsFieldTypeEnum.KEYWORD)
                 .mapping(UserDocument::getNickname, EsFieldTypeEnum.KEYWORD, true)
                 .mapping(UserDocument::getChineseName, Arrays.asList(cnFirstNameParam, cnLastNameParam))
-                .mapping(UserDocument::getEnglishName, Arrays.asList(enFirstNameParam, enLastNameParam), EsFieldTypeEnum.NESTED)
+                .mapping(UserDocument::getEnglishName, EsFieldTypeEnum.NESTED, Arrays.asList(enFirstNameParam, enLastNameParam))
                 .mapping(UserDocument::getIdNumber, EsFieldTypeEnum.KEYWORD, false, 18)
                 .mapping(UserDocument::getAge, EsFieldTypeEnum.INTEGER)
                 .mapping(UserDocument::getGender, EsFieldTypeEnum.KEYWORD, false)
                 .mapping(UserDocument::getBirthday, "yyyy-MM-dd")
-                .mapping(UserDocument::getCompanyName, EsFieldTypeEnum.TEXT, true, null, UserDocument::getAll, "text_anlyzer", EsAnalyzerEnum.IK_MAX_WORD, Arrays.asList(deptNameParam))
+                .mapping(UserDocument::getCompanyName, EsFieldTypeEnum.TEXT, true, null, UserDocument::getAll, "text_analyzer", EsAnalyzerEnum.IK_MAX_WORD, Arrays.asList(deptNameParam))
+//                .mapping("enterprise", "text", true, null, "all", "text_analyzer", "ik_max_word", Arrays.asList(deptNameParam))
                 .mapping(UserDocument::getCompanyAddress, EsFieldTypeEnum.TEXT, EsAnalyzerEnum.IK_SMART, EsAnalyzerEnum.IK_MAX_WORD)
                 .mapping(UserDocument::getCompanyLocation, EsFieldTypeEnum.GEO_POINT)
                 .mapping(UserDocument::getGeoLocation, EsFieldTypeEnum.GEO_SHAPE)

@@ -1,0 +1,26 @@
+// 自定义分词器说明详见README.md 自定义分词器
+{
+  "analysis": {
+    "analyzer": {
+      "completion_analyzer": {
+        "filter": "py",
+        "tokenizer": "keyword"
+      },
+      "text_analyzer": {
+        "filter": "py",
+        "tokenizer": "ik_max_word"
+      }
+    },
+    "filter": {
+      "py": {
+        "keep_joined_full_pinyin": true,
+        "none_chinese_pinyin_tokenize": false,
+        "keep_original": true,
+        "remove_duplicated_term": true,
+        "type": "pinyin",
+        "limit_first_letter_length": 16,
+        "keep_full_pinyin": false
+      }
+    }
+  }
+}

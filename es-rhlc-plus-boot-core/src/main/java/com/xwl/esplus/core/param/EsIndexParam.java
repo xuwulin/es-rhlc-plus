@@ -27,7 +27,7 @@ public class EsIndexParam {
      */
     private Integer ignoreAbove;
     /**
-     * 时间类型格式
+     * 日期类型格式（date类型格式）
      */
     private String format;
     /**
