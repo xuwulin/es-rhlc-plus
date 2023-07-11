@@ -6,7 +6,7 @@
 
     <groupId>io.github.xuwulin</groupId>
     <artifactId>es-rhlc-plus</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.4</version>
     <packaging>pom</packaging>
 
     <name>es-rhlc-plus</name>

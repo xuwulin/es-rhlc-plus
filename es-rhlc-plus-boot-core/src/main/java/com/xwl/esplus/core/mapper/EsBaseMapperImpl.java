@@ -336,16 +336,19 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             }
             return StringUtils.checkValNull(idValue) || Objects.isNull(getById((Serializable) idValue)) ? save(entity) : updateById(entity);
         }
-        return 0;
+        return EsConstants.ZERO;
     }
 
     @Override
     public Integer saveOrUpdate(T entity, EsLambdaUpdateWrapper<T> wrapper) {
-        Integer update = update(entity, wrapper);
-        if (update > EsConstants.ZERO) {
-            return update;
+        if (null != entity) {
+            Integer update = update(entity, wrapper);
+            if (update > EsConstants.ZERO) {
+                return update;
+            }
+            return saveOrUpdate(entity);
         }
-        return saveOrUpdate(entity);
+        return EsConstants.ZERO;
     }
 
     @Override
@@ -354,37 +357,47 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             return EsConstants.ZERO;
         }
 
-        List<T> saveEntityList = new ArrayList<>();
-        BulkRequest saveBulkRequest = new BulkRequest();
+        int saveCounts = 0;
+        int updateCounts = 0;
+        try {
+            List<T> saveEntityList = new ArrayList<>();
+            BulkRequest saveBulkRequest = new BulkRequest();
 
-        List<T> updateEntityList = new ArrayList<>();
-        BulkRequest updateBulkRequest = new BulkRequest();
-        entityList.forEach(entity -> {
-            // 获取id值
-            Object idValue = getIdValueCanBeNull(entityClass, entity);
-            if (Objects.nonNull(idValue) && StringUtils.isNotBlank((CharSequence) idValue)) {
-                // 根据id判断该记录是否存在
-                if (Objects.nonNull(getById((Serializable) idValue))) {
-                    UpdateRequest updateRequest = buildUpdateRequest(entity, (String) idValue);
-                    updateEntityList.add(entity);
-                    updateBulkRequest.add(updateRequest);
+            List<T> updateEntityList = new ArrayList<>();
+            BulkRequest updateBulkRequest = new BulkRequest();
+            entityList.forEach(entity -> {
+                // 获取id值
+                Object idValue = getIdValueCanBeNull(entityClass, entity);
+                if (Objects.nonNull(idValue) && StringUtils.isNotBlank((CharSequence) idValue)) {
+                    // 根据id判断该记录是否存在
+                    if (Objects.nonNull(getById((Serializable) idValue))) {
+                        UpdateRequest updateRequest = buildUpdateRequest(entity, (String) idValue);
+                        updateEntityList.add(entity);
+                        updateBulkRequest.add(updateRequest);
+                    } else {
+                        // 不存在则为新增
+                        IndexRequest indexRequest = buildIndexRequest(entity);
+                        saveEntityList.add(entity);
+                        saveBulkRequest.add(indexRequest);
+                    }
                 } else {
-                    // 不存在则为新增
+                    // 如果id为空（自动生成id）则一定是新增
                     IndexRequest indexRequest = buildIndexRequest(entity);
                     saveEntityList.add(entity);
                     saveBulkRequest.add(indexRequest);
                 }
-            } else {
-                // 如果id为空（自动生成id）则一定是新增
-                IndexRequest indexRequest = buildIndexRequest(entity);
-                saveEntityList.add(entity);
-                saveBulkRequest.add(indexRequest);
-            }
-        });
+            });
 
-        int saveCounts = doBulkRequest(saveBulkRequest, RequestOptions.DEFAULT, saveEntityList);
-        int updateCounts = doBulkRequest(updateBulkRequest, RequestOptions.DEFAULT);
-        log.info("exec saveOrUpdateBatch method, save [{}] records， update [{}] records", saveCounts, updateCounts);
+            if (CollectionUtils.isNotEmpty(saveEntityList)) {
+                saveCounts = doBulkRequest(saveBulkRequest, RequestOptions.DEFAULT, saveEntityList);
+            }
+            if (CollectionUtils.isNotEmpty(updateEntityList)) {
+                updateCounts = doBulkRequest(updateBulkRequest, RequestOptions.DEFAULT);
+            }
+            log.info("exec saveOrUpdateBatch method, save [{}] records， update [{}] records", saveCounts, updateCounts);
+        } catch (Exception e) {
+            throw ExceptionUtils.epe("saveOrUpdateBatch exception", e);
+        }
 
         return saveCounts + updateCounts;
     }

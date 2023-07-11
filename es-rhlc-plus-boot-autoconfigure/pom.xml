@@ -6,7 +6,7 @@
     <parent>
         <artifactId>es-rhlc-plus</artifactId>
         <groupId>io.github.xuwulin</groupId>
-        <version>1.0.2</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>es-rhlc-plus-boot-autoconfigure</artifactId>
@@ -14,7 +14,7 @@
 
     <properties>
         <!-- 不需要deploy此模块 -->
-        <maven.deploy.skip>true</maven.deploy.skip>
+<!--        <maven.deploy.skip>true</maven.deploy.skip>-->
     </properties>
 
     <dependencies>
