@@ -6,6 +6,7 @@ import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import com.xwl.esplus.core.wrapper.update.EsLambdaUpdateWrapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -89,6 +90,15 @@ public interface EsBaseMapper<T> {
      * @return 成功条数
      */
     Integer updateById(T entity);
+
+    /**
+     * 根据id更新文档
+     *
+     * @param entity        es索引对应的实体类
+     * @param refreshPolicy 刷新文档模式
+     * @return 成功条数
+     */
+    Integer updateById(T entity, WriteRequest.RefreshPolicy refreshPolicy);
 
     /**
      * 根据id批量更新文档

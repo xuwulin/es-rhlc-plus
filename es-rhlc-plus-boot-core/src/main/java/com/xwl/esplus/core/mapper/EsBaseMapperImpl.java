@@ -36,6 +36,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
@@ -296,6 +297,24 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     public Integer updateById(T entity) {
         String idValue = getIdValue(entityClass, entity);
         UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
+        try {
+            UpdateResponse updateResponse = restHighLevelClient.update(updateRequest, RequestOptions.DEFAULT);
+            if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
+                return EsConstants.ONE;
+            }
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("updateById exception, entity: %s", e, JSONObject.toJSONString(entity));
+        }
+        return EsConstants.ZERO;
+    }
+
+    @Override
+    public Integer updateById(T entity, WriteRequest.RefreshPolicy refreshPolicy) {
+        String idValue = getIdValue(entityClass, entity);
+        UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
+        if (Objects.nonNull(refreshPolicy)) {
+            updateRequest.setRefreshPolicy(refreshPolicy);
+        }
         try {
             UpdateResponse updateResponse = restHighLevelClient.update(updateRequest, RequestOptions.DEFAULT);
             if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
