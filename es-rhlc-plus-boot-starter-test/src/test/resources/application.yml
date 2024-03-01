@@ -5,14 +5,14 @@ spring:
 # es-plus配置
 es-plus:
   # es连接地址+端口 格式必须为ip:port,如果是集群则可用逗号隔开
-#  address : 10.10.50.177:9200,10.10.50.178:9200,10.10.50.179:9200
-  address : 10.10.50.200:30200
+  address : 10.10.50.177:9200,10.10.50.178:9200,10.10.50.179:9200
+#  address : 10.10.50.200:30200
   # 默认为http
   schema: http
   # 如果无账号密码则可不配置此项
-#  username: elastic
+  username: elastic
   # 如果无账号密码则可不配置此项
-#  password: Yhsl@123
+  password: Yhsl@123
   global-config:
     # 输出日志
     enable-dsl: true
