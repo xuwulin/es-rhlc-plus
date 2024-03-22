@@ -169,12 +169,31 @@ public interface EsBaseMapper<T> {
     SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions);
 
     /**
+     * RestHighLevelClient原生查询，可选是否查询记录总条数
+     *
+     * @param searchRequest  查询请求参数
+     * @param requestOptions 请求选项
+     * @param trackTotalHits 是否查询记录总条数，true-查询返回结果中的hits.total.value为记录总条数，false-查询返回结果中的hits.total.value默认为10000（超过10000显示）
+     * @return SearchResponse
+     */
+    SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions, boolean trackTotalHits);
+
+    /**
      * 条件查询返回SearchResponse
      *
      * @param wrapper 条件
      * @return SearchResponse
      */
     SearchResponse search(EsLambdaQueryWrapper<T> wrapper);
+
+    /**
+     * 条件查询返回SearchResponse，可选是否查询记录总条数
+     *
+     * @param wrapper        条件
+     * @param trackTotalHits 是否查询记录总条数，true-查询返回结果中的hits.total.value为记录总条数，false-查询返回结果中的hits.total.value默认为10000（超过10000显示）
+     * @return SearchResponse
+     */
+    SearchResponse search(EsLambdaQueryWrapper<T> wrapper, boolean trackTotalHits);
 
     /**
      * 获取SearchSourceBuilder

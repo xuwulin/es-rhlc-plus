@@ -1,11 +1,17 @@
 package com.xwl.esplus.core.toolkit;
 
+import com.xwl.esplus.core.cache.GlobalConfigCache;
+import com.xwl.esplus.core.config.GlobalConfig;
 import com.xwl.esplus.core.constant.EsConstants;
 import com.xwl.esplus.core.wrapper.condition.SFunction;
 
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 核心 处理字段名称工具类
@@ -38,6 +44,27 @@ public class FieldUtils {
             return resolveFieldName(getter);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 获取实际字段名
+     *
+     * @param field            原字段名
+     * @param mappingColumnMap 字段映射关系map
+     * @param documentConfig   配置
+     * @return 实际字段名
+     */
+    public static String getRealField(String field, Map<String, String> mappingColumnMap, GlobalConfig.DocumentConfig documentConfig) {
+        String customField = mappingColumnMap.get(field);
+        if (Objects.nonNull(customField)) {
+            return EsConstants.DEFAULT_ID_NAME.equals(customField) ? EsConstants.DEFAULT_ES_ID_NAME : customField;
+        } else {
+            if (documentConfig.isMapUnderscoreToCamelCase()) {
+                return StringUtils.camelToUnderline(field);
+            } else {
+                return field;
+            }
         }
     }
 
@@ -101,5 +128,32 @@ public class FieldUtils {
             return "";
         }
         return param.substring(0, 1).toUpperCase() + param.substring(1);
+    }
+
+    /**
+     * 获取实际字段名数组
+     *
+     * @param fields           原字段名数组
+     * @param mappingColumnMap 字段映射关系map
+     * @return 实际字段数组
+     */
+    public static List<String> getRealFields(List<String> fields, Map<String, String> mappingColumnMap) {
+        return Arrays.stream(getRealFields(fields.toArray(new String[0]), mappingColumnMap, GlobalConfigCache.getGlobalConfig().getDocumentConfig()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取实际字段名数组
+     *
+     * @param fields           原字段名数组
+     * @param mappingColumnMap 字段映射关系map
+     * @param documentConfig   配置
+     * @return 实际字段数组
+     */
+    public static String[] getRealFields(String[] fields, Map<String, String> mappingColumnMap, GlobalConfig.DocumentConfig documentConfig) {
+        return Arrays.stream(fields)
+                .map(field -> getRealField(field, mappingColumnMap, documentConfig))
+                .collect(Collectors.toList())
+                .toArray(new String[]{});
     }
 }

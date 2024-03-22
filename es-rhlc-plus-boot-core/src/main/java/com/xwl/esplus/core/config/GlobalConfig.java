@@ -45,6 +45,10 @@ public class GlobalConfig {
          * 是否开启下划线转驼峰，默认开启
          */
         private boolean mapUnderscoreToCamelCase = true;
+        /**
+         * must convert to filter must by default, must 条件转filter 默认不转换
+         */
+        private boolean enableMust2Filter = false;
 
         public DocumentConfig() {
         }
@@ -92,6 +96,14 @@ public class GlobalConfig {
 
         public void setMapUnderscoreToCamelCase(boolean mapUnderscoreToCamelCase) {
             this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
+        }
+
+        public boolean isEnableMust2Filter() {
+            return enableMust2Filter;
+        }
+
+        public void setEnableMust2Filter(boolean enableMust2Filter) {
+            this.enableMust2Filter = enableMust2Filter;
         }
     }
 

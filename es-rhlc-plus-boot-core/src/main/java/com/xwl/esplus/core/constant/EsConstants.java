@@ -136,4 +136,22 @@ public class EsConstants {
      * es默认得分字段
      */
     public static final String SCORE_FIELD = "_score";
+    /**
+     * 默认主键名称
+     */
+    public static final String DEFAULT_ID_NAME = "id";
+    /**
+     * Es 默认的主键名称
+     */
+    public static final String DEFAULT_ES_ID_NAME = "_id";
+
+    /**
+     * 嵌套类型 path和field连接符
+     */
+    public static final String PATH_FIELD_JOIN = ".";
+
+    /**
+     * 百分比符号
+     */
+    public static final String  PERCENT = "%";
 }

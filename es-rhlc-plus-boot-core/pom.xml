@@ -6,7 +6,7 @@
     <parent>
         <artifactId>es-rhlc-plus</artifactId>
         <groupId>io.github.xuwulin</groupId>
-        <version>1.0.5</version>
+        <version>1.0.6</version>
     </parent>
 
     <artifactId>es-rhlc-plus-boot-core</artifactId>

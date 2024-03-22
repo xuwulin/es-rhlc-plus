@@ -14,9 +14,7 @@ import com.xwl.esplus.core.wrapper.query.EsLambdaQueryWrapper;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.*;
+import org.elasticsearch.search.aggregations.metrics.TopHitsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -27,6 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.xwl.esplus.core.constant.EsConstants.DEFAULT_SIZE;
+import static com.xwl.esplus.core.enums.EsAttachTypeEnum.*;
 import static com.xwl.esplus.core.enums.EsBaseParamTypeEnum.*;
 
 /**
@@ -49,7 +48,7 @@ public class EsWrapperProcessor {
     public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper, Class<?> entityClass) {
         SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper, entityClass);
         // 构建BoolQueryBuilder
-        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList(), entityClass);
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder2(wrapper.getBaseParamList(), wrapper.getEnableMust2Filter(), entityClass);
         // 初始化geo相关: BoundingBox,geoDistance,geoPolygon,geoShape
         Optional.ofNullable(wrapper.getGeoParam()).ifPresent(esGeoParam -> setGeoQuery(esGeoParam, boolQueryBuilder, entityClass));
         // 设置参数
@@ -300,11 +299,15 @@ public class EsWrapperProcessor {
 
             // 处理括号中and和or的最终连接类型 and->must，or->should
             if (Objects.equals(AND_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
-                boolQueryBuilder.must(inner);
+                if (Objects.nonNull(inner)) {
+                    boolQueryBuilder.must(inner);
+                }
                 inner = null;
             }
             if (Objects.equals(OR_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
-                boolQueryBuilder.should(inner);
+                if (Objects.nonNull(inner)) {
+                    boolQueryBuilder.should(inner);
+                }
                 inner = null;
             }
 
@@ -318,6 +321,194 @@ public class EsWrapperProcessor {
         return boolQueryBuilder;
     }
 
+    public static BoolQueryBuilder buildBoolQueryBuilder2(List<EsBaseParam> baseParamList,
+                                                          Boolean enableMust2Filter,
+                                                          Class<?> entityClass) {
+        DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
+        GlobalConfig.DocumentConfig documentConfig = GlobalConfigCache.getGlobalConfig().getDocumentConfig();
+
+        // 获取内层or和内外层or总数,用于处理 是否有外层or:全部重置; 如果仅内层OR,只重置内层.
+        OrCount orCount = getOrCount(baseParamList);
+        // 根节点
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        // 用于连接and,or条件内的多个查询条件,包装成boolQuery
+        BoolQueryBuilder inner = null;
+        // 正式封装参数
+        int start = 0;
+        int end = 0;
+        int remainSetUp = orCount.getOrInnerCount();
+        boolean hasSetUp = false;
+        for (int i = 0; i < baseParamList.size(); i++) {
+            EsBaseParam esBaseParam = baseParamList.get(i);
+            if (orCount.getOrAllCount() > orCount.getOrInnerCount()) {
+                // 存在外层or 统统重置
+                EsBaseParam.setUp(esBaseParam);
+            } else {
+                if (!hasSetUp) {
+                    // 处理or在内层的情况,仅重置括号中的内容
+                    for (int j = i; j < baseParamList.size(); j++) {
+                        EsBaseParam andOr = baseParamList.get(j);
+                        if (AND_LEFT_BRACKET.getType().equals(andOr.getType()) || OR_LEFT_BRACKET.getType().equals(andOr.getType())) {
+                            // 找到了and/or的开始标志
+                            start = j;
+                        }
+
+                        if (AND_RIGHT_BRACKET.getType().equals(andOr.getType()) || OR_RIGHT_BRACKET.getType().equals(andOr.getType())) {
+                            // 找到了and/or的结束标志
+                            end = j;
+                        }
+                        if (remainSetUp > 0 && end > start) {
+                            // 重置内层or
+                            remainSetUp--;
+                            for (int k = start; k < end; k++) {
+                                EsBaseParam.setUp(baseParamList.get(k));
+                                hasSetUp = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            boolean hasLogicOperator = AND_LEFT_BRACKET.getType().equals(esBaseParam.getType())
+                    || OR_LEFT_BRACKET.getType().equals(esBaseParam.getType());
+            if (hasLogicOperator) {
+                // 说明有and或者or 需要将括号中的内容置入新的boolQuery
+                inner = QueryBuilders.boolQuery();
+            }
+
+            // 处理括号中and和or的最终连接类型 and->must, or->should
+            if (Objects.equals(AND_RIGHT_BRACKET.getType(), esBaseParam.getType())) {
+                boolQueryBuilder.must(inner);
+                inner = null;
+            }
+            if (Objects.equals(OR_RIGHT_BRACKET.getType(), esBaseParam.getType())) {
+                boolQueryBuilder.should(inner);
+                inner = null;
+            }
+
+            // 添加字段名称,值,查询类型等
+            Optional.ofNullable(enableMust2Filter).ifPresent(esBaseParam::setEnableMust2Filter);
+            if (Objects.isNull(inner)) {
+                addQuery(esBaseParam, boolQueryBuilder, documentInfo, documentConfig);
+            } else {
+                addQuery(esBaseParam, inner, documentInfo, documentConfig);
+            }
+        }
+        return boolQueryBuilder;
+    }
+
+    /**
+     * 获取内层or和内外层or总数
+     *
+     * @param esBaseParamList 参数列表
+     * @return 内外侧or总数信息
+     */
+    private static OrCount getOrCount(List<EsBaseParam> esBaseParamList) {
+        OrCount orCount = new OrCount();
+        int start;
+        int end = 0;
+        int orAllCount = 0;
+        int orInnerCount = 0;
+        for (int i = 0; i < esBaseParamList.size(); i++) {
+            EsBaseParam esBaseParam = esBaseParamList.get(i);
+            if (OR_ALL.getType().equals(esBaseParam.getType())) {
+                orAllCount++;
+            }
+            boolean hasLogicOperator = AND_LEFT_BRACKET.getType().equals(esBaseParam.getType())
+                    || OR_LEFT_BRACKET.getType().equals(esBaseParam.getType());
+            if (hasLogicOperator) {
+                start = i;
+                for (int j = i; j < esBaseParamList.size(); j++) {
+                    EsBaseParam andOr = esBaseParamList.get(j);
+                    if (AND_RIGHT_BRACKET.getType().equals(andOr.getType()) || OR_RIGHT_BRACKET.getType().equals(andOr.getType())) {
+                        end = j;
+                    }
+
+                    if (start < end) {
+                        for (int k = start; k < end; k++) {
+                            if (OR_ALL.getType().equals(esBaseParamList.get(k).getType())) {
+                                orInnerCount++;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        orCount.setOrAllCount(orAllCount);
+        orCount.setOrInnerCount(orInnerCount);
+        return orCount;
+    }
+
+    private static void addQuery(EsBaseParam esBaseParam, BoolQueryBuilder boolQueryBuilder, DocumentInfo documentInfo,
+                                 GlobalConfig.DocumentConfig documentConfig) {
+        // 获取must是否转filter 默认不转,以wrapper中指定的优先级最高,全局次之
+        boolean enableMust2Filter = Objects.isNull(esBaseParam.getEnableMust2Filter()) ? documentConfig.isEnableMust2Filter() :
+                esBaseParam.getEnableMust2Filter();
+
+        esBaseParam.getMustList().forEach(fieldValueModel -> EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                MUST.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        // 多字段情形
+        esBaseParam.getMustMultiFieldList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(), MUST.getType(),
+                        fieldValueModel.getOriginalAttachType(), enableMust2Filter, FieldUtils.getRealFields(fieldValueModel.getFields(),
+                                documentInfo.getFieldColumnMap()), fieldValueModel.getValue(), fieldValueModel.getExt(),
+                        fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
+
+        esBaseParam.getFilterList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, FILTER.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getShouldList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, SHOULD.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        // 多字段情形
+        esBaseParam.getShouldMultiFieldList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, fieldValueModel.getEsQueryType(),
+                        SHOULD.getType(), fieldValueModel.getOriginalAttachType(), enableMust2Filter,
+                        FieldUtils.getRealFields(fieldValueModel.getFields(), documentInfo.getFieldColumnMap()), fieldValueModel.getValue(),
+                        fieldValueModel.getExt(), fieldValueModel.getMinimumShouldMatch(), fieldValueModel.getBoost()));
+
+        esBaseParam.getMustNotList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, MUST_NOT.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getGtList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, GT.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getLtList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, LT.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getGeList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, GE.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getLeList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, LE.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getBetweenList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, BETWEEN.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getNotBetweenList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, NOT_BETWEEN.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getInList().forEach(fieldValueModel -> EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                IN.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getNotInList().forEach(fieldValueModel -> EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
+                NOT_IN.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getIsNullList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, NOT_EXISTS.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getNotNullList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, EXISTS.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getLikeLeftList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, LIKE_LEFT.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+
+        esBaseParam.getLikeRightList().forEach(fieldValueModel ->
+                EsQueryTypeUtils.addQueryByType(boolQueryBuilder, LIKE_RIGHT.getType(), enableMust2Filter, fieldValueModel, documentInfo, documentConfig));
+    }
 
     static AggregationBuilder convertAggregationBuilder(EsAggregationParam aggregationParam,
                                                         Map<String, String> columnMappingMap,
@@ -545,7 +736,7 @@ public class EsWrapperProcessor {
         baseEsParam.getMustList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.MUST.getType(),
+                        MUST.getType(),
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
@@ -555,7 +746,7 @@ public class EsWrapperProcessor {
         baseEsParam.getFilterList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.FILTER.getType(),
+                        FILTER.getType(),
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),
@@ -565,7 +756,7 @@ public class EsWrapperProcessor {
         baseEsParam.getShouldList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
-                        EsAttachTypeEnum.SHOULD.getType(),
+                        SHOULD.getType(),
                         fieldValueModel.getOriginalAttachType(),
                         documentInfo.getColumnName(fieldValueModel.getField()),
                         fieldValueModel.getValue(),

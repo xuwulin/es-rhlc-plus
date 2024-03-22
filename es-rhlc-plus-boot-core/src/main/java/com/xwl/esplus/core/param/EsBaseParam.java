@@ -16,6 +16,10 @@ public class EsBaseParam {
      */
     private List<FieldValueModel> mustList = new ArrayList<>();
     /**
+     * 存放多字段单值的必须满足条件列表 multiMatchQuery
+     */
+    private List<FieldValueModel> mustMultiFieldList = new ArrayList<>();
+    /**
      * 存放必须满足的条件列表,区别是不计算得分(必须满足,与must区别是不计算得分,效率更高)
      */
     private List<FieldValueModel> filterList = new ArrayList<>();
@@ -23,6 +27,10 @@ public class EsBaseParam {
      * 存放或条件列表(或,相当于MySQL中的or)
      */
     private List<FieldValueModel> shouldList = new ArrayList<>();
+    /**
+     * 存放多字段单值的或条件列表
+     */
+    private List<FieldValueModel> shouldMultiFieldList = new ArrayList<>();
     /**
      * 存放必须不满足的条件列表(否,相当于MySQL中的!=)
      */
@@ -79,6 +87,10 @@ public class EsBaseParam {
      * 参数类型 参见: BaseEsParamTypeEnum
      */
     private Integer type;
+    /**
+     * must条件转filter
+     */
+    protected Boolean enableMust2Filter;
 
     /**
      * 查询模型
@@ -120,6 +132,27 @@ public class EsBaseParam {
          * 连接类型 参见:EsAttachTypeEnum 由于should 包含转换的情况 所以转换之后应仍使用原来的连接类型
          */
         private Integer originalAttachType;
+
+        /**
+         * 字段列表
+         */
+        private List<String> fields;
+        /**
+         * 拓展字段
+         */
+        private Object ext;
+        /**
+         * 最小匹配度 百分比
+         */
+        private int minimumShouldMatch;
+        /**
+         * nested path
+         */
+        private String path;
+        /**
+         * 得分模式or是否计算得分
+         */
+        private Object scoreMode;
 
         public String getField() {
             return field;
@@ -192,6 +225,46 @@ public class EsBaseParam {
         public void setOriginalAttachType(Integer originalAttachType) {
             this.originalAttachType = originalAttachType;
         }
+
+        public List<String> getFields() {
+            return fields;
+        }
+
+        public void setFields(List<String> fields) {
+            this.fields = fields;
+        }
+
+        public Object getExt() {
+            return ext;
+        }
+
+        public void setExt(Object ext) {
+            this.ext = ext;
+        }
+
+        public int getMinimumShouldMatch() {
+            return minimumShouldMatch;
+        }
+
+        public void setMinimumShouldMatch(int minimumShouldMatch) {
+            this.minimumShouldMatch = minimumShouldMatch;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+
+        public Object getScoreMode() {
+            return scoreMode;
+        }
+
+        public void setScoreMode(Object scoreMode) {
+            this.scoreMode = scoreMode;
+        }
     }
 
     public List<FieldValueModel> getMustList() {
@@ -200,6 +273,14 @@ public class EsBaseParam {
 
     public void setMustList(List<FieldValueModel> mustList) {
         this.mustList = mustList;
+    }
+
+    public List<FieldValueModel> getMustMultiFieldList() {
+        return mustMultiFieldList;
+    }
+
+    public void setMustMultiFieldList(List<FieldValueModel> mustMultiFieldList) {
+        this.mustMultiFieldList = mustMultiFieldList;
     }
 
     public List<FieldValueModel> getFilterList() {
@@ -216,6 +297,14 @@ public class EsBaseParam {
 
     public void setShouldList(List<FieldValueModel> shouldList) {
         this.shouldList = shouldList;
+    }
+
+    public List<FieldValueModel> getShouldMultiFieldList() {
+        return shouldMultiFieldList;
+    }
+
+    public void setShouldMultiFieldList(List<FieldValueModel> shouldMultiFieldList) {
+        this.shouldMultiFieldList = shouldMultiFieldList;
     }
 
     public List<FieldValueModel> getMustNotList() {
@@ -330,6 +419,14 @@ public class EsBaseParam {
         this.type = type;
     }
 
+    public Boolean getEnableMust2Filter() {
+        return enableMust2Filter;
+    }
+
+    public void setEnableMust2Filter(Boolean enableMust2Filter) {
+        this.enableMust2Filter = enableMust2Filter;
+    }
+
     /**
      * 重置查询条件 主要用于处理or查询条件
      *
@@ -338,43 +435,59 @@ public class EsBaseParam {
     public static void setUp(EsBaseParam esBaseParam) {
         // 获取原查询条件
         List<FieldValueModel> mustList = esBaseParam.getMustList();
+        List<FieldValueModel> mustNotList = esBaseParam.getMustNotList();
+        List<FieldValueModel> mustMultiFieldList = esBaseParam.getMustMultiFieldList();
         List<FieldValueModel> filterList = esBaseParam.getFilterList();
         List<FieldValueModel> shouldList = esBaseParam.getShouldList();
+        List<FieldValueModel> shouldMultiFieldList = esBaseParam.getShouldMultiFieldList();
         List<FieldValueModel> gtList = esBaseParam.getGtList();
         List<FieldValueModel> ltList = esBaseParam.getLtList();
         List<FieldValueModel> geList = esBaseParam.getGeList();
         List<FieldValueModel> leList = esBaseParam.getLeList();
         List<FieldValueModel> betweenList = esBaseParam.getBetweenList();
+        List<FieldValueModel> notBetweenList = esBaseParam.getNotBetweenList();
         List<FieldValueModel> inList = esBaseParam.getInList();
+        List<FieldValueModel> notInList = esBaseParam.getNotInList();
+        List<FieldValueModel> isNullList = esBaseParam.getIsNullList();
         List<FieldValueModel> notNullList = esBaseParam.getNotNullList();
         List<FieldValueModel> likeLeftList = esBaseParam.getLikeLeftList();
         List<FieldValueModel> likeRightList = esBaseParam.getLikeRightList();
 
         // 把原来必须满足的条件转入should列表
         shouldList.addAll(mustList);
+        shouldList.addAll(mustNotList);
         shouldList.addAll(filterList);
         shouldList.addAll(gtList);
         shouldList.addAll(ltList);
         shouldList.addAll(geList);
         shouldList.addAll(leList);
         shouldList.addAll(betweenList);
+        shouldList.addAll(notBetweenList);
         shouldList.addAll(inList);
+        shouldList.addAll(notInList);
+        shouldList.addAll(isNullList);
         shouldList.addAll(notNullList);
         shouldList.addAll(likeLeftList);
         shouldList.addAll(likeRightList);
+        shouldMultiFieldList.addAll(mustMultiFieldList);
         esBaseParam.setShouldList(shouldList);
 
         // 置空原必须满足的条件列表
         esBaseParam.setMustList(Collections.EMPTY_LIST);
+        esBaseParam.setMustNotList(Collections.EMPTY_LIST);
         esBaseParam.setFilterList(Collections.EMPTY_LIST);
         esBaseParam.setGtList(Collections.EMPTY_LIST);
         esBaseParam.setLtList(Collections.EMPTY_LIST);
         esBaseParam.setGeList(Collections.EMPTY_LIST);
         esBaseParam.setLeList(Collections.EMPTY_LIST);
         esBaseParam.setBetweenList(Collections.EMPTY_LIST);
+        esBaseParam.setNotBetweenList(Collections.EMPTY_LIST);
         esBaseParam.setInList(Collections.EMPTY_LIST);
+        esBaseParam.setNotInList(Collections.EMPTY_LIST);
+        esBaseParam.setIsNullList(Collections.EMPTY_LIST);
         esBaseParam.setNotNullList(Collections.EMPTY_LIST);
         esBaseParam.setLikeLeftList(Collections.EMPTY_LIST);
         esBaseParam.setLikeRightList(Collections.EMPTY_LIST);
+        esBaseParam.setMustMultiFieldList(Collections.EMPTY_LIST);
     }
 }

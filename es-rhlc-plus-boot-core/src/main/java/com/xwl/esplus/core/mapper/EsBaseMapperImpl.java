@@ -494,9 +494,36 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     }
 
     @Override
+    public SearchResponse search(SearchRequest searchRequest, RequestOptions requestOptions, boolean trackTotalHits) {
+        try {
+            // 记录日志
+            logQueryDSL(searchRequest.source());
+            searchRequest.source().trackTotalHits(trackTotalHits);
+            return restHighLevelClient.search(searchRequest, requestOptions);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("original search exception", e);
+        }
+    }
+
+    @Override
     public SearchResponse search(EsLambdaQueryWrapper<T> wrapper) {
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper, entityClass);
+        searchRequest.source(searchSourceBuilder);
+        try {
+            // 记录日志
+            logQueryDSL(wrapper);
+            return restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw ExceptionUtils.epe("search exception", e);
+        }
+    }
+
+    @Override
+    public SearchResponse search(EsLambdaQueryWrapper<T> wrapper, boolean trackTotalHits) {
+        SearchRequest searchRequest = new SearchRequest(getIndexName());
+        SearchSourceBuilder searchSourceBuilder = buildSearchSourceBuilder(wrapper, entityClass);
+        searchSourceBuilder.trackTotalHits(trackTotalHits);
         searchRequest.source(searchSourceBuilder);
         try {
             // 记录日志

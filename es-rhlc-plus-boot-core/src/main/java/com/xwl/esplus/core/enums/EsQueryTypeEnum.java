@@ -45,7 +45,25 @@ public enum EsQueryTypeEnum {
     /**
      * 模糊匹配 分词 相当于mysql like
      */
-    MATCH_PHRASE_QUERY(10),;
+    MATCH_PHRASE_QUERY(10),
+
+    /**
+     * 前缀匹配
+     */
+    MATCH_PHRASE_PREFIX(11),
+
+    /**
+     * 多字段匹配
+     */
+    MULTI_MATCH_QUERY(12),
+    /**
+     * 所有字段中搜索
+     */
+    QUERY_STRING_QUERY(13),
+    /**
+     * 前缀匹配搜索
+     */
+    PREFIX_QUERY(14);
 
     /**
      * 类型

@@ -155,6 +155,8 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
         return entityClass;
     }
 
+
+
     @Override
     public Children eq(boolean condition, R column, Object val, Float boost) {
         return doIt(condition, TERM_QUERY, MUST, FieldUtils.getFieldName(column), val, boost);

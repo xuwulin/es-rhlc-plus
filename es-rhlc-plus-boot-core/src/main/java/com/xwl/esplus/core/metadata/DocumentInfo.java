@@ -83,6 +83,22 @@ public class DocumentInfo {
      * key: 嵌套对象字段名称 -> value: es字段名称
      */
     private final Map<Class<?>, Map<String, String>> objectClassMap = new HashMap<>();
+    /**
+     * 嵌套类型 path和class对应关系
+     */
+    private final Map<String, Class<?>> pathClassMap = new HashMap<>();
+    /**
+     * 嵌套类型 实体字段->es实际字段映射
+     */
+    private final Map<Class<?>, Map<String, String>> nestedClassMappingColumnMap = new HashMap<>();
+    /**
+     * 嵌套类型 es实际字段映射->实体字段 (仅包含被重命名字段)
+     */
+    private final Map<Class<?>, Map<String, String>> nestedClassColumnMappingMap = new HashMap<>();
+    /**
+     * fastjson 过滤器
+     */
+    private final Map<Class<?>, List<SerializeFilter>> classSimplePropertyPreFilterMap = new HashMap<>();
 
     /**
      * 获取id字段名
@@ -221,5 +237,17 @@ public class DocumentInfo {
 
     public Map<Class<?>, Map<String, String>> getObjectClassMap() {
         return objectClassMap;
+    }
+
+    /**
+     * 根据path获取嵌套类字段关系map
+     *
+     * @param path 路径
+     * @return 字段关系map
+     */
+    public Map<String, String> getNestedMappingColumnMapByPath(String path) {
+        return Optional.ofNullable(pathClassMap.get(path))
+                .map(nestedClassMappingColumnMap::get)
+                .orElse(new HashMap<>(0));
     }
 }
