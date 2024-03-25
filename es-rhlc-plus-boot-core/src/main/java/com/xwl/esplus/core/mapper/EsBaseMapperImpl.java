@@ -231,6 +231,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     @Override
     public Integer save(T entity) {
         IndexRequest indexRequest = buildIndexRequest(entity);
+        indexRequest.setRefreshPolicy(getRefreshPolicy());
         try {
             IndexResponse indexResponse = restHighLevelClient.index(indexRequest, RequestOptions.DEFAULT);
             if (Objects.equals(indexResponse.status(), RestStatus.CREATED)) {
@@ -254,6 +255,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             return EsConstants.ZERO;
         }
         BulkRequest bulkRequest = new BulkRequest();
+        bulkRequest.setRefreshPolicy(getRefreshPolicy());
         entityList.forEach(entity -> {
             IndexRequest indexRequest = buildIndexRequest(entity);
             bulkRequest.add(indexRequest);
@@ -269,7 +271,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
 
         SearchRequest searchRequest = new SearchRequest(getIndexName());
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList(), entityClass);
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList(), wrapper.getEnableMust2Filter(), entityClass);
         searchSourceBuilder.query(boolQueryBuilder);
         searchRequest.source(searchSourceBuilder);
         // 根据条件查询要更新的id集合
@@ -283,6 +285,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
                 .map(this::buildJsonSource)
                 .orElseGet(() -> buildJsonDoc(wrapper));
         BulkRequest bulkRequest = new BulkRequest();
+        bulkRequest.setRefreshPolicy(getRefreshPolicy());
         String indexName = getIndexName();
         ids.forEach(id -> {
             UpdateRequest updateRequest = new UpdateRequest();
@@ -297,6 +300,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     public Integer updateById(T entity) {
         String idValue = getIdValue(entityClass, entity);
         UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
+        updateRequest.setRefreshPolicy(getRefreshPolicy());
         try {
             UpdateResponse updateResponse = restHighLevelClient.update(updateRequest, RequestOptions.DEFAULT);
             if (Objects.equals(updateResponse.status(), RestStatus.OK)) {
@@ -312,6 +316,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
     public Integer updateById(T entity, WriteRequest.RefreshPolicy refreshPolicy) {
         String idValue = getIdValue(entityClass, entity);
         UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
+        updateRequest.setRefreshPolicy(getRefreshPolicy());
         if (Objects.nonNull(refreshPolicy)) {
             updateRequest.setRefreshPolicy(refreshPolicy);
         }
@@ -332,6 +337,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             return EsConstants.ZERO;
         }
         BulkRequest bulkRequest = new BulkRequest();
+        bulkRequest.setRefreshPolicy(getRefreshPolicy());
         entityList.forEach(entity -> {
             String idValue = getIdValue(entityClass, entity);
             UpdateRequest updateRequest = buildUpdateRequest(entity, idValue);
@@ -381,9 +387,11 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         try {
             List<T> saveEntityList = new ArrayList<>();
             BulkRequest saveBulkRequest = new BulkRequest();
+            saveBulkRequest.setRefreshPolicy(getRefreshPolicy());
 
             List<T> updateEntityList = new ArrayList<>();
             BulkRequest updateBulkRequest = new BulkRequest();
+            updateBulkRequest.setRefreshPolicy(getRefreshPolicy());
             entityList.forEach(entity -> {
                 // 获取id值
                 Object idValue = getIdValueCanBeNull(entityClass, entity);
@@ -428,6 +436,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             return EsConstants.ZERO;
         }
         BulkRequest bulkRequest = new BulkRequest();
+        bulkRequest.setRefreshPolicy(getRefreshPolicy());
         Method getId = BaseCache.getEsEntityGetterMethod(entityClass, getRealIdFieldName());
         list.forEach(entity -> {
             try {
@@ -451,6 +460,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             throw ExceptionUtils.epe("id can not be null or empty");
         }
         DeleteRequest deleteRequest = new DeleteRequest();
+        deleteRequest.setRefreshPolicy(getRefreshPolicy());
         deleteRequest.id(id.toString());
         deleteRequest.index(getIndexName());
         try {
@@ -470,6 +480,7 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
             throw ExceptionUtils.epe("idList can not be null or empty");
         }
         BulkRequest bulkRequest = new BulkRequest();
+        bulkRequest.setRefreshPolicy(getRefreshPolicy());
         idList.forEach(id -> {
             if (Objects.isNull(id) || StringUtils.isBlank(id.toString())) {
                 throw ExceptionUtils.epe("id can not be null or empty");
@@ -1397,5 +1408,14 @@ public class EsBaseMapperImpl<T> implements EsBaseMapper<T> {
         JSONObject object = JSONObject.parseObject(String.valueOf(searchSourceBuilder));
         String pretty = JSON.toJSONString(object, SerializerFeature.PrettyFormat);
         log.info("Elasticsearch Query DSL:\n{}", pretty);
+    }
+
+    /**
+     * 获取刷新策略
+     *
+     * @return 刷新策略
+     */
+    private String getRefreshPolicy() {
+        return GlobalConfigCache.getGlobalConfig().getDocumentConfig().getRefreshPolicy().getValue();
     }
 }

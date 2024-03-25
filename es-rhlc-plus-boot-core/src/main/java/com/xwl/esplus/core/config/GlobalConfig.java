@@ -3,6 +3,7 @@ package com.xwl.esplus.core.config;
 import com.xwl.esplus.core.constant.EsGlobalConstants;
 import com.xwl.esplus.core.enums.EsFieldStrategyEnum;
 import com.xwl.esplus.core.enums.EsKeyTypeEnum;
+import com.xwl.esplus.core.enums.EsRefreshPolicy;
 
 /**
  * 全局配置
@@ -46,9 +47,17 @@ public class GlobalConfig {
          */
         private boolean mapUnderscoreToCamelCase = true;
         /**
+         * enableTrackTotalHits default true,是否开启查询全部数据 默认开启
+         */
+        private boolean enableTrackTotalHits = true;
+        /**
          * must convert to filter must by default, must 条件转filter 默认不转换
          */
         private boolean enableMust2Filter = false;
+        /**
+         * data refresh policy 数据刷新策略,默认为NONE
+         */
+        private EsRefreshPolicy refreshPolicy = EsRefreshPolicy.NONE;
 
         public DocumentConfig() {
         }
@@ -98,12 +107,28 @@ public class GlobalConfig {
             this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
         }
 
+        public boolean isEnableTrackTotalHits() {
+            return enableTrackTotalHits;
+        }
+
+        public void setEnableTrackTotalHits(boolean enableTrackTotalHits) {
+            this.enableTrackTotalHits = enableTrackTotalHits;
+        }
+
         public boolean isEnableMust2Filter() {
             return enableMust2Filter;
         }
 
         public void setEnableMust2Filter(boolean enableMust2Filter) {
             this.enableMust2Filter = enableMust2Filter;
+        }
+
+        public EsRefreshPolicy getRefreshPolicy() {
+            return refreshPolicy;
+        }
+
+        public void setRefreshPolicy(EsRefreshPolicy refreshPolicy) {
+            this.refreshPolicy = refreshPolicy;
         }
     }
 

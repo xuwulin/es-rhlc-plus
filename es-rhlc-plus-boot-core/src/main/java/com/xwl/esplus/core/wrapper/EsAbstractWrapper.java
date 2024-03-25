@@ -76,6 +76,10 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      */
     protected List<EsOrderByParam> orderByParams;
     /**
+     * must条件转filter
+     */
+    protected Boolean enableMust2Filter;
+    /**
      * 实体对象
      */
     protected T entity;
@@ -145,6 +149,14 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
 
     public List<EsOrderByParam> getOrderByParams() {
         return orderByParams;
+    }
+
+    public Boolean getEnableMust2Filter() {
+        return enableMust2Filter;
+    }
+
+    public void setEnableMust2Filter(Boolean enableMust2Filter) {
+        this.enableMust2Filter = enableMust2Filter;
     }
 
     public T getEntity() {

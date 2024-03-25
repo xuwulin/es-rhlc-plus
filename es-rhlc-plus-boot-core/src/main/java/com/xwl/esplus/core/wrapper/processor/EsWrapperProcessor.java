@@ -48,7 +48,7 @@ public class EsWrapperProcessor {
     public static SearchSourceBuilder buildSearchSourceBuilder(EsLambdaQueryWrapper<?> wrapper, Class<?> entityClass) {
         SearchSourceBuilder searchSourceBuilder = initSearchSourceBuilder(wrapper, entityClass);
         // 构建BoolQueryBuilder
-        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder2(wrapper.getBaseParamList(), wrapper.getEnableMust2Filter(), entityClass);
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(wrapper.getBaseParamList(), wrapper.getEnableMust2Filter(), entityClass);
         // 初始化geo相关: BoundingBox,geoDistance,geoPolygon,geoShape
         Optional.ofNullable(wrapper.getGeoParam()).ifPresent(esGeoParam -> setGeoQuery(esGeoParam, boolQueryBuilder, entityClass));
         // 设置参数
@@ -132,6 +132,9 @@ public class EsWrapperProcessor {
         // 大于一万条, trackTotalHists自动开启
         if (searchSourceBuilder.size() > DEFAULT_SIZE) {
             searchSourceBuilder.trackTotalHits(true);
+        } else {
+            // 根据全局配置决定是否开启
+            searchSourceBuilder.trackTotalHits(GlobalConfigCache.getGlobalConfig().getDocumentConfig().isEnableTrackTotalHits());
         }
 
         return searchSourceBuilder;
@@ -254,7 +257,8 @@ public class EsWrapperProcessor {
      */
     public static BoolQueryBuilder buildBoolQueryBuilder(EsLambdaQueryWrapper<?> wrapper, Class<?> entityClass) {
         List<EsBaseParam> baseParamList = wrapper.getBaseParamList();
-        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(baseParamList, entityClass);
+        Boolean enableMust2Filter = wrapper.getEnableMust2Filter();
+        BoolQueryBuilder boolQueryBuilder = buildBoolQueryBuilder(baseParamList, enableMust2Filter, entityClass);
         Optional.ofNullable(wrapper.getGeoParam()).ifPresent(esGeoParam -> setGeoQuery(esGeoParam, boolQueryBuilder, entityClass));
         return boolQueryBuilder;
     }
@@ -266,64 +270,72 @@ public class EsWrapperProcessor {
      * @param entityClass   es索引对应的实体类
      * @return BoolQueryBuilder
      */
-    public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList, Class<?> entityClass) {
-        DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
-        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        // 用于连接and，or条件内的多个查询条件，包装成boolQuery
-        BoolQueryBuilder inner = null;
-        // 是否有外层or
-        boolean hasOuterOr = false;
-        for (int i = 0; i < baseParamList.size(); i++) {
-            EsBaseParam baseEsParam = baseParamList.get(i);
-            if (Objects.equals(AND_LEFT_BRACKET.getType(), baseEsParam.getType()) || Objects.equals(OR_LEFT_BRACKET.getType(), baseEsParam.getType())) {
-                // 说明有and或者or
-                for (int j = i + 1; j < baseParamList.size(); j++) {
-                    if (Objects.equals(baseParamList.get(j).getType(), OR_ALL.getType())) {
-                        // 说明左括号内出现了内层or查询条件
-                        for (int k = i + 1; k < j; k++) {
-                            // 内层or只会出现在中间，此处将内层or之前的查询条件类型进行处理
-                            EsBaseParam.setUp(baseParamList.get(k));
-                        }
-                    }
-                }
-                inner = QueryBuilders.boolQuery();
-            }
+//    public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList, Class<?> entityClass) {
+//        DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
+//        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+//        // 用于连接and，or条件内的多个查询条件，包装成boolQuery
+//        BoolQueryBuilder inner = null;
+//        // 是否有外层or
+//        boolean hasOuterOr = false;
+//        for (int i = 0; i < baseParamList.size(); i++) {
+//            EsBaseParam baseEsParam = baseParamList.get(i);
+//            if (Objects.equals(AND_LEFT_BRACKET.getType(), baseEsParam.getType()) || Objects.equals(OR_LEFT_BRACKET.getType(), baseEsParam.getType())) {
+//                // 说明有and或者or
+//                for (int j = i + 1; j < baseParamList.size(); j++) {
+//                    if (Objects.equals(baseParamList.get(j).getType(), OR_ALL.getType())) {
+//                        // 说明左括号内出现了内层or查询条件
+//                        for (int k = i + 1; k < j; k++) {
+//                            // 内层or只会出现在中间，此处将内层or之前的查询条件类型进行处理
+//                            EsBaseParam.setUp(baseParamList.get(k));
+//                        }
+//                    }
+//                }
+//                inner = QueryBuilders.boolQuery();
+//            }
+//
+//            // 此处处理所有内外层or后面的查询条件类型
+//            if (Objects.equals(baseEsParam.getType(), OR_ALL.getType())) {
+//                hasOuterOr = true;
+//            }
+//            if (hasOuterOr) {
+//                EsBaseParam.setUp(baseEsParam);
+//            }
+//
+//            // 处理括号中and和or的最终连接类型 and->must，or->should
+//            if (Objects.equals(AND_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
+//                if (Objects.nonNull(inner)) {
+//                    boolQueryBuilder.must(inner);
+//                }
+//                inner = null;
+//            }
+//            if (Objects.equals(OR_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
+//                if (Objects.nonNull(inner)) {
+//                    boolQueryBuilder.should(inner);
+//                }
+//                inner = null;
+//            }
+//
+//            // 添加字段名称,值,查询类型等
+//            if (Objects.isNull(inner)) {
+//                addQuery(baseEsParam, boolQueryBuilder, documentInfo);
+//            } else {
+//                addQuery(baseEsParam, inner, documentInfo);
+//            }
+//        }
+//        return boolQueryBuilder;
+//    }
 
-            // 此处处理所有内外层or后面的查询条件类型
-            if (Objects.equals(baseEsParam.getType(), OR_ALL.getType())) {
-                hasOuterOr = true;
-            }
-            if (hasOuterOr) {
-                EsBaseParam.setUp(baseEsParam);
-            }
-
-            // 处理括号中and和or的最终连接类型 and->must，or->should
-            if (Objects.equals(AND_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
-                if (Objects.nonNull(inner)) {
-                    boolQueryBuilder.must(inner);
-                }
-                inner = null;
-            }
-            if (Objects.equals(OR_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
-                if (Objects.nonNull(inner)) {
-                    boolQueryBuilder.should(inner);
-                }
-                inner = null;
-            }
-
-            // 添加字段名称,值,查询类型等
-            if (Objects.isNull(inner)) {
-                addQuery(baseEsParam, boolQueryBuilder, documentInfo);
-            } else {
-                addQuery(baseEsParam, inner, documentInfo);
-            }
-        }
-        return boolQueryBuilder;
-    }
-
-    public static BoolQueryBuilder buildBoolQueryBuilder2(List<EsBaseParam> baseParamList,
-                                                          Boolean enableMust2Filter,
-                                                          Class<?> entityClass) {
+    /**
+     * 构建BoolQueryBuilder
+     *
+     * @param baseParamList     基础参数列表
+     * @param enableMust2Filter 是否开启must条件转filter
+     * @param entityClass       es索引对应的实体类
+     * @return BoolQueryBuilder
+     */
+    public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList,
+                                                         Boolean enableMust2Filter,
+                                                         Class<?> entityClass) {
         DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
         GlobalConfig.DocumentConfig documentConfig = GlobalConfigCache.getGlobalConfig().getDocumentConfig();
 

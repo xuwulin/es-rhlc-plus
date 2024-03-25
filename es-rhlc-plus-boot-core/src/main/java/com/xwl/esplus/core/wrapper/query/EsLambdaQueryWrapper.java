@@ -43,7 +43,7 @@ public class EsLambdaQueryWrapper<T> extends EsAbstractLambdaWrapper<T, EsLambda
     /**
      * must条件转filter
      */
-    protected Boolean enableMust2Filter;
+//    protected Boolean enableMust2Filter;
 
     /**
      * 不建议直接 new 该实例，使用 Wrappers.lambdaQuery(entity)
@@ -93,13 +93,13 @@ public class EsLambdaQueryWrapper<T> extends EsAbstractLambdaWrapper<T, EsLambda
         return size;
     }
 
-    public Boolean getEnableMust2Filter() {
-        return enableMust2Filter;
-    }
-
-    public void setEnableMust2Filter(Boolean enableMust2Filter) {
-        this.enableMust2Filter = enableMust2Filter;
-    }
+//    public Boolean getEnableMust2Filter() {
+//        return enableMust2Filter;
+//    }
+//
+//    public void setEnableMust2Filter(Boolean enableMust2Filter) {
+//        this.enableMust2Filter = enableMust2Filter;
+//    }
 
     @Override
     protected EsLambdaQueryWrapper<T> instance() {

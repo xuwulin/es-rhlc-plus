@@ -86,4 +86,8 @@ public interface Query<Children, T, R> extends Serializable {
      * @return 泛型
      */
     Children enableMust2Filter(boolean condition, boolean enable);
+
+    default Children enableMust2Filter(boolean enable) {
+        return enableMust2Filter(true, enable);
+    }
 }

@@ -260,6 +260,7 @@ public class AdvancedQueryTest {
                 .or()
                 .in(EsUrbanBrainMapInfo::getPortrait, "出租车", "易投诉人群")
         );
+        Long count = esUrbanBrainMapInfoMapper.count(wrapper);
         SearchResponse search = esUrbanBrainMapInfoMapper.search(wrapper);
         System.out.println(search);
     }
