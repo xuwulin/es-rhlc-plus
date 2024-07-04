@@ -66,12 +66,12 @@ public class EsLambdaQueryWrapper<T> extends EsAbstractLambdaWrapper<T, EsLambda
         exclude = new String[]{};
     }
 
-    EsLambdaQueryWrapper(T entity, List<EsBaseParam> baseEsParamList, List<EsHighLightParam> highLightParamList,
+    EsLambdaQueryWrapper(T entity, List<EsBaseParam> esBaseParamList, List<EsHighLightParam> highLightParamList,
                          List<EsSortParam> sortParamList, List<EsAggregationParam<T>> aggregationParamList) {
         super.setEntity(entity);
         include = new String[]{};
         exclude = new String[]{};
-        this.baseParamList = baseEsParamList;
+        this.baseParamList = esBaseParamList;
         this.highLightParamList = highLightParamList;
         this.sortParamList = sortParamList;
         this.aggregationParamList = aggregationParamList;

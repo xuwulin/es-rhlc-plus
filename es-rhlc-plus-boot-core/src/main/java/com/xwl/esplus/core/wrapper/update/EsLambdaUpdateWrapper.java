@@ -36,9 +36,9 @@ public class EsLambdaUpdateWrapper<T> extends EsAbstractLambdaWrapper<T, EsLambd
         updateParamList = new ArrayList<>();
     }
 
-    EsLambdaUpdateWrapper(T entity, List<EsBaseParam> baseEsParamList, List<EsUpdateParam> updateParamList) {
+    EsLambdaUpdateWrapper(T entity, List<EsBaseParam> esBaseParamList, List<EsUpdateParam> updateParamList) {
         super.setEntity(entity);
-        this.baseParamList = baseEsParamList;
+        this.baseParamList = esBaseParamList;
         this.updateParamList = updateParamList;
     }
 

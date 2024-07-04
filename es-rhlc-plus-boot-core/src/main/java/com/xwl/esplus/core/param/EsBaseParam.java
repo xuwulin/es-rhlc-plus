@@ -84,7 +84,7 @@ public class EsBaseParam {
      */
     private List<FieldValueModel> likeRightList = new ArrayList<>();
     /**
-     * 参数类型 参见: BaseEsParamTypeEnum
+     * 参数类型 参见: EsBaseParamTypeEnum
      */
     private Integer type;
     /**

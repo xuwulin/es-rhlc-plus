@@ -266,68 +266,6 @@ public class EsWrapperProcessor {
     /**
      * 构建BoolQueryBuilder
      *
-     * @param baseParamList 基础参数列表
-     * @param entityClass   es索引对应的实体类
-     * @return BoolQueryBuilder
-     */
-//    public static BoolQueryBuilder buildBoolQueryBuilder(List<EsBaseParam> baseParamList, Class<?> entityClass) {
-//        DocumentInfo documentInfo = DocumentInfoUtils.getDocumentInfo(entityClass);
-//        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-//        // 用于连接and，or条件内的多个查询条件，包装成boolQuery
-//        BoolQueryBuilder inner = null;
-//        // 是否有外层or
-//        boolean hasOuterOr = false;
-//        for (int i = 0; i < baseParamList.size(); i++) {
-//            EsBaseParam baseEsParam = baseParamList.get(i);
-//            if (Objects.equals(AND_LEFT_BRACKET.getType(), baseEsParam.getType()) || Objects.equals(OR_LEFT_BRACKET.getType(), baseEsParam.getType())) {
-//                // 说明有and或者or
-//                for (int j = i + 1; j < baseParamList.size(); j++) {
-//                    if (Objects.equals(baseParamList.get(j).getType(), OR_ALL.getType())) {
-//                        // 说明左括号内出现了内层or查询条件
-//                        for (int k = i + 1; k < j; k++) {
-//                            // 内层or只会出现在中间，此处将内层or之前的查询条件类型进行处理
-//                            EsBaseParam.setUp(baseParamList.get(k));
-//                        }
-//                    }
-//                }
-//                inner = QueryBuilders.boolQuery();
-//            }
-//
-//            // 此处处理所有内外层or后面的查询条件类型
-//            if (Objects.equals(baseEsParam.getType(), OR_ALL.getType())) {
-//                hasOuterOr = true;
-//            }
-//            if (hasOuterOr) {
-//                EsBaseParam.setUp(baseEsParam);
-//            }
-//
-//            // 处理括号中and和or的最终连接类型 and->must，or->should
-//            if (Objects.equals(AND_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
-//                if (Objects.nonNull(inner)) {
-//                    boolQueryBuilder.must(inner);
-//                }
-//                inner = null;
-//            }
-//            if (Objects.equals(OR_RIGHT_BRACKET.getType(), baseEsParam.getType())) {
-//                if (Objects.nonNull(inner)) {
-//                    boolQueryBuilder.should(inner);
-//                }
-//                inner = null;
-//            }
-//
-//            // 添加字段名称,值,查询类型等
-//            if (Objects.isNull(inner)) {
-//                addQuery(baseEsParam, boolQueryBuilder, documentInfo);
-//            } else {
-//                addQuery(baseEsParam, inner, documentInfo);
-//            }
-//        }
-//        return boolQueryBuilder;
-//    }
-
-    /**
-     * 构建BoolQueryBuilder
-     *
      * @param baseParamList     基础参数列表
      * @param enableMust2Filter 是否开启must条件转filter
      * @param entityClass       es索引对应的实体类
@@ -740,12 +678,12 @@ public class EsWrapperProcessor {
     /**
      * 添加进参数容器
      *
-     * @param baseEsParam      基础参数
+     * @param esBaseParam      基础参数
      * @param boolQueryBuilder es boolQueryBuilder
      * @param documentInfo     文档信息8
      */
-    private static void addQuery(EsBaseParam baseEsParam, BoolQueryBuilder boolQueryBuilder, DocumentInfo documentInfo) {
-        baseEsParam.getMustList().forEach(fieldValueModel ->
+    private static void addQuery(EsBaseParam esBaseParam, BoolQueryBuilder boolQueryBuilder, DocumentInfo documentInfo) {
+        esBaseParam.getMustList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         MUST.getType(),
@@ -755,7 +693,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getFilterList().forEach(fieldValueModel ->
+        esBaseParam.getFilterList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         FILTER.getType(),
@@ -765,7 +703,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getShouldList().forEach(fieldValueModel ->
+        esBaseParam.getShouldList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         SHOULD.getType(),
@@ -775,7 +713,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getMustNotList().forEach(fieldValueModel ->
+        esBaseParam.getMustNotList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.MUST_NOT.getType(),
@@ -785,7 +723,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getGtList().forEach(fieldValueModel ->
+        esBaseParam.getGtList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.GT.getType(),
@@ -795,7 +733,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getLtList().forEach(fieldValueModel ->
+        esBaseParam.getLtList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.LT.getType(),
@@ -805,7 +743,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getGeList().forEach(fieldValueModel ->
+        esBaseParam.getGeList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.GE.getType(),
@@ -815,7 +753,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getLeList().forEach(fieldValueModel ->
+        esBaseParam.getLeList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.LE.getType(),
@@ -825,7 +763,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getBetweenList().forEach(fieldValueModel ->
+        esBaseParam.getBetweenList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.BETWEEN.getType(),
@@ -833,7 +771,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getLeftValue(),
                         fieldValueModel.getRightValue(),
                         fieldValueModel.getBoost()));
-        baseEsParam.getNotBetweenList().forEach(fieldValueModel ->
+        esBaseParam.getNotBetweenList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.NOT_BETWEEN.getType(),
@@ -842,7 +780,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getRightValue(),
                         fieldValueModel.getBoost()));
 
-        baseEsParam.getInList().forEach(fieldValueModel ->
+        esBaseParam.getInList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.IN.getType(),
@@ -850,7 +788,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getValues(),
                         fieldValueModel.getBoost()));
 
-        baseEsParam.getNotInList().forEach(fieldValueModel ->
+        esBaseParam.getNotInList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.NOT_IN.getType(),
@@ -858,7 +796,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getValues(),
                         fieldValueModel.getBoost()));
 
-        baseEsParam.getIsNullList().forEach(fieldValueModel ->
+        esBaseParam.getIsNullList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.NOT_EXISTS.getType(),
@@ -868,7 +806,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getNotNullList().forEach(fieldValueModel ->
+        esBaseParam.getNotNullList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.EXISTS.getType(),
@@ -878,7 +816,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getLikeLeftList().forEach(fieldValueModel ->
+        esBaseParam.getLikeLeftList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.LIKE_LEFT.getType(),
@@ -888,7 +826,7 @@ public class EsWrapperProcessor {
                         fieldValueModel.getBoost(),
                         fieldValueModel.getSlop()));
 
-        baseEsParam.getLikeRightList().forEach(fieldValueModel ->
+        esBaseParam.getLikeRightList().forEach(fieldValueModel ->
                 EsQueryTypeUtils.addQueryByType(boolQueryBuilder,
                         fieldValueModel.getEsQueryType(),
                         EsAttachTypeEnum.LIKE_RIGHT.getType(),

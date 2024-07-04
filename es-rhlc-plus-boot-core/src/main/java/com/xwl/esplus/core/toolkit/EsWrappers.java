@@ -14,63 +14,63 @@ public final class EsWrappers {
     }
 
     /**
-     * 获取 LambdaEsIndexWrapper
+     * 获取 EsLambdaIndexWrapper
      *
      * @param <T> 实体类泛型
-     * @return LambdaEsIndexWrapper
+     * @return EsLambdaIndexWrapper
      */
     public static <T> EsLambdaIndexWrapper<T> lambdaIndex() {
         return new EsLambdaIndexWrapper<>();
     }
 
     /**
-     * 获取 LambdaEsIndexWrapper
+     * 获取 EsLambdaIndexWrapper
      *
      * @param entity 实体类
      * @param <T>    实体类泛型
-     * @return LambdaEsIndexWrapper
+     * @return EsLambdaIndexWrapper
      */
     public static <T> EsLambdaIndexWrapper<T> lambdaIndex(T entity) {
         return new EsLambdaIndexWrapper<>(entity);
     }
 
     /**
-     * 获取 LambdaEsQueryWrapper
+     * 获取 EsLambdaQueryWrapper
      *
      * @param <T> 实体类泛型
-     * @return LambdaQueryWrapper
+     * @return EsLambdaQueryWrapper
      */
     public static <T> EsLambdaQueryWrapper<T> lambdaQuery() {
         return new EsLambdaQueryWrapper<>();
     }
 
     /**
-     * 获取LambdaEsQueryWrapper
+     * 获取 EsLambdaQueryWrapper
      *
      * @param entity 实体类
      * @param <T>    实体类泛型
-     * @return LambdaEsQueryWrapper
+     * @return EsLambdaQueryWrapper
      */
     public static <T> EsLambdaQueryWrapper<T> lambdaQuery(T entity) {
         return new EsLambdaQueryWrapper<>(entity);
     }
 
     /**
-     * 获取 LambdaEsUpdateWrapper
+     * 获取 EsLambdaUpdateWrapper
      *
      * @param <T> 实体类泛型
-     * @return LambdaEsUpdateWrapper
+     * @return EsLambdaUpdateWrapper
      */
     public static <T> EsLambdaUpdateWrapper<T> lambdaUpdate() {
         return new EsLambdaUpdateWrapper<>();
     }
 
     /**
-     * 获取 LambdaEsUpdateWrapper
+     * 获取 EsLambdaUpdateWrapper
      *
      * @param entity 实体类
      * @param <T>    实体类泛型
-     * @return LambdaEsUpdateWrapper
+     * @return EsLambdaUpdateWrapper
      */
     public static <T> EsLambdaUpdateWrapper<T> lambdaUpdate(T entity) {
         return new EsLambdaUpdateWrapper<>(entity);

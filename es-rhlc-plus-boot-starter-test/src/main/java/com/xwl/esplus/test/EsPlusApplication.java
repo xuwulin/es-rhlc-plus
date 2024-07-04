@@ -16,10 +16,11 @@ import java.io.IOException;
 //        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {WorkOrderDocumentMapper.class, UserDocumentMapper2.class})
 //})
 @EsMapperScan(basePackages = {"com.xwl.esplus.test.mapper"})
+//@A
 public class EsPlusApplication {
     public static void main(String[] args) throws IOException {
         ConfigurableApplicationContext applicationContext = SpringApplication.run(EsPlusApplication.class, args);
-
+        System.out.println();
         // 注意：classpath:META-INF/spring.factories 只是到当前类路径下查找，在jar包中是找不到的
         // classpath*:META-INF/spring.factories这样就能查找jar包中的
         /*Resource[] resources = applicationContext.getResources("classpath*:META-INF/spring.factories");

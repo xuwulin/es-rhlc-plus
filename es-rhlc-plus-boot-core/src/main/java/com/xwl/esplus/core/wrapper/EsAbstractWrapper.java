@@ -168,7 +168,6 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     }
 
 
-
     @Override
     public Children eq(boolean condition, R column, Object val, Float boost) {
         return doIt(condition, TERM_QUERY, MUST, FieldUtils.getFieldName(column), val, boost);
@@ -190,8 +189,18 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     }
 
     @Override
+    public Children andWrapper(Children children) {
+        return doIt(children, AND_LEFT_BRACKET, AND_RIGHT_BRACKET);
+    }
+
+    @Override
     public Children or(boolean condition, Function<Children, Children> func) {
         return doIt(condition, func, OR_LEFT_BRACKET, OR_RIGHT_BRACKET);
+    }
+
+    @Override
+    public Children orWrapper(Children children) {
+        return doIt(children, OR_LEFT_BRACKET, OR_RIGHT_BRACKET);
     }
 
     @Override
@@ -551,6 +560,25 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     }
 
     /**
+     * 封装查询参数(含AND,OR这种连接操作)
+     *
+     * @param children wrapper条件
+     * @param open     左括号
+     * @param close    右括号
+     * @return 泛型
+     */
+    private Children doIt(Children children, EsBaseParamTypeEnum open, EsBaseParamTypeEnum close) {
+        EsBaseParam left = new EsBaseParam();
+        left.setType(open.getType());
+        baseParamList.add(left);
+        baseParamList.addAll(children.getBaseParamList());
+        EsBaseParam right = new EsBaseParam();
+        right.setType(close.getType());
+        baseParamList.add(right);
+        return typedThis;
+    }
+
+    /**
      * 封装查询参数(普通情况,不带括号)
      *
      * @param condition      条件
@@ -562,7 +590,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      */
     private Children doIt(boolean condition, EsAttachTypeEnum attachTypeEnum, String field, List<Object> values, Float boost) {
         if (condition) {
-            EsBaseParam baseEsParam = new EsBaseParam();
+            EsBaseParam esBaseParam = new EsBaseParam();
             EsBaseParam.FieldValueModel model = new EsBaseParam.FieldValueModel();
             model.setField(field);
             model.setValues(values);
@@ -570,8 +598,8 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
             model.setEsQueryType(TERMS_QUERY.getType());
             model.setOriginalAttachType(attachTypeEnum.getType());
 
-            setModel(baseEsParam, model, attachTypeEnum);
-            baseParamList.add(baseEsParam);
+            setModel(esBaseParam, model, attachTypeEnum);
+            baseParamList.add(esBaseParam);
         }
         return typedThis;
     }
@@ -590,7 +618,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      */
     private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum, String field, Object val, Integer slop, Float boost) {
         if (condition) {
-            EsBaseParam baseEsParam = new EsBaseParam();
+            EsBaseParam esBaseParam = new EsBaseParam();
             EsBaseParam.FieldValueModel model = new EsBaseParam.FieldValueModel();
             model.setField(field);
             model.setValue(val);
@@ -598,8 +626,8 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
             model.setBoost(boost);
             model.setEsQueryType(queryTypeEnum.getType());
             model.setOriginalAttachType(attachTypeEnum.getType());
-            setModel(baseEsParam, model, attachTypeEnum);
-            baseParamList.add(baseEsParam);
+            setModel(esBaseParam, model, attachTypeEnum);
+            baseParamList.add(esBaseParam);
         }
         return typedThis;
     }
@@ -617,7 +645,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      */
     private Children doIt(boolean condition, EsQueryTypeEnum queryTypeEnum, EsAttachTypeEnum attachTypeEnum, String field, Object val, Float boost) {
         if (condition) {
-            EsBaseParam baseEsParam = new EsBaseParam();
+            EsBaseParam esBaseParam = new EsBaseParam();
             EsBaseParam.FieldValueModel model = new EsBaseParam.FieldValueModel();
             model.setField(field);
             model.setValue(val);
@@ -625,8 +653,8 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
             model.setEsQueryType(queryTypeEnum.getType());
             model.setOriginalAttachType(attachTypeEnum.getType());
 
-            setModel(baseEsParam, model, attachTypeEnum);
-            baseParamList.add(baseEsParam);
+            setModel(esBaseParam, model, attachTypeEnum);
+            baseParamList.add(esBaseParam);
         }
         return typedThis;
     }
@@ -642,15 +670,15 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      */
     private Children doIt(boolean condition, EsAttachTypeEnum attachTypeEnum, String field, Float boost) {
         if (condition) {
-            EsBaseParam baseEsParam = new EsBaseParam();
+            EsBaseParam esBaseParam = new EsBaseParam();
             EsBaseParam.FieldValueModel model = new EsBaseParam.FieldValueModel();
             model.setField(field);
             model.setBoost(boost);
             model.setEsQueryType(EXISTS_QUERY.getType());
             model.setOriginalAttachType(attachTypeEnum.getType());
 
-            setModel(baseEsParam, model, attachTypeEnum);
-            baseParamList.add(baseEsParam);
+            setModel(esBaseParam, model, attachTypeEnum);
+            baseParamList.add(esBaseParam);
         }
         return typedThis;
     }
@@ -668,7 +696,7 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
      */
     private Children doIt(boolean condition, EsAttachTypeEnum attachTypeEnum, String field, Object left, Object right, Float boost) {
         if (condition) {
-            EsBaseParam baseEsParam = new EsBaseParam();
+            EsBaseParam esBaseParam = new EsBaseParam();
             EsBaseParam.FieldValueModel model = new EsBaseParam.FieldValueModel();
             model.setField(field);
             model.setLeftValue(left);
@@ -677,8 +705,8 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
             model.setEsQueryType(INTERVAL_QUERY.getType());
             model.setOriginalAttachType(attachTypeEnum.getType());
 
-            setModel(baseEsParam, model, attachTypeEnum);
-            baseParamList.add(baseEsParam);
+            setModel(esBaseParam, model, attachTypeEnum);
+            baseParamList.add(esBaseParam);
         }
         return typedThis;
     }
@@ -827,58 +855,58 @@ public abstract class EsAbstractWrapper<T, R, Children extends EsAbstractWrapper
     /**
      * 设置查询模型类型
      *
-     * @param baseEsParam    基础参数
+     * @param esBaseParam    基础参数
      * @param model          字段&值模型
      * @param attachTypeEnum 连接类型
      */
-    private void setModel(EsBaseParam baseEsParam, EsBaseParam.FieldValueModel model, EsAttachTypeEnum attachTypeEnum) {
+    private void setModel(EsBaseParam esBaseParam, EsBaseParam.FieldValueModel model, EsAttachTypeEnum attachTypeEnum) {
         switch (attachTypeEnum) {
             case MUST:
-                baseEsParam.getMustList().add(model);
+                esBaseParam.getMustList().add(model);
                 break;
             case FILTER:
-                baseEsParam.getFilterList().add(model);
+                esBaseParam.getFilterList().add(model);
                 break;
             case SHOULD:
-                baseEsParam.getShouldList().add(model);
+                esBaseParam.getShouldList().add(model);
                 break;
             case MUST_NOT:
-                baseEsParam.getMustNotList().add(model);
+                esBaseParam.getMustNotList().add(model);
                 break;
             case GT:
-                baseEsParam.getGtList().add(model);
+                esBaseParam.getGtList().add(model);
                 break;
             case LT:
-                baseEsParam.getLtList().add(model);
+                esBaseParam.getLtList().add(model);
                 break;
             case GE:
-                baseEsParam.getGeList().add(model);
+                esBaseParam.getGeList().add(model);
                 break;
             case LE:
-                baseEsParam.getLeList().add(model);
+                esBaseParam.getLeList().add(model);
                 break;
             case IN:
-                baseEsParam.getInList().add(model);
+                esBaseParam.getInList().add(model);
                 break;
             case NOT_IN:
-                baseEsParam.getNotInList().add(model);
+                esBaseParam.getNotInList().add(model);
                 break;
             case EXISTS:
-                baseEsParam.getNotNullList().add(model);
+                esBaseParam.getNotNullList().add(model);
                 break;
             case NOT_EXISTS:
-                baseEsParam.getIsNullList().add(model);
+                esBaseParam.getIsNullList().add(model);
                 break;
             case BETWEEN:
-                baseEsParam.getBetweenList().add(model);
+                esBaseParam.getBetweenList().add(model);
                 break;
             case NOT_BETWEEN:
-                baseEsParam.getNotBetweenList().add(model);
+                esBaseParam.getNotBetweenList().add(model);
             case LIKE_LEFT:
-                baseEsParam.getLikeLeftList().add(model);
+                esBaseParam.getLikeLeftList().add(model);
                 break;
             case LIKE_RIGHT:
-                baseEsParam.getLikeRightList().add(model);
+                esBaseParam.getLikeRightList().add(model);
                 break;
             default:
                 throw new UnsupportedOperationException("不支持的连接类型,请参见EsAttachTypeEnum");

@@ -22,3 +22,4 @@ es-plus:
 #      field-strategy: not_null
       date-format: yyyy-MM-dd HH:mm:ss
       map-underscore-to-camel-case: true
+#      enable-must2-filter: true

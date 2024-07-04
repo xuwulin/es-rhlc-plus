@@ -3,7 +3,7 @@ package com.xwl.esplus.core.wrapper.condition;
 import java.io.Serializable;
 
 /**
- * 函数式接口
+ * 函数式接口：接收一个参数T，返回一个结果R，和JDK自带的函数式接口Function功能一致
  *
  * @author xwl
  * @since 2022/3/11 17:45

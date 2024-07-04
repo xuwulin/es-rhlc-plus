@@ -31,6 +31,10 @@ import java.util.stream.Collectors;
  * <p>
  * ImportBeanDefinitionRegistrar，在Spring中，加载它的实现类，只有一个方法就是配合@Impor使用，是主要负责Bean 的动态注入的。
  *
+ * EsMapperScannerRegister如何注入到Spring中的？
+ * 在springboot的启动类上使用 @EsMapperScan 指定扫描路径，
+ * 因为在 @EsMapperScan 这个注解类上使用 @Import 导入 EsMapperScannerRegister类， 注册到spring中
+ *
  * @author xwl
  * @since 2022/3/11 20:29
  */
@@ -44,7 +48,7 @@ public class EsMapperScannerRegister implements ImportBeanDefinitionRegistrar, R
      * 根据需要注册 bean 定义。
      *
      * @param importingClassMetadata 导入类的注解元数据
-     * @param registry               当前bean定义注册表
+     * @param registry               当前bean定义注册表，就是applicationContext，AnnotationConfigApplicationContext的实现接口
      */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
@@ -77,7 +81,7 @@ public class EsMapperScannerRegister implements ImportBeanDefinitionRegistrar, R
         if (CollectionUtils.isEmpty(basePackages)) {
             throw ExceptionUtils.epe("Annotation @EsMapperScan must be value(basePackages) or basePackageClasses");
         }
-        // 注册过滤器，自定义扫描规则，与Spring的默认机制不同
+        // 注册过滤器，自定义扫描规则，与Spring的默认机制不同，Spring的扫描器是用于扫描bean的，spring扫描到接口是会忽略掉的，但mybatis需要扫描接口
         scanner.registerFilters();
         // 开始扫描，对包路径进行扫描
         scanner.doScan(StringUtils.toStringArray(basePackages));

@@ -36,10 +36,10 @@ public class EsMapperProxyHandler<T> implements InvocationHandler, Serializable 
     private Class<T> mapperInterface;
 
     /**
-     * 构造函数赋值，在使用代理对象时，如：使用@Autowired或其他方式注入的Mapper（继承BaseEsMapper）对象时调用该构造函数
+     * 构造函数赋值，在使用代理对象时，如：使用@Autowired或其他方式注入的Mapper（继承EsBaseMapper）对象时调用该构造函数
      * 在EsMapperFactoryBean的构造方法之后执行
      *
-     * @param mapperInterface 被代理接口的实现，该参数，由注解解析器自动赋值（自动装配），即使用@Autowired或其他方式注入的Mapper（继承BaseEsMapper）对象
+     * @param mapperInterface 被代理接口的实现，该参数，由注解解析器自动赋值（自动装配），即使用@Autowired或其他方式注入的Mapper（继承EsBaseMapper）对象
      */
     public EsMapperProxyHandler(Class<T> mapperInterface) {
         this.mapperInterface = mapperInterface;
@@ -49,23 +49,24 @@ public class EsMapperProxyHandler<T> implements InvocationHandler, Serializable 
      * 处理代理实例上的方法调用并返回结果。当在与其关联的代理实例上调用方法时，将在调用处理程序上调用此方法。
      * 只有执行Mapper接口中的方法时，才会调用此方法
      * <p>
-     * 比如：public interface UserDocumentMapper extends BaseEsMapper<UserDocument> {}
+     * 比如：public interface UserDocumentMapper extends EsBaseMapper<UserDocument> {}
      * 当我们调用 UserDocumentMapper.createIndex() 方法的时候，
      * 这个方法会被EsMapperProxy.invoke()方法被拦截，
      * 就会直接使用EsMapperProxy.invoke方法的返回值，而不会去走真实的UserDocumentMapper.createIndex()方法；
      * 当然也不能直接调用UserDocumentMapper中的方法，因为UserDocumentMapper并没有被实例化
      *
-     * @param proxy  代理类的对象本身，如：com.xwl.esplus.core.condition.BaseEsMapperImpl@78e68401
-     * @param method 正在执行的方法（代理类对象调用的方法），如：public abstract java.lang.Boolean com.xwl.esplus.core.mapper.BaseEsMapper.createIndex()
+     * @param proxy  代理类的对象本身，如：com.xwl.esplus.core.condition.EsBaseMapperImpl@78e68401
+     * @param method 正在执行的方法（代理类对象调用的方法），如：public abstract java.lang.Boolean com.xwl.esplus.core.mapper.EsBaseMapper.createIndex()
      * @param args   正在执行的方法的实际参数
      * @return
      * @throws Throwable
      */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // 从缓存中获取目标对象（被代理接口的具体实现类）
+        // 从缓存中获取目标对象（被代理接口的具体实现类），最终创建的代理对象也是该对象
         EsBaseMapperImpl<?> esBaseMapperInstance = BaseCache.getEsBaseMapperInstance(mapperInterface);
         // 方法反射调用：方法.invoke(目标对象, 参数);
-        return method.invoke(esBaseMapperInstance, args);
+        Object invoke = method.invoke(esBaseMapperInstance, args);
+        return invoke;
     }
 }

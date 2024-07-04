@@ -1,12 +1,11 @@
 package com.xwl.esplus.core.cache;
 
-import com.xwl.esplus.core.mapper.EsBaseMapperImpl;
 import com.xwl.esplus.core.constant.EsConstants;
+import com.xwl.esplus.core.mapper.EsBaseMapperImpl;
 import com.xwl.esplus.core.toolkit.ExceptionUtils;
 import com.xwl.esplus.core.toolkit.FieldUtils;
 import com.xwl.esplus.core.toolkit.GenericTypeUtils;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.springframework.context.ApplicationContext;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -24,7 +23,7 @@ public class BaseCache {
     /**
      * 存放EsBaseMapper的所有实例
      * key: mapper接口
-     * value: mapper接口对于得实例
+     * value: mapper接口对应的实例
      */
     public static final Map<Class<?>, EsBaseMapperImpl<?>> ES_BASE_MAPPER_INSTANCE = new ConcurrentHashMap<>();
 
@@ -42,7 +41,7 @@ public class BaseCache {
      * @param restHighLevelClient es客户端
      */
     public static void initCache(Class<?> mapperInterface, RestHighLevelClient restHighLevelClient) {
-        // 初始化baseEsMapper的所有实现类实例
+        // 初始化esBaseMapper的所有实现类实例
         EsBaseMapperImpl esBaseMapper = new EsBaseMapperImpl();
         esBaseMapper.setRestHighLevelClient(restHighLevelClient);
         // 获取接口泛型的实际类型

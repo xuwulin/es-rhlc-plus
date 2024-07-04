@@ -15,6 +15,8 @@ import com.xwl.esplus.test.mapper.UserDocumentMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.common.geo.GeoPoint;
+import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -255,13 +257,29 @@ public class AdvancedQueryTest {
                 // 过滤无坐标数据
                 .isNotNull(EsUrbanBrainMapInfo::getLonlat);
 
-        wrapper.and(t -> t
-                .in(EsUrbanBrainMapInfo::getTopic, "出租车", "易投诉人群")
-                .or()
-                .in(EsUrbanBrainMapInfo::getPortrait, "出租车", "易投诉人群")
-        );
+//        wrapper.and(t -> t
+//                .in(EsUrbanBrainMapInfo::getTopic, "出租车", "易投诉人群")
+//                .or()
+//                .in(EsUrbanBrainMapInfo::getPortrait, "出租车", "易投诉人群")
+//        );
+
+        EsLambdaQueryWrapper<EsUrbanBrainMapInfo> wrapper2 = new EsLambdaQueryWrapper<>();
+        wrapper2.eq(EsUrbanBrainMapInfo::getFromTel, "12345");
+
+        EsLambdaQueryWrapper<EsUrbanBrainMapInfo> wrapper3 = new EsLambdaQueryWrapper<>();
+        wrapper3.geoDistance(EsUrbanBrainMapInfo::getLonlat, 500d, DistanceUnit.METERS, new GeoPoint(30.904962, 103.706442))
+                .geoDistance(EsUrbanBrainMapInfo::getLonlat, 500d, DistanceUnit.METERS, new GeoPoint(30.909059, 103.697828))
+                .geoDistance(EsUrbanBrainMapInfo::getLonlat, 500d, DistanceUnit.METERS, new GeoPoint(30.90721, 103.701656));
+
+
+        wrapper.orWrapper(wrapper3);
+
+//        wrapper.setEnableMust2Filter(true);
         Long count = esUrbanBrainMapInfoMapper.count(wrapper);
         SearchResponse search = esUrbanBrainMapInfoMapper.search(wrapper);
+        SearchSourceBuilder searchSourceBuilder = esUrbanBrainMapInfoMapper.getSearchSourceBuilder(wrapper);
         System.out.println(search);
+
+
     }
 }

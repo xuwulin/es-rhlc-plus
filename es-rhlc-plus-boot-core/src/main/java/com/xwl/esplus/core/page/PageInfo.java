@@ -129,6 +129,13 @@ public class PageInfo<T> extends PageSerializable<T> {
         judgePageBoudary();
     }
 
+    /**
+     * 类上的泛型T 不能配合静态方法使用，静态方法需要单独定义自己的泛型：public static <T>
+     *
+     * @param list
+     * @param <T>
+     * @return
+     */
     public static <T> PageInfo<T> of(List<T> list) {
         return new PageInfo<T>(list);
     }

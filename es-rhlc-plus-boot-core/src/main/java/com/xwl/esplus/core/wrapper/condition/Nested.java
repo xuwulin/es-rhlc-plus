@@ -25,6 +25,14 @@ public interface Nested<Param, Children> extends Serializable {
      */
     Children and(boolean condition, Function<Param, Param> func);
 
+    /**
+     * AND 嵌套，直接and另一个wrapper
+     *
+     * @param param wrapper
+     * @return
+     */
+    Children andWrapper(Param param);
+
     default Children or(Function<Param, Param> func) {
         return or(true, func);
     }
@@ -37,4 +45,12 @@ public interface Nested<Param, Children> extends Serializable {
      * @return 泛型
      */
     Children or(boolean condition, Function<Param, Param> func);
+
+    /**
+     * OR 嵌套，直接or另一个wrapper
+     *
+     * @param param wrapper
+     * @return
+     */
+    Children orWrapper(Param param);
 }
