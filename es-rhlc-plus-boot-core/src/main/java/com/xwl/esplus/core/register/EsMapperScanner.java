@@ -8,9 +8,11 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Set;
@@ -168,13 +170,27 @@ public class EsMapperScanner extends ClassPathBeanDefinitionScanner {
              *
              * 设置自动装配：按照类型装配，（对于 “构造方法” 和 “工厂方法” 来说选择AUTOWIRE_CONSTRUCTOR）
              * 将BeanDefinition的autowireMode属性改成 AUTOWIRE_BY_TYPE，
-             * 后面实例化该bean的时候spring会自动调用类中的set方法，也就是说，不管set方法上有没有@Autowired注解，都会调用set方法。
+             * 后面实例化该bean的时候spring会自动调用类中的所有set方法，也就是说，不管set方法上有没有@Autowired注解，都会调用set方法。
+             * 并且set方法所需要的参数，spring也会从容器中去获取并自动注入。
              *
              * mybatis-spring 创建SqlSessionFactoryBean对象时，会调用set方法注入SqlSessionFactory对象（在SqlSessionFactoryBean的父类SqlSessionDaoSupport中申明的setSqlSessionFactory()方法）
              *
              */
             definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
         }
+    }
+
+    /**
+     * 用于判断扫描到的类上是否有@Component注解，有的话，则将其加入到beanDefinition中
+     * 但是这里是扫描mapper接口，有没有@Component注解都无所谓，直接返回true，也可以不用重写这个方法
+     *
+     * @param metadataReader the ASM ClassReader for the class
+     * @return
+     * @throws IOException
+     */
+    @Override
+    protected boolean isCandidateComponent(MetadataReader metadataReader) throws IOException {
+        return true;
     }
 
     /**

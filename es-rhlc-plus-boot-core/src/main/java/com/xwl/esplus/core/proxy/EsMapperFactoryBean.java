@@ -3,7 +3,6 @@ package com.xwl.esplus.core.proxy;
 import com.xwl.esplus.core.cache.BaseCache;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Proxy;
 
@@ -34,7 +33,16 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
      */
     private Class<T> mapperInterface;
 
-    @Autowired
+    /**
+     * 客户端对象，用于创建索引、删除索引等操作
+     * 有两种方式可以给 restHighLevelClient 赋值：
+     * 1、直接在属性或者set方法上加上@Autowired注解，让spring容器自动注入
+     * 2、只需要一个set方法，不用在set方法上加@Autowired，在定义beanDefinition的时候，
+     * 设置 definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+     * 实例化该bean的时候spring会自动调用类中的所有set方法，也就是说，不管set方法上有没有@Autowired注解，都会调用set方法。
+     * 并且set方法所需要的参数，spring也会从容器中去获取并自动注入。
+     */
+//    @Autowired
     private RestHighLevelClient restHighLevelClient;
 
     public EsMapperFactoryBean() {
@@ -52,6 +60,20 @@ public class EsMapperFactoryBean<T> implements FactoryBean<T> {
      */
     public EsMapperFactoryBean(Class<T> mapperInterface) {
         this.mapperInterface = mapperInterface;
+    }
+
+    /**
+     * 在EsMapperScanner中，设置了 definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+     * 实例化该bean的时候spring会自动调用类中的所有set方法，也就是说，不管set方法上有没有@Autowired注解，都会调用set方法。
+     * 并且set方法所需要的参数，spring也会从容器中去获取并自动注入。
+     *
+     * 当然，也可以不设置definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+     * 直接在属性或者set方法上使用@Autowired注解也行
+     *
+     * @param restHighLevelClient
+     */
+    public void setRestHighLevelClient(RestHighLevelClient restHighLevelClient) {
+        this.restHighLevelClient = restHighLevelClient;
     }
 
     /**
