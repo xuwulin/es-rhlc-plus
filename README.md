@@ -117,7 +117,7 @@ public interface UserDocumentMapper extends EsBaseMapper<UserDocument> {
 }
 ```
 
-> 注：如果启动类未配置@EsMapperScan，则可以再Mapper文件众使用@EsMapper注解，如果配置了@EsMapperScan，则@EsMapper无效
+> 注：如果启动类未配置@EsMapperScan，则可以在Mapper文件中使用@EsMapper注解，如果配置了@EsMapperScan，则@EsMapper无效
 
 #### @EsDocument
 
